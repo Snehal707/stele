@@ -27,6 +27,30 @@ const CONFIG = {
 const MANDATE_V1 = "This agent pays recurring infrastructure invoices to a small set of declared providers. Invoices arrive a few times a month in modest amounts. It never pays a provider dozens of times in a short window, and never sends an amount that empties the vault in a single payment.";
 const MANDATE_V2 = `${MANDATE_V1} Never sends an amount that empties the vault in a single payment.`;
 
+function describeWriteError(error) {
+  const parts = [];
+  const seen = new Set();
+  let current = error;
+  while (current && typeof current === "object" && !seen.has(current) && parts.length < 6) {
+    seen.add(current);
+    for (const key of ["shortMessage", "details", "message", "code", "data"]) {
+      const value = current[key];
+      if (value !== undefined && value !== null && value !== "") {
+        let rendered;
+        try {
+          rendered = typeof value === "string" ? value : JSON.stringify(value);
+        } catch {
+          rendered = String(value);
+        }
+        if (!parts.includes(`${key}: ${rendered}`)) parts.push(`${key}: ${rendered}`);
+      }
+    }
+    current = current.cause;
+  }
+  if (!parts.length) return String(error);
+  return parts.join(" | ");
+}
+
 const cases = {
   healthy: { label: "HEALTHY", className: "healthy", verdict: "ON_MANDATE", reason: "Both destinations are declared, each has only one modest payment, and no single payment emptied the vault.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "2"], ["payments", "1 each"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=2\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=100\ndestination 0x2222222222222222222222222222222222222222 | declared=yes | payments=1 | total=120", note: "modest recurring invoices" },
   burst: { label: "BURST", className: "burst", verdict: "OFF_MANDATE", reason: "The agent made 48 payments to a declared provider in a short window, which violates the mandate rule against paying a provider dozens of times in a short window.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "1"], ["payments", "48"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=1\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220", note: "48 payments · dozens in a short window" },
@@ -67,17 +91,36 @@ function ActionPanel() {
     try {
       const provider = await connector.getProvider();
       if (!provider) throw new Error("Connected wallet provider unavailable.");
+      const tracedProvider = {
+        request: async (request) => {
+          try {
+            const result = await provider.request(request);
+            console.debug("Stele wallet RPC response", { request, result });
+            return result;
+          } catch (error) {
+            console.error("Stele wallet RPC failed", { request, error, cause: error?.cause, data: error?.data, details: error?.details, shortMessage: error?.shortMessage });
+            throw error;
+          }
+        },
+      };
       const client = createClient({
         chain: testnetBradbury,
         account: walletClient.account.address,
-        provider,
+        provider: tracedProvider,
       });
       const hash = await client.writeContract({ address: CONFIG.governor, functionName, args, value });
       setHashes((previous) => [{ label, hash }, ...previous]);
       setStatus(`${label}: submitted; receipt polling continues in the background.`);
       pollReceipt(hash, label);
     } catch (error) {
-      const message = String(error?.message || error);
+      console.error("Stele write failed", error, {
+        shortMessage: error?.shortMessage,
+        details: error?.details,
+        cause: error?.cause,
+        code: error?.code,
+        data: error?.data,
+      });
+      const message = describeWriteError(error);
       setStatus(message.includes("-32005") || message.toLowerCase().includes("capacity")
         ? `${label}: network at capacity; try again later.`
         : `${label}: ${message}`);
