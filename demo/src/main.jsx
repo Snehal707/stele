@@ -244,6 +244,25 @@ function ActionPanel() {
     }
   };
 
+  const depositMinimum = async () => {
+    if (!requireWallet()) return;
+    try {
+      const readClient = createClient({ chain: testnetBradbury });
+      const [lpPool, totalShares] = await Promise.all([
+        readClient.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
+        readClient.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
+      ]);
+      const pool = BigInt(lpPool || 0);
+      const shares = BigInt(totalShares || 0);
+      const minimum = pool > 0n && shares > 0n ? (pool + shares - 1n) / shares : 1n;
+      setStatus(`Deposit: submitting ${minimum} GEN so the deposit mints at least one LP share…`);
+      await runWrite("Deposit", "deposit", [], minimum);
+    } catch (error) {
+      console.error("Stele deposit preflight failed", error);
+      setStatus(`Deposit preflight failed: ${describeWriteError(error)}`);
+    }
+  };
+
   const runWrite = async (label, functionName, args, value = 0n) => {
     if (!requireWallet()) return;
     if (submitting || transactions.some((transaction) => transaction.pending)) {
@@ -381,7 +400,7 @@ function ActionPanel() {
       <button disabled={hasPendingTransaction || submitting} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
       <button disabled={hasPendingTransaction || submitting} onClick={fileClaim}>File claim</button>
       <button disabled={hasPendingTransaction || submitting} onClick={proposeMandate}>Propose mandate</button>
-      <button disabled={hasPendingTransaction || submitting} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
+      <button disabled={hasPendingTransaction || submitting} onClick={depositMinimum}>Deposit minimum GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
