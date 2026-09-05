@@ -108,6 +108,19 @@ function ActionPanel() {
         account: walletClient.account.address,
         provider: tracedProvider,
       });
+      const balanceHex = await tracedProvider.request({
+        method: "eth_getBalance",
+        params: [walletClient.account.address, "latest"],
+      });
+      const balance = BigInt(balanceHex);
+      console.debug("Stele connected wallet balance", {
+        address: walletClient.account.address,
+        balanceHex,
+        balanceWei: balance.toString(),
+      });
+      if (balance === 0n) {
+        throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
+      }
       const hash = await client.writeContract({ address: CONFIG.governor, functionName, args, value });
       setHashes((previous) => [{ label, hash }, ...previous]);
       setStatus(`${label}: submitted; receipt polling continues in the background.`);
