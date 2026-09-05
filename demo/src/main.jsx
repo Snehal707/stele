@@ -224,14 +224,15 @@ function ActionPanel() {
   };
 
   if (!isConnected) return <div className="write-panel"><strong>Actions</strong><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
+  const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="write-actions">
-      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Review")} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Claim")} onClick={fileClaim}>File claim</button>
-      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Propose")} onClick={proposeMandate}>Propose mandate</button>
-      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Deposit")} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
+      <button disabled={hasPendingTransaction} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
+      <button disabled={hasPendingTransaction} onClick={fileClaim}>File claim</button>
+      <button disabled={hasPendingTransaction} onClick={proposeMandate}>Propose mandate</button>
+      <button disabled={hasPendingTransaction} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
