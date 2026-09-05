@@ -149,6 +149,7 @@ function ActionPanel() {
   const [status, setStatus] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uncertainSubmission, setUncertainSubmission] = useState(null);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -265,6 +266,10 @@ function ActionPanel() {
 
   const runWrite = async (label, functionName, args, value = 0n) => {
     if (!requireWallet()) return;
+    if (uncertainSubmission) {
+      setStatus(`${uncertainSubmission.label}: submission status is uncertain. Verify the wallet and explorer before retrying.`);
+      return;
+    }
     if (submitting || transactions.some((transaction) => transaction.pending)) {
       setStatus("A transaction is already being submitted or waiting for Bradbury consensus.");
       return;
@@ -334,6 +339,7 @@ function ActionPanel() {
         }
       }
       const startedAt = Date.now();
+      setUncertainSubmission(null);
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
       pollReceipt(hash, label, startedAt);
@@ -346,9 +352,18 @@ function ActionPanel() {
         data: error?.data,
       });
       const message = describeWriteError(error);
-      setStatus(message.includes("-32005") || message.toLowerCase().includes("capacity")
-        ? `${label}: network at capacity; try again later.`
-        : `${label}: ${message}`);
+      const lowerMessage = message.toLowerCase();
+      const capacity = message.includes("-32005") || lowerMessage.includes("capacity");
+      const userRejected = error?.code === 4001 || lowerMessage.includes("user rejected") || lowerMessage.includes("rejected the request");
+      const ambiguous = !capacity && !userRejected && (message.includes("-32603") || lowerMessage.includes("transaction failed") || lowerMessage.includes("originalerror"));
+      if (ambiguous) {
+        setUncertainSubmission({ label, functionName, args, value });
+        setStatus(`${label}: submission uncertain — the wallet returned no transaction hash. Verify wallet activity and Bradbury before retrying.`);
+      } else {
+        setStatus(capacity
+          ? `${label}: network at capacity; try again later.`
+          : `${label}: ${message}`);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -397,11 +412,12 @@ function ActionPanel() {
     <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="write-actions">
-      <button disabled={hasPendingTransaction || submitting} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button disabled={hasPendingTransaction || submitting} onClick={fileClaim}>File claim</button>
-      <button disabled={hasPendingTransaction || submitting} onClick={proposeMandate}>Propose mandate</button>
-      <button disabled={hasPendingTransaction || submitting} onClick={depositMinimum}>Deposit minimum GEN</button>
+      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
+      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={fileClaim}>File claim</button>
+      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={proposeMandate}>Propose mandate</button>
+      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={depositMinimum}>Deposit minimum GEN</button>
     </div>
+    {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
