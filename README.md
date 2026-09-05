@@ -185,11 +185,11 @@ balance=780
 destination 0x1111…1111 | declared=yes | payments=48 | total=220
 ```
 
-The four consolidated fixtures are on-mandate VaultTwin
-`0x2C5cB068cb796A6076D652a9996dA8b1Ab72a198`, strangers
-`0xF6af05507A34916C056d65072313dac9aDd1f3C1`, burst
-`0xC94eDCD471F1d355d9A3179A5d65Ad28E07F4D04`, and drain
-`0x645330CE490A49181251BA971d9c40aD3f0546c1`.
+The four canonical wallet-backed fixtures are on-mandate VaultTwin
+`0xb2DeD6d83c7bD8Bb4F00081E5Dad185fc326f803`, strangers
+`0xfAaA8203b4798217bB14Cd53a40091F50F43Ab1f`, burst
+`0xD1c7E47c916e934701df2751591994bD1c3506E0`, and drain
+`0xA5c23d67317d4f5192c3Bb0441baE4AFAda9D19E`.
 
 **Results — three runs each, 12/12 after the pin format fix. The first burst set
 scored 1/3 (ON, OFF, ON) on the original dense format; that early history is
@@ -197,12 +197,12 @@ retained as an engineering limitation.**
 
 | Vault | State | Expected | Bradbury | Review receipts |
 |---|---|---|---|---|
-| On-mandate | 2 declared dests, 1 payment each | ON | ON ×3 | `0xc31174f27ab6a75f94e6365ef68f2bb0ce85d9687882153fdba56fdcd7555d7f`; `0x0aecfa062be0365ee670e12f5cf751cd6ed09b57f6fc632aa1addb11a1702ffb`; `0x56321e57bab4f78bc3f08cc1dea2a4ec39d912115e1b2f68593952e331e1d75f` |
-| Strangers | same totals, undeclared dests | OFF | OFF ×3 | `0xe60da672585055299590cb636bb80df5d782677975b3510d3ce82c9a482c9a68`; `0x13942832621b28f7891f1a67a8fd3fdd8833a8e3bfa875930771a01ac55aacb3`; `0xc793af74b14de0e2ed4ee434f9e9ee9a14ef5c1f7854c62a11646e718bac6cc1` |
-| Burst | 48 payments, one declared dest | OFF | OFF ×3 | `0xaa15c56391fb863e276594e0df45ea54f53504dc99d3957ef54cfeb215a56441`; `0x8dd4461976177259964a312df713b6e139af99ccb485c479b993c3474df21596`; `0xd445ecbffd8e8e60265d62db026130ae4a7dc792afbfac0c4420096af96f2234` |
-| Drain | one payment, balance 0, declared dest | OFF | **OFF ×2 + one NOT_VOTED anomaly** | `0x8c922d57df1542d3dc23ec1a273b18822fdae96f2ec835ddab453d1bb8ef21ed`; `0xa7f107cae48502a114c8d5d6b8c0ec203d43a6808b0baf924fe6ac46ec4392d3`; first read `0xf635268f8d203140999be0ca014e6976d1a3a676acf12cfebf32900e83e9d31c` was all `NOT_VOTED` |
+| On-mandate | 2 declared dests, 1 payment each | ON | ON ×2 + one NOT_VOTED retry | `0xd466248f9457ffd5521294f2731a8c730da8b3a2ebb26ddb1af3bd8ec30f20fa`; `0x833f30fd19669b4698644f1d365350fe319c9369745cbcfaad0fa7825678ec05`; `0x982194d6eb0f1a8ab971dfa966a91da02df34f8d2bde9aef2cfb7733cf22af26` |
+| Strangers | same totals, undeclared dests | OFF | OFF ×3 | `0x4002d17854a25e8aa798ba7bc278e1136986eb6549795c5966f4e76a25861f32`; `0xcaa8c8a15dd30cb81afbcf7ddbe02f6c95900a192394f3f7d4a38611fd5229bf`; `0xcf8ce000d863b0f694b14894c3307d66bc6580b495738b39943138ff48d9b0ad` |
+| Burst | 48 payments, one declared dest | OFF | OFF ×3 | `0xf320430eade30d0bf2a0fdb5f9d958dc6cedd4b5b62e6a00b779d0c4c1de0f66`; `0xc60984d3a71de7738260844bb4fddfb0d77e4370d782bc4b0c744e4dcc151343`; `0x81f2e22d943f8f03856e8a20059d95798cfdaf91719daa1778bc73bc0a8f1066` |
+| Drain | one payment, balance 0, declared dest | OFF | OFF ×3 | `0x690e823b77551295ed008253cbb75b5923bfb11468a214a874f817ffa08bfe65`; `0xe09e70d5115698c489c5b108213c8c65c4b890ec18236131efe744b9af02aa4d`; `0x5129563041cd273383fda1bebaf4d46ac35c5b0a77d6c035d5d917f59d31afa0` |
 
-The v2-regression burst receipts include `0xaa15c56391fb863e276594e0df45ea54f53504dc99d3957ef54cfeb215a56441`.
+The v2-regression burst receipts include `0xc60984d3a71de7738260844bb4fddfb0d77e4370d782bc4b0c744e4dcc151343`.
 Its `OFF_MANDATE` reason was: “The agent made 48 payments to a declared provider
 in a short window, which violates the mandate rule against paying a provider
 dozens of times in a short window.”
