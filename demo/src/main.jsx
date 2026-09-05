@@ -243,7 +243,7 @@ function ActionPanel() {
   </div>;
 }
 
-function App() {
+function ProductPage() {
   const [live, setLive] = useState({});
   const [capital, setCapital] = useState({});
   const [readStatus, setReadStatus] = useState("Loading live Bradbury reads…");
@@ -299,6 +299,37 @@ function App() {
     <section className="chain wrap" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><h2 id="chain-title">Public state, with provenance attached.</h2></div><div className="chain-list"><article className="chain-record"><div><strong>Consolidated Governor</strong><small>judgment · halt · cover/lifeform · economics</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div><ActionPanel /></section>
     <footer className="wrap footer"><span>STELE</span><span>read-only evidence page · chain 4221</span></footer>
   </main>;
+}
+
+function LandingPage() {
+  return <main className="landing-page">
+    <nav className="landing-nav wrap">
+      <a className="brand-mark" href="/">STELE</a>
+      <div className="landing-nav-links"><a href="#why">Why Stele</a><a href="#mechanism">Mechanism</a><a className="nav-product" href="/product">Open live product ↗</a></div>
+    </nav>
+    <section className="landing-hero wrap">
+      <div className="hero-copy">
+        <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>
+        <h1>Rules for agents.<br /><em>Held in public.</em></h1>
+        <p className="hero-lede">Stele gives an agent's payment behavior a visible rulebook, a funded response, and a record that can grow without rewriting history.</p>
+        <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
+      </div>
+      <div className="hero-image-wrap"><img src="/assets/stele-hero.png" alt="A weathered stone stele with horizontal carved rules" /><span className="image-caption">A public rule, made legible.</span></div>
+    </section>
+    <section id="why" className="landing-section wrap">
+      <div className="landing-section-heading"><div className="eyebrow">THE PROBLEM</div><h2>The difficult part is not knowing there should be a circuit breaker.</h2><p>The difficult part is custody of the switch. Stele makes the judgment public, deterministic inputs visible, and the response executable.</p></div>
+      <div className="landing-statements"><article><span>01</span><h3>See the shape</h3><p>Two vaults can have nearly identical totals and still deserve opposite verdicts.</p></article><article><span>02</span><h3>Hold the switch</h3><p>An OFF mandate can halt the next spend before the pattern compounds.</p></article><article><span>03</span><h3>Add to the law</h3><p>A paid loss can produce a narrower clause without erasing the original rule.</p></article></div>
+    </section>
+    <section id="mechanism" className="landing-mechanism">
+      <div className="wrap mechanism-grid"><div><div className="eyebrow">THE MECHANISM</div><h2>From observed state to public consequence.</h2><p>Evidence stays in the vault state. The Governor pins that state, asks validators for a ruling, records the result, and can stop the next payment.</p><a className="button button-outline" href="/product">See the chain record ↗</a></div><div className="flow-card"><div className="flow-step"><b>01</b><span>Vault state</span><small>payments · destinations · balance</small></div><div className="flow-line" /><div className="flow-step"><b>02</b><span>Validator ruling</span><small>ON_MANDATE or OFF_MANDATE</small></div><div className="flow-line" /><div className="flow-step"><b>03</b><span>Recorded response</span><small>halt · claim · next clause</small></div></div></div>
+    </section>
+    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0xE45a615c076950B5ee3E5265e366945d7e148875</strong><a href="/product">Open public record ↗</a></div></section>
+    <footer className="wrap footer landing-footer"><span>STELE</span><span>an upright inscribed stone where laws are published in public and added to over time.</span></footer>
+  </main>;
+}
+
+function App() {
+  return window.location.pathname === "/product" ? <ProductPage /> : <LandingPage />;
 }
 
 const config = getDefaultConfig({ appName: "Stele", projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "stele-demo-project-id", chains: [bradbury], ssr: false });
