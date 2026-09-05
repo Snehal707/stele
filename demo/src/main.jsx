@@ -7,6 +7,7 @@ import { createClient } from "genlayer-js";
 import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
+import steleHero from "../assets/stele-hero.png";
 
 const bradbury = {
   id: 4221,
@@ -314,7 +315,7 @@ function LandingPage() {
         <p className="hero-lede">Stele gives an agent's payment behavior a visible rulebook, a funded response, and a record that can grow without rewriting history.</p>
         <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
       </div>
-      <div className="hero-image-wrap"><img src="/assets/stele-hero.png" alt="A weathered stone stele with horizontal carved rules" /><span className="image-caption">A public rule, made legible.</span></div>
+      <div className="hero-image-wrap"><img src={steleHero} alt="A weathered stone stele with horizontal carved rules" /><span className="image-caption">A public rule, made legible.</span></div>
     </section>
     <section id="why" className="landing-section wrap">
       <div className="landing-section-heading"><div className="eyebrow">THE PROBLEM</div><h2>The difficult part is not knowing there should be a circuit breaker.</h2><p>The difficult part is custody of the switch. Stele makes the judgment public, deterministic inputs visible, and the response executable.</p></div>
