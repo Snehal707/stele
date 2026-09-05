@@ -209,12 +209,12 @@ function ActionPanel() {
   const pollReceipt = (hash, label, startedAt) => {
     const poll = async () => {
       try {
-        const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [hash] }) });
+        const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
         const payload = await response.json();
         if (payload.result) {
-          const execution = payload.result.txExecutionResultName || "receipt received";
+          const execution = payload.result.txExecutionResultName || ({ 0: "NOT_VOTED", 1: "FINISHED_WITH_RETURN", 2: "FINISHED_WITH_ERROR" }[payload.result.txExecutionResult] || "receipt received");
           setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
-          setStatus(`${label}: ${execution} ✓`);
+          setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
           return;
         }
       } catch { /* keep background polling quiet */ }
