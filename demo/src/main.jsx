@@ -305,9 +305,12 @@ function ProductPage() {
 
 function DocsPage() {
   return <main className="docs-page">
+    <nav className="docs-topbar wrap" aria-label="Primary navigation">
+      <a className="brand-mark" href="/">STELE</a>
+      <div className="docs-topbar-links"><a href="/product">Product</a><a className="active" href="/docs">Docs</a></div>
+    </nav>
     <header className="docs-header wrap">
       <div><div className="eyebrow">STELE / DOCUMENTATION</div><h1>How the record becomes a response.</h1></div>
-      <a className="docs-back" href="/product">Back to live evidence ↗</a>
     </header>
     <div className="docs-layout wrap">
       <aside className="docs-nav"><a href="#judgment">Judgment</a><a href="#halt">Halt</a><a href="#cover">Cover</a><a href="#capital">Capital</a><a href="#lineage">Lineage</a><a href="#engineering">Engineering notes</a></aside>

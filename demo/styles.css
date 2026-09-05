@@ -13,6 +13,10 @@ body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opa
 .product-label { display: flex; justify-content: space-between; gap: 20px; padding: 28px 0 18px; color: var(--muted); font: 700 11px/1.2 var(--mono); letter-spacing: .14em; }
 .product-label a, .docs-back { color: var(--accent); text-decoration: none; }
 .docs-page { min-height: 100vh; background: var(--paper); }
+.docs-topbar { display: flex; justify-content: space-between; align-items: center; padding: 26px 0; border-bottom: 1px solid var(--line); }
+.docs-topbar-links { display: flex; gap: 24px; font: 11px var(--mono); }
+.docs-topbar-links a { color: var(--ink); text-decoration: none; }
+.docs-topbar-links a.active, .docs-topbar-links a:hover { color: var(--accent); }
 .docs-header { display: flex; justify-content: space-between; gap: 40px; align-items: end; padding: 70px 0 45px; border-bottom: 1px solid var(--line); }
 .docs-header h1 { max-width: 760px; margin: 18px 0 0; font-size: clamp(3.2rem, 7vw, 6.8rem); }
 .docs-back { font: 11px var(--mono); white-space: nowrap; }
@@ -166,6 +170,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .hero-actions, .proof-row { align-items: flex-start; flex-direction: column; }
   .landing-mechanism { padding: 70px 0; }
   .product-label, .docs-header { align-items: flex-start; flex-direction: column; }
+  .docs-topbar { align-items: flex-start; }
   .docs-header { padding-top: 48px; }
   .docs-layout { grid-template-columns: 1fr; gap: 34px; padding-top: 36px; }
   .docs-nav { position: static; display: flex; flex-wrap: wrap; gap: 14px 20px; }
