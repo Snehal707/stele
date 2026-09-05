@@ -194,6 +194,22 @@ function ActionPanel() {
         setStatus("Propose: requires a paid claim first.");
         return;
       }
+      const [version, promotion] = await Promise.all([
+        readClient.readContract({
+          address: CONFIG.governor,
+          functionName: "get_mandate_version",
+          args: addressArgs([CONFIG.rewriteAgent, 2]),
+        }).catch(() => null),
+        readClient.readContract({
+          address: CONFIG.governor,
+          functionName: "get_promotion_result",
+          args: addressArgs([CONFIG.rewriteAgent]),
+        }).catch(() => null),
+      ]);
+      if (version?.status === "active" || promotion === "PASSED") {
+        setStatus("Propose: mandate v2 is already promoted for this agent.");
+        return;
+      }
       setStatus("Propose: paid-claim precondition passed; submitting…");
       await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
     } catch (error) {
@@ -282,7 +298,22 @@ function ActionPanel() {
       if (balance === 0n) {
         throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
       }
-      const hash = await client.writeContract({ address: CONFIG.governor, functionName, args: addressArgs(args), value });
+      let hash;
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        try {
+          hash = await client.writeContract({ address: CONFIG.governor, functionName, args: addressArgs(args), value });
+          break;
+        } catch (error) {
+          const message = describeWriteError(error);
+          const capacity = message.includes("-32005") || message.toLowerCase().includes("capacity");
+          if (!capacity || attempt === 3) throw error;
+          const retryAfter = Number(error?.cause?.data?.retryAfterMs || error?.data?.retryAfterMs || 0);
+          const delay = Math.max(500, Math.min(8000, retryAfter || 2 ** attempt * 1000));
+          console.warn(`Stele ${label} retrying after Bradbury capacity response`, { attempt: attempt + 1, delay, error });
+          setStatus(`${label}: Bradbury is busy; retrying in ${Math.ceil(delay / 1000)}s…`);
+          await new Promise((resolve) => window.setTimeout(resolve, delay));
+        }
+      }
       const startedAt = Date.now();
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
@@ -298,8 +329,6 @@ function ActionPanel() {
       const message = describeWriteError(error);
       setStatus(message.includes("-32005") || message.toLowerCase().includes("capacity")
         ? `${label}: network at capacity; try again later.`
-        : message.includes("-32603") && !message.toLowerCase().includes("wallet is on chain")
-          ? `${label}: wallet RPC rejected the transaction before Bradbury issued a GenLayer hash. Check the selected Bradbury RPC and pending wallet transaction, then try once more.`
         : `${label}: ${message}`);
     } finally {
       setSubmitting(false);
