@@ -59,6 +59,10 @@ section { padding: 70px 0; border-top: 1px solid var(--line); }
 .field.diff { margin: 0 -8px; padding-inline: 8px; color: var(--accent); background: rgba(177,120,66,.12); }
 .field.diff strong { color: var(--accent); font-size: 1.08rem; }
 .pinned, pre { overflow-x: auto; margin: 20px 0 0; padding: 15px; color: #4d4940; background: rgba(231,224,209,.75); font: 11px/1.55 var(--mono); white-space: pre-wrap; }
+.evidence-tag { display: inline-block; margin-left: .45rem; color: var(--muted); font: 10px/1.2 var(--mono); letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+.receipt-trail { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr); gap: 14px; margin-top: 24px; padding-top: 14px; border-top: 1px dashed var(--line); color: var(--muted); font: 11px/1.45 var(--mono); }
+.receipt-trail a { display: block; overflow-wrap: anywhere; color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); }
+.receipt-trail a:hover { color: var(--accent); }
 .caption { margin: 26px 0 0; color: var(--muted); font: italic 1rem var(--serif); text-align: center; }
 .lineage-rail { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: stretch; }
 .version-card { padding: 24px; border: 1px solid var(--line); background: rgba(244,239,229,.55); }
@@ -99,6 +103,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .cover-grid > div, .pricing-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .cover-grid > div:last-child, .pricing-grid > div:last-child { border-bottom: 0; }
   .chain-record { grid-template-columns: 1fr; gap: 8px; } .trigger { flex-wrap: wrap; } .footer { flex-direction: column; }
+  .receipt-trail { grid-template-columns: 1fr; gap: 6px; }
 }
 /* Connected actions stay inside the existing chain-record surface. */
 .write-panel { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line, #d8d2c6); display: grid; gap: .8rem; }
