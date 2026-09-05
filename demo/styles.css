@@ -12,6 +12,9 @@ body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opa
 .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
 .product-label { display: flex; justify-content: space-between; gap: 20px; padding: 28px 0 18px; color: var(--muted); font: 700 11px/1.2 var(--mono); letter-spacing: .14em; }
 .product-label a, .docs-back { color: var(--accent); text-decoration: none; }
+.product-cta { display: flex; align-items: center; gap: 18px; padding: 14px 16px; color: var(--muted); background: rgba(244,239,229,.72); border: 1px solid var(--line); font-size: .92rem; }
+.product-cta a { padding: 10px 14px; color: var(--paper); background: var(--ink); font: 700 12px var(--mono); text-decoration: none; }
+.product-cta a:hover { background: var(--accent); }
 .docs-page { min-height: 100vh; background: var(--paper); }
 .docs-topbar { display: flex; justify-content: space-between; align-items: center; padding: 26px 0; border-bottom: 1px solid var(--line); }
 .docs-topbar-links { display: flex; gap: 24px; font: 11px var(--mono); }
@@ -170,6 +173,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .hero-actions, .proof-row { align-items: flex-start; flex-direction: column; }
   .landing-mechanism { padding: 70px 0; }
   .product-label, .docs-header { align-items: flex-start; flex-direction: column; }
+  .product-cta { align-items: flex-start; flex-direction: column; gap: 10px; }
   .docs-topbar { align-items: flex-start; }
   .docs-header { padding-top: 48px; }
   .docs-layout { grid-template-columns: 1fr; gap: 34px; padding-top: 36px; }
