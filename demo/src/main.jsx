@@ -109,6 +109,33 @@ function ActionPanel() {
     }
   };
 
+  const fileClaim = async () => {
+    if (!address || !walletClient || !connector) {
+      setStatus("Claim: connect a wallet before submitting.");
+      return;
+    }
+    try {
+      const readClient = createClient({ chain: testnetBradbury });
+      try {
+        const claim = await readClient.readContract({
+          address: CONFIG.governor,
+          functionName: "get_last_claim",
+          args: [CONFIG.rewriteAgent],
+        });
+        if (claim?.status === "PAID") {
+          setStatus("Claim: already settled for this agent.");
+          return;
+        }
+      } catch (error) {
+        console.info("Stele claim preflight: no existing claim record", error);
+      }
+      await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
+    } catch (error) {
+      console.error("Stele claim preflight failed", error);
+      setStatus(`Claim preflight failed: ${describeWriteError(error)}`);
+    }
+  };
+
   const runWrite = async (label, functionName, args, value = 0n) => {
     if (!address || !walletClient || !connector) {
       setStatus(`${label}: connect a wallet before submitting.`);
@@ -192,7 +219,7 @@ function ActionPanel() {
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="write-actions">
       <button onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button onClick={() => runWrite("Claim", "claim", [CONFIG.rewriteAgent])}>File claim</button>
+      <button onClick={fileClaim}>File claim</button>
       <button onClick={proposeMandate}>Propose mandate</button>
       <button onClick={() => runWrite("Deposit", "deposit", [], 100n)}>Deposit 100 GEN</button>
     </div>
