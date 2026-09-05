@@ -4,6 +4,7 @@ import { RainbowKitProvider, ConnectButton, getDefaultConfig } from "@rainbow-me
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { createClient } from "genlayer-js";
+import { CalldataAddress } from "../../node_modules/genlayer-js/dist/chunk-EY35NPSE.js";
 import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
@@ -27,6 +28,17 @@ const CONFIG = {
 
 const MANDATE_V1 = "This agent pays recurring infrastructure invoices to a small set of declared providers. Invoices arrive a few times a month in modest amounts. It never pays a provider dozens of times in a short window, and never sends an amount that empties the vault in a single payment.";
 const MANDATE_V2 = `${MANDATE_V1} Never sends an amount that empties the vault in a single payment.`;
+
+function addressArg(address) {
+  if (typeof address !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    throw new Error(`Invalid GenLayer address argument: ${address}`);
+  }
+  return new CalldataAddress(Uint8Array.from(address.slice(2).match(/../g).map((byte) => parseInt(byte, 16))));
+}
+
+function addressArgs(args) {
+  return args.map((value) => typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value) ? addressArg(value) : value);
+}
 
 const RECEIPTS = {
   judgmentHealthy: [
@@ -136,7 +148,7 @@ function ActionPanel() {
         claim = await readClient.readContract({
           address: CONFIG.governor,
           functionName: "get_last_claim",
-          args: [CONFIG.rewriteAgent],
+          args: addressArgs([CONFIG.rewriteAgent]),
         });
       } catch (error) {
         console.info("Stele propose blocked: no claim record for configured agent", error);
@@ -166,7 +178,7 @@ function ActionPanel() {
         const claim = await readClient.readContract({
           address: CONFIG.governor,
           functionName: "get_last_claim",
-          args: [CONFIG.rewriteAgent],
+          args: addressArgs([CONFIG.rewriteAgent]),
         });
         if (claim?.status === "PAID") {
           setStatus("Claim: already settled for this agent.");
@@ -225,7 +237,7 @@ function ActionPanel() {
       if (balance === 0n) {
         throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
       }
-      const hash = await client.writeContract({ address: CONFIG.governor, functionName, args, value });
+      const hash = await client.writeContract({ address: CONFIG.governor, functionName, args: addressArgs(args), value });
       const startedAt = Date.now();
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
@@ -292,8 +304,14 @@ function ProductPage() {
     (async () => {
       try {
         const client = createClient({ chain: testnetBradbury });
-        const verdict = await client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: [CONFIG.rewriteAgent] });
-        if (active) { setLive({ drain: verdict }); setReadStatus("Live Bradbury verdict read succeeded from the consolidated Governor."); }
+        const verdict = await client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([CONFIG.rewriteAgent]) });
+        const matchesDrainFixture = verdict?.pinned_state === cases.drainOff.pinned;
+        if (active && matchesDrainFixture) {
+          setLive({ drain: verdict });
+          setReadStatus("Live Bradbury verdict read succeeded for the current drain fixture.");
+        } else if (active) {
+          setReadStatus("A live verdict exists for a different pinned state; showing the receipt-backed drain evidence snapshot.");
+        }
       } catch { if (active) setReadStatus("The consolidated Governor has no current verdict for the display agent; showing the receipt-backed evidence snapshot."); }
     })();
     return () => { active = false; };
@@ -308,9 +326,9 @@ function ProductPage() {
           read("get_pool", []),
           read("get_lp_pool", []),
           read("get_total_lp_shares", []),
-          read("get_bond_of", [CONFIG.rewriteAgent], "1,000"),
-          read("get_last_claim", [CONFIG.rewriteAgent], null),
-          isConnected ? read("get_lp_shares", [address], "0") : Promise.resolve({ value: null, live: true }),
+          read("get_bond_of", addressArgs([CONFIG.rewriteAgent]), "1,000"),
+          read("get_last_claim", addressArgs([CONFIG.rewriteAgent]), null),
+          isConnected ? read("get_lp_shares", addressArgs([address]), "0") : Promise.resolve({ value: null, live: true }),
         ]);
         if (active) {
           setCapital({ pool, lpPool, totalShares, bond, lastClaim, yourShares });
