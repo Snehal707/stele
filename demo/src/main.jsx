@@ -4,7 +4,7 @@ import { RainbowKitProvider, ConnectButton, getDefaultConfig } from "@rainbow-me
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { createClient } from "genlayer-js";
-import { CalldataAddress } from "../../node_modules/genlayer-js/dist/chunk-EY35NPSE.js";
+import { CalldataAddress } from "genlayer-js/types";
 import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
@@ -219,11 +219,24 @@ function ActionPanel() {
           }
         },
       };
+      const walletChainId = await tracedProvider.request({ method: "eth_chainId" });
+      const expectedChainId = `0x${bradbury.id.toString(16)}`;
+      if (walletChainId !== expectedChainId) {
+        throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Bradbury (4221) and try again.`);
+      }
+      const walletPendingNonce = await tracedProvider.request({
+        method: "eth_getTransactionCount",
+        params: [walletClient.account.address, "pending"],
+      });
       const client = createClient({
         chain: testnetBradbury,
         account: walletClient.account.address,
         provider: tracedProvider,
       });
+      // genlayer-js normally reads the nonce from its public RPC transport.
+      // Wallets can know about locally pending transactions that the public
+      // RPC has not indexed yet, so use the connected wallet's pending nonce.
+      client.getCurrentNonce = async () => BigInt(walletPendingNonce);
       const balanceHex = await tracedProvider.request({
         method: "eth_getBalance",
         params: [walletClient.account.address, "latest"],
@@ -253,6 +266,8 @@ function ActionPanel() {
       const message = describeWriteError(error);
       setStatus(message.includes("-32005") || message.toLowerCase().includes("capacity")
         ? `${label}: network at capacity; try again later.`
+        : message.includes("-32603") && !message.toLowerCase().includes("wallet is on chain")
+          ? `${label}: wallet RPC rejected the transaction before Bradbury issued a GenLayer hash. Check the selected Bradbury RPC and pending wallet transaction, then try once more.`
         : `${label}: ${message}`);
     }
   };
