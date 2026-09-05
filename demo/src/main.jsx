@@ -150,6 +150,7 @@ function ActionPanel() {
   const [transactions, setTransactions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [uncertainSubmission, setUncertainSubmission] = useState(null);
+  const [activeAction, setActiveAction] = useState(null);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -275,6 +276,7 @@ function ActionPanel() {
       return;
     }
     setSubmitting(true);
+    setActiveAction(label);
     setStatus(`${label}: submitting…`);
     try {
       const provider = await connector.getProvider();
@@ -357,9 +359,11 @@ function ActionPanel() {
       const userRejected = error?.code === 4001 || lowerMessage.includes("user rejected") || lowerMessage.includes("rejected the request");
       const ambiguous = !capacity && !userRejected && (message.includes("-32603") || lowerMessage.includes("transaction failed") || lowerMessage.includes("originalerror"));
       if (ambiguous) {
+        setActiveAction(null);
         setUncertainSubmission({ label, functionName, args, value });
         setStatus(`${label}: submission uncertain — the wallet returned no transaction hash. Verify wallet activity and Bradbury before retrying.`);
       } else {
+        setActiveAction(null);
         setStatus(capacity
           ? `${label}: network at capacity; try again later.`
           : `${label}: ${message}`);
@@ -394,6 +398,7 @@ function ActionPanel() {
           }
           const execution = receipt.txExecutionResultName || ({ 0: "NOT_VOTED", 1: "FINISHED_WITH_RETURN", 2: "FINISHED_WITH_ERROR" }[receipt.txExecutionResult] || "receipt received");
           setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
+          setActiveAction(null);
           setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
           return;
         }
@@ -411,11 +416,12 @@ function ActionPanel() {
   return <div className="write-panel">
     <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    <p className="action-sequence"><span className="sequence-dot" /> One action at a time · waiting for Bradbury consensus before the next action.</p>
     <div className="write-actions">
-      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={fileClaim}>File claim</button>
-      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={proposeMandate}>Propose mandate</button>
-      <button disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={depositMinimum}>Deposit minimum GEN</button>
+      <button className={activeAction === "Review" ? "is-active" : activeAction ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>{activeAction === "Review" ? <><span className="action-spinner" /> Review · waiting…</> : activeAction ? "Run review · locked" : "Run review"}</button>
+      <button className={activeAction === "Claim" ? "is-active" : activeAction ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={fileClaim}>{activeAction === "Claim" ? <><span className="action-spinner" /> File claim · waiting…</> : activeAction ? "File claim · locked" : "File claim"}</button>
+      <button className={activeAction === "Propose" ? "is-active" : activeAction ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={proposeMandate}>{activeAction === "Propose" ? <><span className="action-spinner" /> Propose mandate · waiting…</> : activeAction ? "Propose mandate · locked" : "Propose mandate"}</button>
+      <button className={activeAction === "Deposit" ? "is-active" : activeAction ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={depositMinimum}>{activeAction === "Deposit" ? <><span className="action-spinner" /> Deposit · waiting…</> : activeAction ? "Deposit minimum GEN · locked" : "Deposit minimum GEN"}</button>
     </div>
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>

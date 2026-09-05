@@ -112,6 +112,13 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .write-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .write-panel button { border: 1px solid currentColor; background: transparent; color: inherit; padding: .65rem .85rem; font: inherit; cursor: pointer; }
 .write-panel button:hover, .write-panel button:focus-visible { background: #171717; color: #f4f0e8; }
+.write-panel button:disabled { cursor: not-allowed; }
+.write-panel button.is-locked:disabled { opacity: .42; border-style: dashed; }
+.write-panel button.is-active:disabled { opacity: 1; background: #171717; color: #f4f0e8; border-color: #171717; }
+.action-sequence { margin: .75rem 0 .65rem; color: var(--muted, #756f64); font: .72rem var(--mono); letter-spacing: .02em; }
+.sequence-dot { display: inline-block; width: .48rem; height: .48rem; margin-right: .4rem; border-radius: 50%; background: var(--accent, #b86d32); vertical-align: .04em; }
+.action-spinner { display: inline-block; width: .7em; height: .7em; margin-right: .4em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: action-spin .8s linear infinite; vertical-align: -.08em; }
+@keyframes action-spin { to { transform: rotate(360deg); } }
 .write-status { margin: 0; color: var(--muted, #756f64); font-size: .9rem; }
 .tx-hash { display: grid; grid-template-columns: 7rem 1fr; gap: .75rem; align-items: baseline; font: .72rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .tx-hash a { overflow-wrap: anywhere; color: inherit; }
