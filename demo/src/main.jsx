@@ -69,7 +69,7 @@ const RECEIPTS = {
 };
 
 function ReceiptLinks({ title, hashes }) {
-  const list = Array.isArray(hashes) ? hashes : [hashes];
+  const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
   return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
 }
 
@@ -311,13 +311,20 @@ function ActionPanel() {
       try {
         const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
         const payload = await response.json();
+        if (payload.error) {
+          console.error("Stele receipt RPC failed", payload.error);
+        }
         if (payload.result) {
           const receipt = payload.result;
           const created = Number(receipt.timestamps?.Created || 0);
-          const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number(receipt.status || 0) > 0);
-          if (!hasReceipt) {
+          const statusName = receipt.status_name || receipt.statusName;
+          const numericStatus = Number(receipt.status);
+          const terminalStatus = ["ACCEPTED", "UNDETERMINED", "FINALIZED", "CANCELED", "LEADER_TIMEOUT", "VALIDATORS_TIMEOUT"].includes(statusName)
+            || [5, 6, 7, 8, 12, 13].includes(numericStatus);
+          const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number.isFinite(numericStatus));
+          if (!hasReceipt || !terminalStatus) {
             if (Date.now() - startedAt >= 120000) {
-              setStatus(`${label}: still waiting for Bradbury consensus… keep this tab open; the explorer hash remains the source of truth.`);
+              setStatus(`${label}: Bradbury is still processing (${statusName || `status ${receipt.status}`})… keep this tab open.`);
             }
             window.setTimeout(poll, 5000);
             return;
