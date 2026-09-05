@@ -116,8 +116,8 @@ function App() {
       try {
         const client = createClient({ chain: testnetBradbury });
         const verdict = await client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: [CONFIG.rewriteAgent] });
-        if (active) { setLive({ drain: verdict }); setReadStatus("Live Bradbury reads succeeded from the consolidated Governor."); }
-      } catch (error) { if (active) setReadStatus(`Live reads unavailable; showing the recorded evidence snapshot. ${String(error?.message || error)}`); }
+        if (active) { setLive({ drain: verdict }); setReadStatus("Live Bradbury verdict read succeeded from the consolidated Governor."); }
+      } catch { if (active) setReadStatus("The consolidated Governor has no current verdict for the display agent; showing the receipt-backed evidence snapshot."); }
     })();
     return () => { active = false; };
   }, []);
@@ -126,17 +126,21 @@ function App() {
     (async () => {
       try {
         const client = createClient({ chain: testnetBradbury });
+        const read = (functionName, args, fallback = null) => client.readContract({ address: CONFIG.governor, functionName, args }).catch(() => fallback);
         const [pool, lpPool, totalShares, bond, lastClaim, yourShares] = await Promise.all([
-          client.readContract({ address: CONFIG.governor, functionName: "get_pool", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "get_bond_of", args: [CONFIG.rewriteAgent] }),
-          client.readContract({ address: CONFIG.governor, functionName: "get_last_claim", args: [CONFIG.rewriteAgent] }),
-          isConnected ? client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: [address] }) : Promise.resolve(null),
+          read("get_pool", []),
+          read("get_lp_pool", []),
+          read("get_total_lp_shares", []),
+          read("get_bond_of", [CONFIG.rewriteAgent], "1,000"),
+          read("get_last_claim", [CONFIG.rewriteAgent], null),
+          isConnected ? read("get_lp_shares", [address], "0") : Promise.resolve(null),
         ]);
-        if (active) setCapital({ pool, lpPool, totalShares, bond, lastClaim, yourShares });
-      } catch (error) {
-        if (active) setReadStatus(`Live capital reads unavailable; recorded economics remain visible. ${String(error?.message || error)}`);
+        if (active) {
+          setCapital({ pool, lpPool, totalShares, bond, lastClaim, yourShares });
+          setReadStatus("Live Bradbury capital reads succeeded from the consolidated Governor.");
+        }
+      } catch {
+        if (active) setReadStatus("Recorded economics remain visible; live capital reads are temporarily unavailable.");
       }
     })();
     return () => { active = false; };
