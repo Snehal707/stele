@@ -1,0 +1,12 @@
+{
+  "network": "testnet-bradbury",
+  "governor": "0xE45a615c076950B5ee3E5265e366945d7e148875",
+  "governor_deploy_tx": "0xe62b745700cd8121a06547b3b5288965a9e13599a9ccc66404ac4e41c96ffac84",
+  "vault": "0xfA44d0Ad421120853eB97ce38940eDAbe7fdB216",
+  "vault_deploy_tx": "0x499ccc03d45a7f346a7695b8beb21450a42eb248059cc54ae58ab4c67a34faa2",
+  "agent": "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
+  "provider": "0x1111111111111111111111111111111111111111",
+  "claims_premium_bps": 7000,
+  "lp_premium_bps": 3000,
+  "lp_risk_note": "LPs bear no direct claims risk in this version; they only earn premium yield."
+}

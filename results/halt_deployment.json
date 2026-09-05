@@ -1,0 +1,6 @@
+{
+  "governor": "0xa7b6F602e9cf65090D2e353587dBb8Af3C2C9CFB",
+  "governor_deploy_tx": "0x719c5842dd080b7708838c4b4856c512b6fdd4568071dfe6bc8ae701b2ec64a1",
+  "vault": "0x95d4B65188e7cE0DaFAa715681c2d5Dd8923fbFA",
+  "vault_deploy_tx": "0xf274332f7b61ce5ee7e42b4b96d2b7c2f453ff3a2b8666126617ad694b73ab8f"
+}

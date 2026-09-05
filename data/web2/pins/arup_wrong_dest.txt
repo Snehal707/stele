@@ -1,0 +1,5 @@
+spend_total=220
+destination_count=2
+balance=780
+destination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20
+destination 0x5555555555555555555555555555555555555555 | declared=no | payments=1 | total=200

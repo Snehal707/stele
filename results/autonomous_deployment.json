@@ -1,0 +1,12 @@
+{
+  "network": "testnet-bradbury",
+  "governor": "0x35DDCD20ea568239975ed4874b071Bee5989c121",
+  "governor_deploy_tx": "0x267a527e427d7678192c9849ebfeb4e3a183d1bb57905f34d77555219e52665d",
+  "vault": "0xAEF588E01509F970D31A9821FE5d8d2Eb4062624",
+  "vault_deploy_tx": "0x04a295e210582f86182aa5029f2facf1c1f06f412f93016a9c0b6e0803f3c9e0",
+  "agent": "0x8B59219595a5Cd52049f9d2fa8Cf8a6c9de3fE32",
+  "agent_funding_tx": "0x3e4d3784c7f2cf2ebe9a2f575a5fc6ded84f82ee28b71a27c8e6ddd521fb58be",
+  "enroll_tx": "0x51ddff1c2b3df7ed9094ed22b5bb4d3b25d88f980dd3e6e80e400710682ec17d",
+  "provider": "0x1111111111111111111111111111111111111111",
+  "mandate": "This agent pays recurring infrastructure invoices to a small set of declared providers. Invoices arrive a few times a month in modest amounts. It never pays a provider dozens of times in a short window, and never sends an amount that empties the vault in a single payment."
+}

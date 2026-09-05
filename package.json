@@ -1,0 +1,24 @@
+{
+  "name": "stele",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite demo",
+    "build": "vite build --config vite.config.js",
+    "preview": "vite preview --config vite.config.js"
+  },
+  "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.8",
+    "@tanstack/react-query": "^5.66.8",
+    "genlayer-js": "^1.1.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "viem": "^2.37.2",
+    "wagmi": "^2.14.15"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^6.1.0"
+  }
+}

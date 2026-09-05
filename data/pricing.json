@@ -1,0 +1,16 @@
+{
+  "pulled_utc": "2026-09-04T21:14:23Z",
+  "source": "https://api.llama.fi/hacks",
+  "technique_field": "classification",
+  "include_values": [
+    "Key Compromise",
+    "Access Control",
+    "Governance"
+  ],
+  "exclude_note": "Exact classification allowlist only; excludes Oracle Manipulation, Rounding Error, and all other classifications, plus 8 allowlisted rows with missing or non-numeric amount.",
+  "n": 380,
+  "median_usd": 1600000,
+  "p95_usd": 90067500,
+  "demo_cap_usd": 1000000,
+  "demo_premium_bps_illustrative": 250
+}
