@@ -10,6 +10,7 @@ html { scroll-behavior: smooth; }
 body { margin: 0; color: var(--ink); background: var(--stone); font-family: var(--sans); }
 body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .28; background-image: radial-gradient(#8b8171 0.5px, transparent 0.5px); background-size: 6px 6px; mix-blend-mode: multiply; }
 .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+.product-label { padding: 28px 0 18px; color: var(--muted); font: 700 11px/1.2 var(--mono); letter-spacing: .14em; }
 .masthead { padding: 84px 0 64px; }
 .eyebrow { color: var(--accent); font: 700 11px/1.2 var(--mono); letter-spacing: .17em; }
 h1, h2, p { margin-top: 0; }
