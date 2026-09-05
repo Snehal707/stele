@@ -213,7 +213,7 @@ dozens of times in a short window.”
 
 The lifeform fixture is a separate process with its own funded wallet,
 `0x8B59219595a5Cd52049f9d2fa8Cf8a6c9de3fE32`. At startup it reads its mandate
-from the Governor, then chooses payments from its own invoice logic. The
+from the Governor, then chooses payments from its own local payment schedule. The
 `normal` profile pays declared providers modest amounts and stays on-mandate;
 the `drift` profile repeatedly pays one declared provider dozens of times in
 quick succession. Every individual payment is within the existing caps and to
