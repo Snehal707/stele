@@ -127,12 +127,12 @@ function App() {
       try {
         const client = createClient({ chain: testnetBradbury });
         const [pool, lpPool, totalShares, bond, lastClaim, yourShares] = await Promise.all([
-          client.readContract({ address: CONFIG.governor, functionName: "pool", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "lp_pool", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "total_lp_shares", args: [] }),
-          client.readContract({ address: CONFIG.governor, functionName: "bond_of", args: [CONFIG.rewriteAgent] }),
-          client.readContract({ address: CONFIG.governor, functionName: "last_claim", args: [CONFIG.rewriteAgent] }),
-          isConnected ? client.readContract({ address: CONFIG.governor, functionName: "lp_shares", args: [address] }) : Promise.resolve(null),
+          client.readContract({ address: CONFIG.governor, functionName: "get_pool", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_bond_of", args: [CONFIG.rewriteAgent] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_last_claim", args: [CONFIG.rewriteAgent] }),
+          isConnected ? client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: [address] }) : Promise.resolve(null),
         ]);
         if (active) setCapital({ pool, lpPool, totalShares, bond, lastClaim, yourShares });
       } catch (error) {
