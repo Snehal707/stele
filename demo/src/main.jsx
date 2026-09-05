@@ -308,14 +308,15 @@ function LandingPage() {
       <a className="brand-mark" href="/">STELE</a>
       <div className="landing-nav-links"><a href="#why">Why Stele</a><a href="#mechanism">Mechanism</a><a className="nav-product" href="/product">Open live product ↗</a></div>
     </nav>
-    <section className="landing-hero wrap">
+    <section className="landing-hero wrap" style={{ backgroundImage: `url(${steleHero})` }}>
+      <div className="hero-overlay" aria-hidden="true" />
       <div className="hero-copy">
         <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>
         <h1>Rules for agents.<br /><em>Held in public.</em></h1>
         <p className="hero-lede">Stele gives an agent's payment behavior a visible rulebook, a funded response, and a record that can grow without rewriting history.</p>
         <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
       </div>
-      <div className="hero-image-wrap"><img src={steleHero} alt="A weathered stone stele with horizontal carved rules" /><span className="image-caption">A public rule, made legible.</span></div>
+      <span className="image-caption">A public rule, made legible.</span>
     </section>
     <section id="why" className="landing-section wrap">
       <div className="landing-section-heading"><div className="eyebrow">THE PROBLEM</div><h2>The difficult part is not knowing there should be a circuit breaker.</h2><p>The difficult part is custody of the switch. Stele makes the judgment public, deterministic inputs visible, and the response executable.</p></div>
