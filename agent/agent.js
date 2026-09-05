@@ -16,6 +16,7 @@ const option = (name, fallback = undefined) => {
 const profile = option("--profile", "normal");
 const governor = option("--governor");
 const vault = option("--vault");
+const requestedMandateVersion = option("--mandate-version");
 const keystorePath = option("--keystore", "C:/Users/ASUS/.genlayer/keystores/stele-agent.json");
 const password = process.env.STELE_AGENT_PASSWORD;
 const provider = "0x1111111111111111111111111111111111111111";
@@ -46,11 +47,33 @@ const agent = wallet.address;
 const account = createAccount(wallet.privateKey);
 const client = createClient({ chain: testnetBradbury, account });
 
-const mandateRecord = await client.readContract({
-  address: governor,
-  functionName: "get_mandate_version",
-  args: [addressBytes(agent), 1],
-});
+let mandateRecord;
+if (requestedMandateVersion) {
+  mandateRecord = await client.readContract({
+    address: governor,
+    functionName: "get_mandate_version",
+    args: [addressBytes(agent), BigInt(requestedMandateVersion)],
+  });
+} else {
+  for (let version = 1n; version <= 64n; version += 1n) {
+    try {
+      const candidate = await client.readContract({
+        address: governor,
+        functionName: "get_mandate_version",
+        args: [addressBytes(agent), version],
+      });
+      if (candidate.status === "active") {
+        mandateRecord = candidate;
+        break;
+      }
+    } catch {
+      // Version ids are global across agents; gaps are expected.
+    }
+  }
+}
+if (!mandateRecord) {
+  throw new Error(`No active mandate found for ${agent}`);
+}
 const mandate = mandateRecord.text;
 await logDecision("startup", { mandate, mandateVersion: mandateRecord.version_id });
 
@@ -64,7 +87,7 @@ async function vaultState() {
 
 function receiptFor(hash) {
   const started = Date.now();
-  const result = spawnSync("genlayer.cmd", ["receipt", hash, "--status", "ACCEPTED", "--retries", "180", "--interval", "5000"], { encoding: "utf8" });
+  const result = spawnSync("genlayer.cmd", ["receipt", hash, "--status", "ACCEPTED", "--retries", "180", "--interval", "5000"], { encoding: "utf8", shell: true });
   const output = `${result.stdout || ""}${result.stderr || ""}`;
   const execution = output.match(/txExecutionResultName:\s*'([^']+)'/)?.[1] || null;
   const votes = [...output.matchAll(/validatorVotesName:\s*\[([^\]]*)\]/g)].at(-1)?.[1]
@@ -78,7 +101,8 @@ async function writeWithBackoff(request) {
       return await client.writeContract(request);
     } catch (error) {
       const message = String(error);
-      const transientQueueRevert = message.includes("execution reverted") && message.includes("eth_estimateGas");
+      const transientQueueRevert = (message.includes("execution reverted") && message.includes("eth_estimateGas"))
+        || (message.includes("consensus contract") && message.includes("was reverted"));
       if (!message.includes("-32005") && !message.includes("capacity") && !transientQueueRevert) throw error;
       const delay = Math.min(120000, 1000 * (2 ** Math.min(attempt, 7)));
       await logDecision(transientQueueRevert ? "queue_backoff" : "capacity_backoff", { attempt: attempt + 1, delay_ms: delay });

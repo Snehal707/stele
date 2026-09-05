@@ -151,7 +151,7 @@ This was a deliberate design constraint, not an accident of implementation.
 
 | Role | Network | Governor | Persistence |
 |---|---|---|---|
-| Stele Governor | Bradbury | `0xE45a615c076950B5ee3E5265e366945d7e148875` | durable; verified for judgment + halt + cover/lifeform + economics |
+| Stele Governor | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | canonical deployment from parser-fix commit `3c6cbc0`; verified for judgment + halt + cover/lifeform + economics |
 
 Studio runs are recorded in the ephemeral appendix. **Do not mix addresses
 between deployments.**
@@ -164,7 +164,7 @@ actions; each write shows its transaction hash and explorer link immediately.
 
 ## 1. Judgment — four vaults (Bradbury)
 
-The consolidated Governor is `0xE45a615c076950B5ee3E5265e366945d7e148875`,
+The canonical Governor is `0xB31bc62001219E8A9eF4026820A06A6799984D26`,
 deployed by `0xe62b745700cd8121a06547b3b5288965a9e13599a9ccc66404ac4e41c96ffac84`.
 Its stored verdicts match the four cases below.
 
@@ -212,7 +212,8 @@ dozens of times in a short window.”
 ### Autonomous agent — separate process
 
 The lifeform fixture is a separate process with its own funded wallet,
-`0x8B59219595a5Cd52049f9d2fa8Cf8a6c9de3fE32`. At startup it reads its mandate
+`0x851705477939F31D2699c86547782fecabF470C0`, and autonomous VaultTwin
+`0x539d3Ba32d909396Df9B5977048B4338cF94575F` on the canonical Governor. At startup it reads its mandate
 from the Governor, then chooses payments from its own local payment schedule. The
 `normal` profile pays declared providers modest amounts and stays on-mandate;
 the `drift` profile repeatedly pays one declared provider dozens of times in
@@ -220,23 +221,24 @@ quick succession. Every individual payment is within the existing caps and to
 an allowlisted destination, so no single deterministic rule catches the drift.
 Before every spend it checks `is_halted(agent)`.
 
-On the recorded drift run, the early review was ON at
-`0xba24940d28ea2aa99cba810762b1db74746337c62962c87513c045275912d3c1`, the
-17-payment review was ON at
-`0x0282050c7afe69e75bcd917cc3d48c91621011c554572b77af3536d43bfa6d0c`, and
+On the canonical drift run, the 17-payment review was ON at
+`0x3c84d21218e41f79d37f7a2605d694349f75122fe3a700f7e6b05b914f0e0359`, and
 the 24-payment review was OFF at
-`0x162c9005fc4599d3cb41682383595f3d0fc9a569e7abf28bc07500fd156679f1`.
-The agent observed the halt at its pre-payment check at loop index 27 and
-stopped. Its decisions are logged in `results/agent_decisions.jsonl`.
+`0xa43698aceb79093bfdcede4e386a880aee314e108a8ea767f88572ba6f052bb4`.
+Bradbury settled writes concurrently while those reviews finalized, so the
+pinned snapshots contain 18 and 25 payments. The agent then observed the halt
+and stopped after a rejected race-window spend at loop index 28. Its decisions
+are logged in `results/agent_decisions.jsonl`.
 
 This is a different agent/vault pair from the four judgment fixtures: the
-agent run reached 24 payments, while the separate burst fixture has 48.
+agent run reached 25 payments in its OFF snapshot, while the separate burst
+fixture has 48.
 
 ---
 
 ## 2. Halt — state machine
 
-**Bradbury run** on `0xE45a615c076950B5ee3E5265e366945d7e148875` (1800s window).
+**Bradbury run** on `0xB31bc62001219E8A9eF4026820A06A6799984D26` (1800s window).
 
 | Step | Time (UTC) | Result |
 |---|---|---|

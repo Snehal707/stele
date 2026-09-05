@@ -20,7 +20,7 @@ const bradbury = {
 
 const CONFIG = {
   chainId: 4221,
-  governor: "0xE45a615c076950B5ee3E5265e366945d7e148875",
+  governor: "0xB31bc62001219E8A9eF4026820A06A6799984D26",
   explorer: "https://explorer-bradbury.genlayer.com/tx/",
   addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
@@ -42,30 +42,30 @@ function addressArgs(args) {
 
 const RECEIPTS = {
   judgmentHealthy: [
-    "0xc31174f27ab6a75f94e6365ef68f2bb0ce85d9687882153fdba56fdcd7555d7f",
-    "0x0aecfa062be0365ee670e12f5cf751cd6ed09b57f6fc632aa1addb11a1702ffb",
-    "0x56321e57bab4f78bc3f08cc1dea2a4ec39d912115e1b2f68593952e331e1d75f",
+    "0x833f30fd19669b4698644f1d365350fe319c9369745cbcfaad0fa7825678ec05",
+    "0x982194d6eb0f1a8ab971dfa966a91da02df34f8d2bde9aef2cfb7733cf22af26",
+    "0xd466248f9457ffd5521294f2731a8c730da8b3a2ebb26ddb1af3bd8ec30f20fa",
   ],
   judgmentBurst: [
-    "0xaa15c56391fb863e276594e0df45ea54f53504dc99d3957ef54cfeb215a56441",
-    "0x8dd4461976177259964a312df713b6e139af99ccb485c479b993c3474df21596",
-    "0xd445ecbffd8e8e60265d62db026130ae4a7dc792afbfac0c4420096af96f2234",
+    "0xf320430eade30d0bf2a0fdb5f9d958dc6cedd4b5b62e6a00b779d0c4c1de0f66",
+    "0xc60984d3a71de7738260844bb4fddfb0d77e4370d782bc4b0c744e4dcc151343",
+    "0x81f2e22d943f8f03856e8a20059d95798cfdaf91719daa1778bc73bc0a8f1066",
   ],
-  drainV1: "0x679a6178eeec580c333dc03a2b228496c251157708db6459f7033ce01c3e8aed",
-  drainV2: "0xb36246f9f593220869b42fe724f4179cddce0e5f870ce173a9f193ab69c37bde",
+  drainV1: "0xb390dd9bbbe16d1946e984a95708b7411b7f87d2ebd6c1691f41860891fd1474",
+  drainV2: "0x891f969ef7375e0be30b082f158eafe7b7bfef1615c32ebea9e9b128bceafba1",
   drainSuite: [
-    "0xf635268f8d203140999be0ca014e6976d1a3a676acf12cfebf32900e83e9d31c",
-    "0x8c922d57df1542d3dc23ec1a273b18822fdae96f2ec835ddab453d1bb8ef21ed",
-    "0xa7f107cae48502a114c8d5d6b8c0ec203d43a6808b0baf924fe6ac46ec4392d3",
+    "0x690e823b77551295ed008253cbb75b5923bfb11468a214a874f817ffa08bfe65",
+    "0xe09e70d5115698c489c5b108213c8c65c4b890ec18236131efe744b9af02aa4d",
+    "0x5129563041cd273383fda1bebaf4d46ac35c5b0a77d6c035d5d917f59d31afa0",
   ],
-  claim: "0xec0ab688b3f7df37447483b0cb93e2464ba70c7394a519b57648d279225cb6bc",
-  propose: "0x79ae8de3d617fb4db0f79f27be7906e9fd34e248f6a60d7f765a28830dfb95a2",
-  promote: "0xde9dd5318ddfe85680d113d235e92a6525cc524f8837c62762fbed2b0dbff275",
-  haltSeed: "0xcf42f4f500725d61faca7db088dfa549d1264836a516364677fb50be62045f48",
-  haltReview: "0x682ecccc99261f3c2e32ee4bd8301759db545d03986e8045c623eb70932cb31e",
-  haltSpendRejected: "0xcf580c5918ef5c2a522ca9428668afcd940debe4404a7be332aad671ab010a20",
-  haltAdvance: "0x865891e8eeb45f0bd211e195a6fda84a0898b33b545fa85ae86ca2fdaddebb0f",
-  haltSpendSuccess: "0x64af7688033ec67d7a4cae3775ea3dd390c58e12cd0266906bb024388e4174c8",
+  claim: "0x9ac626d32b5c601b26951c82ea95299e26c7837054cd6b4636fffd1442524786",
+  propose: "0xf37206944cb1765f4a0690bf841e8f7db4fb910f2ef48f7fb551547433b05091",
+  promote: "0x4a4980b0142c7aa6593829ad402cd574e090fffd67d20c37afd11cbfe2d0cac0",
+  haltSeed: "0xa98b979573f7fce8842a68df3f26b43c8df1a41454e342d40f6ac1a6fc535d1c",
+  haltReview: "0x14004d2a6e5caf8c57569c4d07b91611fbc1d3dace78d12567b85a5d18b01c90",
+  haltSpendRejected: "0x1bf05c92e1df7d720c32190b5568ee15c767715e425bb442f0f09ab0b5f0127c",
+  haltAdvance: null,
+  haltSpendSuccess: "0x8cc3a04b073d272eccc641cebc8edc4ffc899940669ab36c0d2a4e0cec2bb899",
 };
 
 function ReceiptLinks({ title, hashes }) {
@@ -472,7 +472,7 @@ function LandingPage() {
     <section id="mechanism" className="landing-mechanism">
       <div className="wrap mechanism-grid"><div><div className="eyebrow">THE MECHANISM</div><h2>From observed state to public consequence.</h2><p>Evidence stays in the vault state. The Governor pins that state, asks validators for a ruling, records the result, and can stop the next payment.</p><a className="button button-outline" href="/product">See the chain record ↗</a></div><div className="flow-card"><div className="flow-step"><b>01</b><span>Vault state</span><small>payments · destinations · balance</small></div><div className="flow-line" /><div className="flow-step"><b>02</b><span>Validator ruling</span><small>ON_MANDATE or OFF_MANDATE</small></div><div className="flow-line" /><div className="flow-step"><b>03</b><span>Recorded response</span><small>halt · claim · next clause</small></div></div></div>
     </section>
-    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0xE45a615c076950B5ee3E5265e366945d7e148875</strong><a href="/product">Open public record ↗</a></div></section>
+    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0xB31bc62001219E8A9eF4026820A06A6799984D26</strong><a href="/product">Open public record ↗</a></div></section>
     <footer className="wrap footer landing-footer"><span>STELE</span><span>an upright inscribed stone where laws are published in public and added to over time.</span></footer>
   </main>;
 }
