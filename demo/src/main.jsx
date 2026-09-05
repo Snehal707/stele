@@ -76,7 +76,14 @@ function ActionPanel() {
   const { data: walletClient } = useWalletClient({ chainId: bradbury.id });
   const { switchChain } = useSwitchChain();
   const [status, setStatus] = useState("");
-  const [hashes, setHashes] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!transactions.some((transaction) => transaction.pending)) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [transactions]);
 
   const proposeMandate = async () => {
     if (!address || !walletClient || !connector) {
@@ -180,9 +187,10 @@ function ActionPanel() {
         throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
       }
       const hash = await client.writeContract({ address: CONFIG.governor, functionName, args, value });
-      setHashes((previous) => [{ label, hash }, ...previous]);
-      setStatus(`${label}: submitted; receipt polling continues in the background.`);
-      pollReceipt(hash, label);
+      const startedAt = Date.now();
+      setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
+      setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
+      pollReceipt(hash, label, startedAt);
     } catch (error) {
       console.error("Stele write failed", error, {
         shortMessage: error?.shortMessage,
@@ -198,13 +206,15 @@ function ActionPanel() {
     }
   };
 
-  const pollReceipt = (hash, label) => {
+  const pollReceipt = (hash, label, startedAt) => {
     const poll = async () => {
       try {
         const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [hash] }) });
         const payload = await response.json();
         if (payload.result) {
-          setStatus(`${label}: ${payload.result.txExecutionResultName || "receipt received"}.`);
+          const execution = payload.result.txExecutionResultName || "receipt received";
+          setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
+          setStatus(`${label}: ${execution} ✓`);
           return;
         }
       } catch { /* keep background polling quiet */ }
@@ -218,13 +228,17 @@ function ActionPanel() {
     <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="write-actions">
-      <button onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button onClick={fileClaim}>File claim</button>
-      <button onClick={proposeMandate}>Propose mandate</button>
-      <button onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
+      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Review")} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
+      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Claim")} onClick={fileClaim}>File claim</button>
+      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Propose")} onClick={proposeMandate}>Propose mandate</button>
+      <button disabled={transactions.some((transaction) => transaction.pending && transaction.label === "Deposit")} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
-    {hashes.map(({ label, hash }) => <div className="tx-hash" key={hash}><span>{label}</span><a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a></div>)}
+    {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
+      <span>{label}</span>
+      <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>
+      <small>{pending ? `Submitted ✓ · Waiting for Bradbury consensus… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ✓`}</small>
+    </div>)}
   </div>;
 }
 
