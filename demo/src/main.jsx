@@ -85,11 +85,18 @@ function ActionPanel() {
     }
     try {
       const readClient = createClient({ chain: testnetBradbury });
-      const claim = await readClient.readContract({
-        address: CONFIG.governor,
-        functionName: "get_last_claim",
-        args: [CONFIG.rewriteAgent],
-      });
+      let claim;
+      try {
+        claim = await readClient.readContract({
+          address: CONFIG.governor,
+          functionName: "get_last_claim",
+          args: [CONFIG.rewriteAgent],
+        });
+      } catch (error) {
+        console.info("Stele propose blocked: no claim record for configured agent", error);
+        setStatus("Propose: requires a paid claim first.");
+        return;
+      }
       if (!claim || claim.status !== "PAID") {
         setStatus("Propose: requires a paid claim first.");
         return;
