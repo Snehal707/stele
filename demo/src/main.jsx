@@ -101,6 +101,21 @@ function describeWriteError(error) {
   return parts.join(" | ");
 }
 
+function parsePinnedFields(pinned) {
+  if (typeof pinned !== "string") return null;
+  const lines = pinned.split("\n");
+  const values = Object.fromEntries(lines.slice(0, 3).map((line) => line.split("=")).filter(([key, value]) => key && value));
+  const destinations = lines.slice(3).map((line) => line.match(/declared=(yes|no) \| payments=(\d+) \| total=(\d+)/)).filter(Boolean);
+  if (!values.spend_total || !values.destination_count || !values.balance || destinations.length === 0) return null;
+  return {
+    spend_total: values.spend_total,
+    balance: values.balance,
+    destination_count: values.destination_count,
+    payments: destinations.length === 1 ? destinations[0][2] : `${destinations.map((destination) => destination[2]).join(", ")} each`,
+    declared: destinations.every((destination) => destination[1] === "yes") ? "yes" : "no",
+  };
+}
+
 const cases = {
   healthy: { label: "HEALTHY", className: "healthy", verdict: "ON_MANDATE", reason: "Both destinations are declared, each has only one modest payment, and no single payment emptied the vault.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "2"], ["payments", "1 each"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=2\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=100\ndestination 0x2222222222222222222222222222222222222222 | declared=yes | payments=1 | total=120", note: "example invoice pattern" },
   burst: { label: "BURST", className: "burst", verdict: "OFF_MANDATE", reason: "The agent made 48 payments to a declared provider in a short window, which violates the mandate rule against paying a provider dozens of times in a short window.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "1"], ["payments", "48"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=1\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220", note: "48 payments · dozens in a short window" },
@@ -110,7 +125,12 @@ const cases = {
 
 function renderCase(item, liveValue, provenance = "receipt-backed") {
   const value = liveValue || item;
-  const fields = item.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && fieldValue !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{fieldValue}{!liveValue && <EvidenceTag />}</strong></div>);
+  const liveFields = parsePinnedFields(liveValue?.pinned_state);
+  const fields = item.fields.map(([key, fieldValue]) => {
+    const displayedValue = liveFields?.[key] ?? fieldValue;
+    const isLiveField = Boolean(liveValue && liveFields?.[key]);
+    return <div className={`field ${key === "payments" && displayedValue !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{displayedValue}{!isLiveField && <EvidenceTag />}</strong></div>;
+  });
   return <article className={`vault-card ${item.className}`} data-case={item.label} key={item.label}>
     <div className="vault-kicker"><span>{item.label}</span><span>BRADBURY · 4221</span></div>
     <h3>{item.note}</h3>
@@ -128,6 +148,7 @@ function ActionPanel() {
   const { switchChain } = useSwitchChain();
   const [status, setStatus] = useState("");
   const [transactions, setTransactions] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -136,11 +157,25 @@ function ActionPanel() {
     return () => window.clearInterval(timer);
   }, [transactions]);
 
-  const proposeMandate = async () => {
-    if (!address || !walletClient || !connector) {
-      setStatus("Propose: connect a wallet before submitting.");
-      return;
+  const requireWallet = () => {
+    if (!address || !connector) {
+      setStatus("Connect a wallet before submitting.");
+      return false;
     }
+    if (chain?.id !== bradbury.id) {
+      setStatus("Switch your wallet to GenLayer Bradbury (4221) before submitting.");
+      switchChain({ chainId: bradbury.id });
+      return false;
+    }
+    if (!walletClient) {
+      setStatus("The Bradbury wallet client is unavailable; reconnect and try again.");
+      return false;
+    }
+    return true;
+  };
+
+  const proposeMandate = async () => {
+    if (!requireWallet()) return;
     try {
       const readClient = createClient({ chain: testnetBradbury });
       let claim;
@@ -168,10 +203,7 @@ function ActionPanel() {
   };
 
   const fileClaim = async () => {
-    if (!address || !walletClient || !connector) {
-      setStatus("Claim: connect a wallet before submitting.");
-      return;
-    }
+    if (!requireWallet()) return;
     try {
       const readClient = createClient({ chain: testnetBradbury });
       try {
@@ -185,7 +217,9 @@ function ActionPanel() {
           return;
         }
       } catch (error) {
-        console.info("Stele claim preflight: no existing claim record", error);
+        console.error("Stele claim preflight failed", error);
+        setStatus(`Claim preflight failed: ${describeWriteError(error)}`);
+        return;
       }
       await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
     } catch (error) {
@@ -195,14 +229,12 @@ function ActionPanel() {
   };
 
   const runWrite = async (label, functionName, args, value = 0n) => {
-    if (!address || !walletClient || !connector) {
-      setStatus(`${label}: connect a wallet before submitting.`);
+    if (!requireWallet()) return;
+    if (submitting || transactions.some((transaction) => transaction.pending)) {
+      setStatus("A transaction is already being submitted or waiting for Bradbury consensus.");
       return;
     }
-    if (chain?.id !== bradbury.id) {
-      switchChain({ chainId: bradbury.id });
-      return;
-    }
+    setSubmitting(true);
     setStatus(`${label}: submitting…`);
     try {
       const provider = await connector.getProvider();
@@ -269,6 +301,8 @@ function ActionPanel() {
         : message.includes("-32603") && !message.toLowerCase().includes("wallet is on chain")
           ? `${label}: wallet RPC rejected the transaction before Bradbury issued a GenLayer hash. Check the selected Bradbury RPC and pending wallet transaction, then try once more.`
         : `${label}: ${message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -282,6 +316,9 @@ function ActionPanel() {
           const created = Number(receipt.timestamps?.Created || 0);
           const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number(receipt.status || 0) > 0);
           if (!hasReceipt) {
+            if (Date.now() - startedAt >= 120000) {
+              setStatus(`${label}: still waiting for Bradbury consensus… keep this tab open; the explorer hash remains the source of truth.`);
+            }
             window.setTimeout(poll, 5000);
             return;
           }
@@ -291,6 +328,9 @@ function ActionPanel() {
           return;
         }
       } catch { /* keep background polling quiet */ }
+      if (Date.now() - startedAt >= 120000) {
+        setStatus(`${label}: still waiting for Bradbury consensus… keep this tab open; the explorer hash remains the source of truth.`);
+      }
       window.setTimeout(poll, 5000);
     };
     window.setTimeout(poll, 5000);
@@ -302,10 +342,10 @@ function ActionPanel() {
     <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="write-actions">
-      <button disabled={hasPendingTransaction} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
-      <button disabled={hasPendingTransaction} onClick={fileClaim}>File claim</button>
-      <button disabled={hasPendingTransaction} onClick={proposeMandate}>Propose mandate</button>
-      <button disabled={hasPendingTransaction} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
+      <button disabled={hasPendingTransaction || submitting} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
+      <button disabled={hasPendingTransaction || submitting} onClick={fileClaim}>File claim</button>
+      <button disabled={hasPendingTransaction || submitting} onClick={proposeMandate}>Propose mandate</button>
+      <button disabled={hasPendingTransaction || submitting} onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
@@ -328,7 +368,8 @@ function ProductPage() {
         const client = createClient({ chain: testnetBradbury });
         const verdict = await client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([CONFIG.rewriteAgent]) });
         const matchesDrainFixture = verdict?.pinned_state === cases.drainOff.pinned;
-        if (active && matchesDrainFixture) {
+        const validVerdict = verdict && ["ON_MANDATE", "OFF_MANDATE"].includes(verdict.ruling) && typeof verdict.reason === "string";
+        if (active && matchesDrainFixture && validVerdict) {
           setLive({ drain: verdict });
           setReadStatus("Live Bradbury verdict read succeeded for the current drain fixture.");
         } else if (active) {
