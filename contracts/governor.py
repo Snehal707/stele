@@ -433,7 +433,17 @@ class Governor(gl.Contract):
             raw_proposal = "\n".join(lines[1:-1]).strip()
             if raw_proposal.lower().startswith("json\n"):
                 raw_proposal = raw_proposal[5:].lstrip()
-        parsed = json.loads(raw_proposal)
+        # LLMs sometimes add a short preface or trailing sentence even when
+        # the requested JSON shape is correct. Extract the object before
+        # validating the exact one-clause envelope.
+        first_brace = raw_proposal.find("{")
+        last_brace = raw_proposal.rfind("}")
+        if first_brace < 0 or last_brace <= first_brace:
+            raise gl.vm.UserError("Invalid mandate proposal JSON")
+        try:
+            parsed = json.loads(raw_proposal[first_brace:last_brace + 1])
+        except Exception:
+            raise gl.vm.UserError("Invalid mandate proposal JSON")
         if not isinstance(parsed, dict) or set(parsed.keys()) != {"clause"}:
             raise gl.vm.UserError("Invalid mandate proposal JSON")
         clause = parsed["clause"]
