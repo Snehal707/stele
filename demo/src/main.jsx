@@ -221,7 +221,7 @@ function ActionPanel() {
       <button onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
       <button onClick={fileClaim}>File claim</button>
       <button onClick={proposeMandate}>Propose mandate</button>
-      <button onClick={() => runWrite("Deposit", "deposit", [], 100n)}>Deposit 100 GEN</button>
+      <button onClick={() => runWrite("Deposit", "deposit", [], 1n)}>Deposit 1 GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {hashes.map(({ label, hash }) => <div className="tx-hash" key={hash}><span>{label}</span><a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a></div>)}
