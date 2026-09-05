@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { RainbowKitProvider, ConnectButton, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider, useAccount, useConnect, useSwitchChain } from "wagmi";
+import { WagmiProvider, useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { createClient } from "genlayer-js";
 import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -48,21 +48,30 @@ function renderCase(item, liveValue) {
 }
 
 function ActionPanel() {
-  const { address, isConnected, chain } = useAccount();
+  const { address, isConnected, chain, connector } = useAccount();
+  const { data: walletClient } = useWalletClient({ chainId: bradbury.id });
   const { switchChain } = useSwitchChain();
-  const { connect, connectors } = useConnect();
   const [status, setStatus] = useState("");
   const [hashes, setHashes] = useState([]);
 
   const runWrite = async (label, functionName, args, value = 0n) => {
-    if (!address) return;
+    if (!address || !walletClient || !connector) {
+      setStatus(`${label}: connect a wallet before submitting.`);
+      return;
+    }
     if (chain?.id !== bradbury.id) {
       switchChain({ chainId: bradbury.id });
       return;
     }
     setStatus(`${label}: submitting…`);
     try {
-      const client = createClient({ chain: testnetBradbury, account: address });
+      const provider = await connector.getProvider();
+      if (!provider) throw new Error("Connected wallet provider unavailable.");
+      const client = createClient({
+        chain: testnetBradbury,
+        account: walletClient.account.address,
+        provider,
+      });
       const hash = await client.writeContract({ address: CONFIG.governor, functionName, args, value });
       setHashes((previous) => [{ label, hash }, ...previous]);
       setStatus(`${label}: submitted; receipt polling continues in the background.`);
