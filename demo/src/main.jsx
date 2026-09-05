@@ -78,6 +78,30 @@ function ActionPanel() {
   const [status, setStatus] = useState("");
   const [hashes, setHashes] = useState([]);
 
+  const proposeMandate = async () => {
+    if (!address || !walletClient || !connector) {
+      setStatus("Propose: connect a wallet before submitting.");
+      return;
+    }
+    try {
+      const readClient = createClient({ chain: testnetBradbury });
+      const claim = await readClient.readContract({
+        address: CONFIG.governor,
+        functionName: "get_last_claim",
+        args: [CONFIG.rewriteAgent],
+      });
+      if (!claim || claim.status !== "PAID") {
+        setStatus("Propose: requires a paid claim first.");
+        return;
+      }
+      setStatus("Propose: paid-claim precondition passed; submitting…");
+      await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
+    } catch (error) {
+      console.error("Stele propose preflight failed", error);
+      setStatus(`Propose preflight failed: ${describeWriteError(error)}`);
+    }
+  };
+
   const runWrite = async (label, functionName, args, value = 0n) => {
     if (!address || !walletClient || !connector) {
       setStatus(`${label}: connect a wallet before submitting.`);
@@ -162,7 +186,7 @@ function ActionPanel() {
     <div className="write-actions">
       <button onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>Run review</button>
       <button onClick={() => runWrite("Claim", "claim", [CONFIG.rewriteAgent])}>File claim</button>
-      <button onClick={() => runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent])}>Propose mandate</button>
+      <button onClick={proposeMandate}>Propose mandate</button>
       <button onClick={() => runWrite("Deposit", "deposit", [], 100n)}>Deposit 100 GEN</button>
     </div>
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
