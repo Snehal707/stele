@@ -122,9 +122,8 @@ Not a replacement for spend caps and allowlists — those are cheaper, faster an
 deterministic, and they should stay. Stele is the layer above them, for the
 class of failure they structurally cannot see.
 
-Not a funded mutual. The pool is currently funded by the same party that
-enrolls. The mechanism is proven end to end on Bradbury with a real 980 payout;
-the market is not.
+The consolidated Bradbury cover result is documented in Section 3; the market
+is not.
 
 ---
 
@@ -156,6 +155,10 @@ This was a deliberate design constraint, not an accident of implementation.
 
 Studio runs are recorded in the ephemeral appendix. **Do not mix addresses
 between deployments.**
+
+The [live demo](https://stele-gold.vercel.app) reads live contract state without
+a wallet. Connect a wallet to submit review, claim, `propose_mandate` and deposit
+actions; each write shows its transaction hash and explorer link immediately.
 
 ---
 
@@ -203,6 +206,31 @@ The v2-regression burst receipts include `0xaa15c56391fb863e276594e0df45ea54f535
 Its `OFF_MANDATE` reason was: “The agent made 48 payments to a declared provider
 in a short window, which violates the mandate rule against paying a provider
 dozens of times in a short window.”
+
+---
+
+### Autonomous agent — separate process
+
+The lifeform fixture is a separate process with its own funded wallet,
+`0x8B59219595a5Cd52049f9d2fa8Cf8a6c9de3fE32`. At startup it reads its mandate
+from the Governor, then chooses payments from its own invoice logic. The
+`normal` profile pays declared providers modest amounts and stays on-mandate;
+the `drift` profile repeatedly pays one declared provider dozens of times in
+quick succession. Every individual payment is within the existing caps and to
+an allowlisted destination, so no single deterministic rule catches the drift.
+Before every spend it checks `is_halted(agent)`.
+
+On the recorded drift run, the early review was ON at
+`0xba24940d28ea2aa99cba810762b1db74746337c62962c87513c045275912d3c1`, the
+17-payment review was ON at
+`0x0282050c7afe69e75bcd917cc3d48c91621011c554572b77af3536d43bfa6d0c`, and
+the 24-payment review was OFF at
+`0x162c9005fc4599d3cb41682383595f3d0fc9a569e7abf28bc07500fd156679f1`.
+The agent observed the halt at its pre-payment check at loop index 27 and
+stopped. Its decisions are logged in `results/agent_decisions.jsonl`.
+
+This is a different agent/vault pair from the four judgment fixtures: the
+agent run reached 24 payments, while the separate burst fixture has 48.
 
 ---
 
@@ -393,12 +421,11 @@ a thin mandate and a generic prompt missed both.
 **Detection is not prevention.** A halt bounds further loss; it does not undo
 what already executed.
 
-**There is no autonomous agent in the demo.** The VaultTwin is seeded into
-states by script and stands in for an agent; the Governor reads state and
-judges it, so the mechanism is unaffected, but nothing autonomous decides to
-spend.
-
-**The p95 is 56× the filtered median; the demo cap is 1.6× below the filtered median.** This is not a funded mutual.
+**LPs earn yield, not claims risk.** Capital providers deposit into a separate
+pool and earn a share of premium as yield, but the claims pool that actually
+pays losses is currently funded only by the enrolling operator. A real mutual
+would have LP capital backstopping claims too; this version keeps those pools
+separate.
 
 **Ronin is an analogy, not a replay.** Five-of-nine valid signatures, ~$624M,
 unnoticed six days — authorization correct, behaviour wrong. Same failure class
@@ -463,11 +490,32 @@ receipts, not live state.
 
 ```
 README.md
+build-plan.md
+.env.example
+package.json
+package-lock.json
+vite.config.js
 contracts/
   governor.py          # Intelligent Contract
   vault_twin.py        # governed vault
+agent/
+  agent.js             # autonomous wallet-owning process
+demo/
+  index.html
+  src/main.jsx
+  styles.css
+dist/
+  index.html            # static build output
 scripts/
+  demo_halt.py
+  drive_vaults.py
+  genlayer_write.mjs
   genvm-lint.ps1
+  run_bradbury_reviews.py
+  run_halt_arc.py
+  run_rewrite_arc.py
+  run_transaction.py
+  submit_capture.py
 data/
   defi/hacks_raw.json
   pricing.json
@@ -475,7 +523,14 @@ data/
   web2/moffatt.md
   web2/arup.md
   web2/pins/arup_wrong_dest.txt
+results/
+  agent_decisions.jsonl
+  runs.jsonl
+  *_deployment.json
 ```
+
+Demo:       https://stele-gold.vercel.app
+Repository: https://github.com/Snehal707/stele
 
 SDK: `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`,
 namespaced `gl.nondet.*` / `gl.eq_principle.*`.
