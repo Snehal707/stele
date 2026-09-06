@@ -129,21 +129,27 @@ is not.
 
 ## The evidence rule
 
-`review(agent)` takes **one argument**. There is no parameter for a description
-of what the agent did, no evidence URL, no submitted narrative.
+`review(agent)` still takes **one argument**. The caller cannot supply a URL,
+description, or narrative. The current C1 path is a two-stage review:
 
 ```python
 review(agent) →
-    read vault state via eth_call        # deterministic context
-    canonicalize to a pinned string      # fixed field layout
-    judge pinned string against mandate  # prompt_non_comparative
-    write ruling                         # deterministic context
+    pin vault state via eth_call                         # deterministic source 1
+    fetch enrolled record_url and verify record_hash      # source 2
+    parse and compare record fields with strict_eq        # load-bearing agreement check
+    if fields match: judge both sources against mandate
+    if fields conflict: write EVIDENCE_CONFLICT and halt
+    if fetch/hash fails: record unavailable and judge pinned state alone
 ```
 
-If the read fails, there is no ruling. The halt decision cannot be reached from
-anything a caller supplies.
+The enrolled `record_url` is derived from the configured vault and its
+SHA-256 `record_hash` is stored on-chain. Validators independently fetch,
+hash-check, parse, and compare the record to the pinned vault state before the
+mandate judgment. The C1 record is part of the ruling path, not a decorative
+citation. `claim()` rejects payout for `EVIDENCE_CONFLICT`.
 
-This was a deliberate design constraint, not an accident of implementation.
+This supersedes the original pin-only design. The earlier design remains useful
+as historical context, but it is not the active review path.
 
 ---
 
@@ -151,7 +157,9 @@ This was a deliberate design constraint, not an accident of implementation.
 
 | Role | Network | Governor | Persistence |
 |---|---|---|---|
-| Stele Governor | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | canonical deployment from parser-fix commit `3c6cbc0`; verified for judgment + halt + cover/lifeform + economics |
+| C1 burst records | Bradbury | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | burst agreement + conflict receipts |
+| C1 drain records | Bradbury | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | drain agreement + covered claim receipts |
+| Pre-C1 consolidated demo | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | earlier judgment/halt/cover/lifeform/economics runs; not the C1 receipt source |
 
 Studio runs are recorded in the ephemeral appendix. **Do not mix addresses
 between deployments.**
@@ -164,9 +172,11 @@ actions; each write shows its transaction hash and explorer link immediately.
 
 ## 1. Judgment — four vaults (Bradbury)
 
-The canonical Governor is `0xB31bc62001219E8A9eF4026820A06A6799984D26`,
-deployed by `0xe62b745700cd8121a06547b3b5288965a9e13599a9ccc66404ac4e41c96ffac84`.
-Its stored verdicts match the four cases below.
+The older consolidated Governor is `0xB31bc62001219E8A9eF4026820A06A6799984D26`.
+The C1 receipts below came from two later Bradbury Governors because adding
+record evidence required redeployment: burst uses
+`0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF`; drain uses
+`0x68781475569CFd451b7F061f64964eB1e17Ed64e`.
 
 **Mandate:**
 
@@ -189,7 +199,7 @@ The four canonical wallet-backed fixtures are on-mandate VaultTwin
 `0xb2DeD6d83c7bD8Bb4F00081E5Dad185fc326f803`, strangers
 `0xfAaA8203b4798217bB14Cd53a40091F50F43Ab1f`, burst
 `0xD1c7E47c916e934701df2751591994bD1c3506E0`, and drain
-`0xA5c23d67317d4f5192c3Bb0441baE4AFAda9D19E`.
+`0xCc0Fc6A4B3C6a83F5Ca0Dd1614B557297f52A7F3`.
 
 **Results — three runs each, 12/12 after the pin format fix. The first burst set
 scored 1/3 (ON, OFF, ON) on the original dense format; that early history is
@@ -207,33 +217,28 @@ Its `OFF_MANDATE` reason was: “The agent made 48 payments to a declared provid
 in a short window, which violates the mandate rule against paying a provider
 dozens of times in a short window.”
 
-### Web evidence path
+### Superseded — historical explorer fetch
 
-`review(agent)` derives the Bradbury explorer address at runtime from
-`vault_of[agent]`; the review API remains single-argument. Inside the consensus
-read it tries `gl.nondet.web.render(explorer_url, mode="text")`, rejects the
-known shell-only response, then tries `mode="html"`. A failed web read never
-halts review: Burst has a dated, hashed fallback-only pin at
-`data/web2/pins/burst_explorer_fallback.txt`, while other fixtures proceed on
-their pinned vault state when no matching fallback exists. The resulting
-`latest_verdict` includes `web_source` (`explorer`, `fallback`, or `none`).
+The original implementation derived the Bradbury explorer address from
+`vault_of[agent]` and tried `gl.nondet.web.render()` as supplementary evidence.
+It is retained only as historical engineering context. It was replaced by the
+C1 record system below and is no longer part of `review()` or the active ruling
+path.
 
-The live Studio probe for the Burst address returned shell-only text (283
-characters), while HTML returned a 33,241-character rendered payload. The
-payload was therefore accepted in `html` mode. The page exposed address/network
-context, not transaction-level payment facts, so the review reason must take
-the concrete payment count from pinned state and use the web page only as
-corroborating context. Full probe and Bradbury deployment evidence is recorded
-in `results/web_evidence_burst.json`.
+The old Studio probe returned shell-only text in one mode and a rendered HTML
+payload in another, but it exposed address/network context rather than
+transaction-level payment facts. That probe is recorded in
+`results/web_evidence_burst.json` and is not C1 evidence.
 
 ### C1 hash-locked evidence records
 
 The C1 evidence path makes the enrolled record load-bearing. At enrollment,
 each agent stores a runtime-derived `record_url` and the SHA-256 `record_hash`
 of a frozen plain-text record in `data/web2/records/<vault>.txt`. Every
-validator independently fetches and parses that record inside
-`gl.eq_principle.strict_eq`; raw page bytes are never compared. The record is
-then compared with the pinned vault state before the mandate judgment runs.
+validator independently fetches, hash-checks, parses, and compares that record
+inside `gl.eq_principle.strict_eq`; raw page bytes are not used as the judgment
+input. The record is compared with the pinned vault state before the mandate
+judgment runs.
 
 The review branches are explicit:
 
@@ -244,9 +249,23 @@ The review branches are explicit:
 - A field mismatch records the distinct `EVIDENCE_CONFLICT` ruling, halts the
   agent, and `claim()` records `DENIED_EVIDENCE_CONFLICT` with zero payout.
 
-The explorer fetch remains available only through the separate
-`supplementary_explorer_check` path. It is not used by `review()` and cannot
-decide a ruling.
+The explorer fetch is not used by `review()` and cannot decide a ruling.
+
+### C1 receipt ledger
+
+These are the four receipt-backed C1 results, grouped by the Governor that
+actually produced them:
+
+| Case | Governor | Receipt | Ruling | Reason |
+|---|---|---|---|---|
+| Burst agreement | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | `0xdd5c2f9748ee17e7917d5b8a45b1f4e70b5f437fbdf7636086703d7e478c86f9` | `OFF_MANDATE` | Pinned state and record agree on 48 payments; the review reason says this exceeds 23 and constitutes dozens in the short window. |
+| Burst conflict | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | `0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3` | `EVIDENCE_CONFLICT` | Pinned state says `payments=28`; the enrolled record says `payments=3`; operator review is required. |
+| Drain agreement | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | `0xdf2167c1373ff12e2f34a19c819ebdcc2fdf452df3796eb059a89b0f4500187a` | `ON_MANDATE` | Pinned state and record agree on the declared provider with `payments=0` and `total=0`, below the dozens threshold. |
+| Drain claim | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | `0x4aa83979d5f5e10167d7c046c425b52d93a2485023e1e71342e451b9f734f29a` | `PAID` | Matching evidence was verified at Review; after the declared-provider payment drained the vault, Claim paid the 1000 loss in full. |
+
+Full machine-readable receipts are in `results/c1_evidence.json` (burst
+agreement/conflict and conflict claim) and `results/c1_drain_evidence.json`
+(drain agreement and covered claim).
 
 These guarantees must not be conflated:
 

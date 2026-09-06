@@ -131,6 +131,8 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .c1-card-kicker { display: flex; justify-content: space-between; gap: 14px; color: var(--muted); font: 700 10px/1.3 var(--mono); letter-spacing: .1em; }
 .c1-card-kicker strong { color: var(--ink); text-align: right; }
 .record-conflict .c1-card-kicker strong { color: var(--red); }
+.c1-governor { margin-top: 10px; color: var(--muted); font: 10px/1.4 var(--mono); }
+.c1-governor code { color: var(--ink); overflow-wrap: anywhere; font-size: 10px; }
 .c1-card-heading { display: flex; align-items: baseline; gap: 8px; margin: 28px 0 14px; }
 .c1-card-heading strong { font: 800 clamp(1rem, 1.7vw, 1.65rem)/1 var(--mono); letter-spacing: -.08em; white-space: nowrap; word-break: normal; }
 .c1-card-heading strong.on { color: var(--green); }

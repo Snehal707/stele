@@ -88,6 +88,7 @@ const RECEIPTS = {
 
 const C1_RECORD_EVIDENCE = {
   burstAgreement: {
+    governor: "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
     label: "BURST · RECORD AGREES",
     tone: "record-agree",
     status: "AGREE · VERIFIED",
@@ -101,6 +102,7 @@ const C1_RECORD_EVIDENCE = {
     recordStatus: "Verified record agrees with the pinned vault state.",
   },
   burstConflict: {
+    governor: "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
     label: "BURST · RECORD DISAGREES",
     tone: "record-conflict",
     status: "MISMATCH · VERIFIED",
@@ -115,6 +117,7 @@ const C1_RECORD_EVIDENCE = {
     recordStatus: "The record is hash-verified, but it conflicts with the pinned state.",
   },
   drainAgreement: {
+    governor: "0x68781475569CFd451b7F061f64964eB1e17Ed64e",
     label: "DRAIN · PRE-DRAIN AGREEMENT",
     tone: "record-agree",
     status: "AGREE · VERIFIED",
@@ -126,6 +129,7 @@ const C1_RECORD_EVIDENCE = {
     recordStatus: "Verified record agrees with the pinned pre-drain state.",
   },
   drainClaim: {
+    governor: "0x68781475569CFd451b7F061f64964eB1e17Ed64e",
     label: "DRAIN · RESULTING CLAIM",
     tone: "claim-paid",
     status: "PAID · VERIFIED",
@@ -142,6 +146,7 @@ const C1_RECORD_EVIDENCE = {
 function C1EvidenceCard({ item }) {
   return <article className={`c1-evidence-card ${item.tone}`}>
     <div className="c1-card-kicker"><span>{item.label}</span><strong>{item.status}</strong></div>
+    <div className="c1-governor">Originating Governor · <code>{item.governor}</code></div>
     <div className="c1-card-heading"><strong className={item.ruling === "ON_MANDATE" ? "on" : item.ruling === "OFF_MANDATE" ? "off" : "conflict"}>{item.ruling}</strong><EvidenceTag>receipt-backed</EvidenceTag></div>
     <p className="c1-reason">“{item.reason}”</p>
     {item.claim && <div className="c1-claim-outcome">{item.claim}</div>}
