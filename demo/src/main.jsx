@@ -26,6 +26,15 @@ const CONFIG = {
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
 };
 
+const LOCAL_TEST_WALLET = {
+  address: "0x0000000000000000000000000000000000000421",
+  hash: "0x0000000000000000000000000000000000000000000000000000000000000421",
+};
+
+function isLocalTestWalletEnabled() {
+  return import.meta.env.DEV && new URLSearchParams(window.location.search).get("localTestWallet") === "1";
+}
+
 const FIXTURES = {
   healthy: { label: "HEALTHY", className: "healthy", note: "example invoice pattern", agent: "0x6e1781e673afd1751f2f58ab8a4081fc1686554e" },
   burst: { label: "BURST", className: "burst", note: "48 payments · dozens in a short window", agent: "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a" },
@@ -187,7 +196,7 @@ function YourRunResult({ result }) {
   if (!result) return <div className="read-status your-result" role="status"><strong>Run an action above to see your result here.</strong><span>Your connected wallet’s transaction, Bradbury consensus status, and Review verdict will appear in this panel.</span></div>;
   return <section className="your-result" aria-labelledby="your-result-title">
     <div className="section-intro compact"><div className="eyebrow">YOUR RESULT · {result.action.toUpperCase()}</div></div>
-    <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span><a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a></div></div>
+    <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span>{result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>}</div></div>
     <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
     {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : "This action does not produce a Review verdict."}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
   </section>;
@@ -195,6 +204,9 @@ function YourRunResult({ result }) {
 
 function ActionPanel({ onResultChange }) {
   const { address, isConnected, chain, connector } = useAccount();
+  const localTestWallet = isLocalTestWalletEnabled();
+  const connectedAddress = address || (localTestWallet ? LOCAL_TEST_WALLET.address : undefined);
+  const connected = isConnected || localTestWallet;
   const { data: walletClient } = useWalletClient({ chainId: bradbury.id });
   const { switchChain } = useSwitchChain();
   const [status, setStatus] = useState("");
@@ -206,7 +218,7 @@ function ActionPanel({ onResultChange }) {
   const autoSwitchAttempted = useRef(false);
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!connected) {
       autoSwitchAttempted.current = false;
       return;
     }
@@ -217,7 +229,7 @@ function ActionPanel({ onResultChange }) {
       console.info("Stele automatic Bradbury switch was not approved", error);
       setStatus("Wallet connected · approve the switch to GenLayer Bradbury (4221) before submitting.");
     });
-  }, [isConnected, chain?.id, switchChain]);
+  }, [connected, chain?.id, switchChain]);
 
   useEffect(() => {
     if (!transactions.some((transaction) => transaction.pending)) return undefined;
@@ -226,6 +238,7 @@ function ActionPanel({ onResultChange }) {
   }, [transactions]);
 
   const requireWallet = () => {
+    if (localTestWallet) return true;
     if (!address || !connector) {
       setStatus("Connect a wallet before submitting.");
       return false;
@@ -344,6 +357,40 @@ function ActionPanel({ onResultChange }) {
     setSubmitting(true);
     setActiveAction(label);
     setStatus(`${label}: submitting…`);
+    if (localTestWallet) {
+      const startedAt = Date.now();
+      const hash = LOCAL_TEST_WALLET.hash;
+      setTransactions((previous) => [{ label, hash, startedAt, pending: true, localTest: true }, ...previous]);
+      onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "pending", consensus: "Pending", execution: null, localTest: true });
+      setStatus(`${label}: local test simulation · consensus pending…`);
+      window.setTimeout(() => {
+        const execution = "FINISHED_WITH_RETURN";
+        setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
+        setActiveAction(null);
+        if (label === "Review") {
+          onResultChange({
+            action: label,
+            hash,
+            targetAgent: CONFIG.rewriteAgent,
+            status: "resolved",
+            consensus: "Resolved",
+            execution,
+            localTest: true,
+            verdict: true,
+            ruling: "ON_MANDATE",
+            reason: "Local test result: the configured demo agent paid declared providers in modest amounts without emptying the vault.",
+            fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "2"], ["payments", "1, 1 each"], ["declared", "yes"]],
+            pinned_state: "local_test=true\nspend_total=220\ndestination_count=2\nbalance=780\nverdict=ON_MANDATE",
+          });
+          setStatus("Review: local test verdict resolved ✓");
+        } else {
+          onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, localTest: true });
+          setStatus(`${label}: local test resolved ✓`);
+        }
+        setSubmitting(false);
+      }, 1200);
+      return;
+    }
     try {
       const provider = await connector.getProvider();
       if (!provider) throw new Error("Connected wallet provider unavailable.");
@@ -498,12 +545,13 @@ function ActionPanel({ onResultChange }) {
     window.setTimeout(poll, 5000);
   };
 
-  if (!isConnected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
+  if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
-    <div className="write-panel-head"><span>Connected wallet</span><span>{address}</span></div>
-    <div className="run-target"><strong>You are submitting actions for configured agent</strong><span>{CONFIG.rewriteAgent}</span><small>using wallet {address}</small></div>
-    {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
+    <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
+    <div className="run-target"><strong>You are submitting actions for configured agent</strong><span>{CONFIG.rewriteAgent}</span><small>using wallet {connectedAddress}</small></div>
+    {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
@@ -513,9 +561,9 @@ function ActionPanel({ onResultChange }) {
     </div>
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
-    {transactions.map(({ label, hash, startedAt, pending, execution }) => <div className="tx-hash" key={hash}>
+    {transactions.map(({ label, hash, startedAt, pending, execution, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
-      <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>
+      {localTest ? <strong>{hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>}
       <small>{pending ? `Submitted ✓ · Waiting for Bradbury consensus… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ✓`}</small>
     </div>)}
   </div>;
@@ -529,6 +577,9 @@ function ProductPage() {
   const [readNonce, setReadNonce] = useState(0);
   const [yourRun, setYourRun] = useState(null);
   const { address, isConnected } = useAccount();
+  const localTestWallet = isLocalTestWalletEnabled();
+  const walletConnected = isConnected || localTestWallet;
+  const walletAddress = address || (localTestWallet ? LOCAL_TEST_WALLET.address : undefined);
 
   const retryLiveReads = () => setReadNonce((value) => value + 1);
 
@@ -592,9 +643,9 @@ function ProductPage() {
         ]);
         let yourShares = null;
         let yourSharesError = null;
-        if (isConnected) {
+        if (walletConnected) {
           try {
-            yourShares = await client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: addressArgs([address]) });
+            yourShares = await client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: addressArgs([walletAddress]) });
           } catch (error) {
             console.info("Stele wallet-specific LP share read unavailable", error);
             yourSharesError = describeReadError(error);
@@ -614,7 +665,7 @@ function ProductPage() {
       }
     })();
     return () => { active = false; };
-  }, [address, isConnected, readNonce]);
+  }, [walletAddress, walletConnected, readNonce]);
 
   const capitalValue = (key) => {
     if (capital.status === "loading") return <span className="capital-pending" aria-label="Live read pending">…</span>;
@@ -663,7 +714,7 @@ function ProductPage() {
         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={setYourRun} /><YourRunResult result={yourRun} /></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
-        {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{isConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
+        {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
         {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Global protocol record.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Consolidated Governor</strong><small>judgment · halt · cover/lifeform · economics</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
         {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">06 / SECONDARY EVIDENCE · ALLOWLIST</div><p className="scope-note">Fixed example evidence — not your wallet.</p></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></div>}
         {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">07 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, and Drain are fixed examples.</strong><span>These live reads demonstrate the judgment rules; they are not the result of your connected wallet.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div></section><section className="drain" aria-labelledby="drain-title"><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "current drain fixture · live state" }, live.fixtures.drain, retryLiveReads, "CURRENT DRAIN STATE")}</div></section></section>}
