@@ -86,6 +86,82 @@ const RECEIPTS = {
   haltSpendSuccess: "0x8cc3a04b073d272eccc641cebc8edc4ffc899940669ab36c0d2a4e0cec2bb899",
 };
 
+const C1_RECORD_EVIDENCE = {
+  burstAgreement: {
+    label: "BURST · RECORD AGREES",
+    tone: "record-agree",
+    status: "AGREE · VERIFIED",
+    ruling: "OFF_MANDATE",
+    hash: "0xdd5c2f9748ee17e7917d5b8a45b1f4e70b5f437fbdf7636086703d7e478c86f9",
+    reason: "The pinned state shows 48 payments to the declared provider 0x1111111111111111111111111111111111111111, and the enrolled record confirms this number, which exceeds 23 and thus constitutes dozens in the short window, violating the mandate.",
+    recordUrl: "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt",
+    recordHash: "356FBA068599C25B04F532537E539E3604174FD9E9DCAF87E16FA3E14A131438",
+    archiveUrl: "https://web.archive.org/web/20260906202142/https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt",
+    otsUrl: "https://github.com/Snehal707/stele/blob/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt.ots",
+    recordStatus: "Verified record agrees with the pinned vault state.",
+  },
+  burstConflict: {
+    label: "BURST · RECORD DISAGREES",
+    tone: "record-conflict",
+    status: "MISMATCH · VERIFIED",
+    ruling: "EVIDENCE_CONFLICT",
+    hash: "0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3",
+    reason: "Evidence conflict: pinned vault state has spend_total=123, balance=877, and payments=28, but the enrolled record claims spend_total=123, balance=877, and payments=3; operator review is required.",
+    claim: "Claim attempted → DENIED_EVIDENCE_CONFLICT · payout 0",
+    recordUrl: "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
+    recordHash: "A257FF4C9D87199F34020EE2A109BA6C437E76415CCE27A3CE0CD12CDF47B504",
+    archiveUrl: "https://web.archive.org/web/20260906204025/https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
+    otsUrl: "https://github.com/Snehal707/stele/blob/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots",
+    recordStatus: "The record is hash-verified, but it conflicts with the pinned state.",
+  },
+  drainAgreement: {
+    label: "DRAIN · PRE-DRAIN AGREEMENT",
+    tone: "record-agree",
+    status: "AGREE · VERIFIED",
+    ruling: "ON_MANDATE",
+    hash: "0xdf2167c1373ff12e2f34a19c819ebdcc2fdf452df3796eb059a89b0f4500187a",
+    reason: "The pinned state shows the single declared provider 0x1111111111111111111111111111111111111111 with payments=0 and total=0, and the verified enrolled record confirms spend_total=0 with 0 payments to that destination, far below the 24-payment dozens threshold.",
+    recordUrl: "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/Cc0Fc6A4B3C6a83F5Ca0Dd1614B557297f52A7F3.txt",
+    recordHash: "E4C441241A8B490830010D28911700F9154C7BB1443F08C2908FD7FBC7F4CC2A",
+    recordStatus: "Verified record agrees with the pinned pre-drain state.",
+  },
+  drainClaim: {
+    label: "DRAIN · RESULTING CLAIM",
+    tone: "claim-paid",
+    status: "PAID · VERIFIED",
+    ruling: "PAID",
+    hash: "0x4aa83979d5f5e10167d7c046c425b52d93a2485023e1e71342e451b9f734f29a",
+    reason: "Matching evidence was verified at Review; after the declared-provider payment drained the vault, Claim paid the 1000 loss in full.",
+    claim: "Loss 1000 · payout 1000",
+    recordUrl: "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/Cc0Fc6A4B3C6a83F5Ca0Dd1614B557297f52A7F3.txt",
+    recordHash: "E4C441241A8B490830010D28911700F9154C7BB1443F08C2908FD7FBC7F4CC2A",
+    recordStatus: "Verified record from the covered, legitimate case.",
+  },
+};
+
+function C1EvidenceCard({ item }) {
+  return <article className={`c1-evidence-card ${item.tone}`}>
+    <div className="c1-card-kicker"><span>{item.label}</span><strong>{item.status}</strong></div>
+    <div className="c1-card-heading"><strong className={item.ruling === "ON_MANDATE" ? "on" : item.ruling === "OFF_MANDATE" ? "off" : "conflict"}>{item.ruling}</strong><EvidenceTag>receipt-backed</EvidenceTag></div>
+    <p className="c1-reason">“{item.reason}”</p>
+    {item.claim && <div className="c1-claim-outcome">{item.claim}</div>}
+    <a className="c1-tx" href={`${CONFIG.explorer}${item.hash}`} target="_blank" rel="noreferrer">{item.hash} ↗</a>
+    <div className="c1-record-meta"><span>Record status</span><strong>{item.recordStatus}</strong></div>
+    <a className="c1-record-link" href={item.recordUrl} target="_blank" rel="noreferrer">Open raw record ↗</a>
+  </article>;
+}
+
+function EvidenceRecordSection() {
+  const verification = C1_RECORD_EVIDENCE.burstAgreement;
+  return <section id="evidence-record" className="evidence-record evidence-panel" aria-labelledby="evidence-record-title">
+    <div className="section-intro compact"><div className="eyebrow">06 / EVIDENCE RECORD</div><h2 id="evidence-record-title">A second source can change the ruling.</h2><p className="scope-note">Receipt-backed C1 cases — fixed historical examples, not your wallet.</p></div>
+    <p className="evidence-record-explainer">Review doesn't just read the vault — it independently fetches a hash-locked record and checks that the two agree. If they don't, the ruling changes and payout is blocked.</p>
+    <div className="c1-evidence-grid"><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstConflict} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainClaim} /></div>
+    <div className="c1-verification-block"><div className="eyebrow">JUDGE VERIFICATION · BURST RECORD</div><p>Open the raw record, compare its bytes to the on-chain hash, then inspect the independent timestamp anchors.</p><div className="c1-verification-links"><div><a href={verification.recordUrl} target="_blank" rel="noreferrer">Raw GitHub record ↗</a><code className="c1-url">{verification.recordUrl}</code></div><span>record_hash · <code>{verification.recordHash}</code> <em>click the raw record to verify</em></span><a href={verification.archiveUrl} target="_blank" rel="noreferrer">Archive.org snapshot ↗</a><a href={verification.otsUrl} target="_blank" rel="noreferrer">OpenTimestamps proof (.ots) ↗</a></div><pre className="c1-command-note">curl -L &lt;record-url&gt; | sha256sum{`\n`}Expected hash: {verification.recordHash}</pre><p className="c1-honest-note">OpenTimestamps proof is published; Bitcoin confirmation is still pending. This is project-authored evidence, not third-party evidence.</p></div>
+    <div className="c1-guarantees"><div className="eyebrow">THREE GUARANTEES</div><div className="c1-guarantee-grid"><div><strong>Tamper-evident</strong><span>hash verified by every validator independently</span></div><div><strong>Backdating-resistant</strong><span>Archive.org + OpenTimestamps anchor the record's existence, independent of the project</span></div><div><strong>Load-bearing</strong><span>mismatch produces a different ruling and blocks payout — not just a message</span></div></div></div>
+  </section>;
+}
+
 function ReceiptLinks({ title, hashes }) {
   const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
   return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
@@ -723,6 +799,7 @@ function ProductPage() {
     ["cover", "Cover", "Pool · bond · last claim", "Protocol State"],
     ["capital", "Capital & Yield", "LP pool · shares", "Protocol State"],
     ["chain", "Chain Record", "Governor · Bradbury 4221", "Protocol State"],
+    ["evidence-record", "Evidence Record", "C1 hash-locked cases", "Evidence Record"],
     ["secondary", "Secondary Evidence", "Allowlist evidence", "Demo Fixtures & Reference"],
     ["demo", "Demo Fixtures", "Healthy · burst · drain examples", "Demo Fixtures & Reference"],
     ["history", "Reference Receipts", "Historic runs · not current state", "Demo Fixtures & Reference"],
@@ -758,9 +835,10 @@ function ProductPage() {
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
         {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Global protocol record.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Consolidated Governor</strong><small>judgment · halt · cover/lifeform · economics</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
-        {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">06 / SECONDARY EVIDENCE · ALLOWLIST</div><p className="scope-note">Fixed example evidence — not your wallet.</p></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></div>}
-        {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">07 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, and Drain are fixed examples.</strong><span>These live reads demonstrate the judgment rules; they are not the result of your connected wallet.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div></section><section className="drain" aria-labelledby="drain-title"><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "current drain fixture · live state" }, live.fixtures.drain, retryLiveReads, "CURRENT DRAIN STATE")}</div></section></section>}
-        {activeProductSection === "history" && <section className="history evidence-panel" aria-labelledby="history-title"><div className="section-intro compact"><div className="eyebrow">08 / REFERENCE RECEIPTS</div><p className="scope-note">Historical reference — not current wallet data.</p></div><details className="receipt-appendix"><summary>Show historic receipts and their purpose</summary><div className="read-status" role="note"><strong>These receipts document earlier global demo runs.</strong><span>They do not change when a new wallet connects and do not represent the current Review result.</span></div><div className="history-list"><ReceiptLinks title="Judgment · healthy fixture · reference run" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Judgment · burst fixture · reference run" hashes={RECEIPTS.judgmentBurst} /><ReceiptLinks title="Judgment · drain v1 · reference run" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Judgment · drain v2 · reference run" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Judgment · consolidated drain suite · reference run" hashes={RECEIPTS.drainSuite} /><ReceiptLinks title="Halt sequence · reference run" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /><ReceiptLinks title="Lineage · claim, proposal, promotion · reference run" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></div></details></section>}
+        {activeProductSection === "evidence-record" && <EvidenceRecordSection />}
+        {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">07 / SECONDARY EVIDENCE · ALLOWLIST</div><p className="scope-note">Fixed example evidence — not your wallet.</p></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></div>}
+        {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">08 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, and Drain are fixed examples.</strong><span>These live reads demonstrate the judgment rules; they are not the result of your connected wallet.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div></section><section className="drain" aria-labelledby="drain-title"><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "current drain fixture · live state" }, live.fixtures.drain, retryLiveReads, "CURRENT DRAIN STATE")}</div></section></section>}
+        {activeProductSection === "history" && <section className="history evidence-panel" aria-labelledby="history-title"><div className="section-intro compact"><div className="eyebrow">09 / REFERENCE RECEIPTS</div><p className="scope-note">Historical reference — not current wallet data.</p></div><details className="receipt-appendix"><summary>Show historic receipts and their purpose</summary><div className="read-status" role="note"><strong>These receipts document earlier global demo runs.</strong><span>They do not change when a new wallet connects and do not represent the current Review result.</span></div><div className="history-list"><ReceiptLinks title="Judgment · healthy fixture · reference run" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Judgment · burst fixture · reference run" hashes={RECEIPTS.judgmentBurst} /><ReceiptLinks title="Judgment · drain v1 · reference run" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Judgment · drain v2 · reference run" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Judgment · consolidated drain suite · reference run" hashes={RECEIPTS.drainSuite} /><ReceiptLinks title="Halt sequence · reference run" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /><ReceiptLinks title="Lineage · claim, proposal, promotion · reference run" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></div></details></section>}
       </div>
     </div>
     <footer className="wrap footer"><span>STELE</span></footer>
