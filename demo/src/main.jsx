@@ -441,10 +441,10 @@ function ActionPanel() {
     window.setTimeout(poll, 5000);
   };
 
-  if (!isConnected) return <div className="write-panel"><strong>Actions</strong><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
+  if (!isConnected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
-    <div className="write-panel-head"><strong>Connected actions</strong><span>{address}</span></div>
+    <div className="write-panel-head"><span>Connected wallet</span><span>{address}</span></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
@@ -580,14 +580,13 @@ function ProductPage() {
 
   return <main className="product-page">
     <header className="product-label wrap"><span>STELE / LIVE EVIDENCE · GENLAYER BRADBURY · CHAIN 4221</span><a href="/docs">Read the docs ↗</a></header>
-    <div className="product-cta wrap"><a href="#actions" onClick={(event) => { event.preventDefault(); selectProductSection("actions"); }}>Try it live →</a><span>Connected Actions is the interactive core. Select one action at a time.</span></div>
+    <div className="product-cta wrap"><a href="#actions" onClick={(event) => { event.preventDefault(); selectProductSection("actions"); }}>Try it live →</a></div>
     <div className="product-layout wrap">
       <aside className="product-sidebar" aria-label="Evidence sections">
         <div className="sidebar-label">EVIDENCE INDEX</div>
         <nav>{productSections.map(([id, label, detail]) => <button key={id} className={activeProductSection === id ? "active" : ""} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button>)}</nav>
       </aside>
       <div className="product-main">
-        <div className="panel-context"><span>Showing</span><strong>{productSections.find(([id]) => id === activeProductSection)?.[1]}</strong><small>Live data and receipt-backed evidence stay labeled.</small></div>
         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / CONNECTED ACTIONS</div></div><ActionPanel /></section>}
         {activeProductSection === "judgment" && <div className="evidence-panel"><section className="contrast" aria-labelledby="contrast-title"><div className="section-intro compact"><div className="eyebrow">02 / JUDGMENT</div></div><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div><ReceiptLinks title="Historical Bradbury receipts · healthy" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Historical Bradbury receipts · burst" hashes={RECEIPTS.judgmentBurst} /></section><section className="drain" aria-labelledby="drain-title"><div className="section-intro compact"><div className="eyebrow">02 / JUDGMENT · DRAIN</div></div><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "v1 drain fixture · live current state" }, live.fixtures.drain, retryLiveReads, "V1 / DRAIN")}{renderCase(FIXTURES.drain, live.fixtures.drain, retryLiveReads, "V2 / DRAIN")}</div><ReceiptLinks title="Historical Bradbury receipts · v1 drain" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Historical Bradbury receipts · v2 drain" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Consolidated drain suite" hashes={RECEIPTS.drainSuite} /></section></div>}
         {activeProductSection === "halt" && <section className="halt evidence-panel" aria-labelledby="halt-title"><div className="section-intro compact"><div className="eyebrow">03 / HALT</div></div><ReceiptLinks title="Bradbury halt sequence · seed, OFF review, rejected spend, expiry, successful spend" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /></section>}
@@ -598,7 +597,7 @@ function ProductPage() {
         {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">08 / SECONDARY EVIDENCE · ALLOWLIST</div></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section><section className="pricing" aria-labelledby="pricing-title"><div className="section-intro compact"><div className="eyebrow">09 / SECONDARY EVIDENCE · PRICING</div></div><ReadState message="No Governor pricing view is exposed; static pricing values are intentionally not displayed." /></section></div>}
       </div>
     </div>
-    <footer className="wrap footer"><span>STELE</span><span>live evidence page · chain 4221</span></footer>
+    <footer className="wrap footer"><span>STELE</span></footer>
   </main>;
 }
 
