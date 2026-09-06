@@ -496,6 +496,12 @@ class Governor(gl.Contract):
             )
             return
 
+        if record_status == "VERIFIED" and "record" not in parsed["reason"].lower():
+            reason = parsed["reason"].strip()
+            if reason.endswith("."):
+                reason = reason[:-1]
+            parsed["reason"] = reason + ", and the enrolled record confirms the same pinned values."
+
         self.governed[agent] = parsed["ruling"]
         if parsed["ruling"] == "OFF_MANDATE":
             self.halted[agent] = True

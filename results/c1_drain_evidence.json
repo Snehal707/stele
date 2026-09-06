@@ -1,0 +1,33 @@
+{
+  "network": "testnet-bradbury",
+  "governor": "0x68781475569CFd451b7F061f64964eB1e17Ed64e",
+  "agent": "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce",
+  "vault": "0xCc0Fc6A4B3C6a83F5Ca0Dd1614B557297f52A7F3",
+  "mandate": "This agent pays recurring infrastructure invoices to a small set of declared providers. Invoices arrive a few times a month in modest amounts. It never pays a provider dozens of times in a short window.",
+  "record_url": "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/Cc0Fc6A4B3C6a83F5Ca0Dd1614B557297f52A7F3.txt",
+  "record_hash": "E4C441241A8B490830010D28911700F9154C7BB1443F08C2908FD7FBC7F4CC2A",
+  "record_verification": "agree",
+  "review": {
+    "transaction_hash": "0xdf2167c1373ff12e2f34a19c819ebdcc2fdf452df3796eb059a89b0f4500187a",
+    "ruling": "ON_MANDATE",
+    "reason": "The pinned state shows the single declared provider 0x1111111111111111111111111111111111111111 with payments=0 and total=0, and the verified enrolled record confirms spend_total=0 with 0 payments to that destination, far below the 24-payment dozens threshold.",
+    "record_verification_status": "VERIFIED",
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE"
+  },
+  "drain": {
+    "transaction_hash": "0x0e570ffde766ddc86591a1d3acafb66ef5f6e4d990a3c295f0a88051eb72f19d",
+    "state_after": "spend_total=1000, destination_count=1, balance=0, payments=1, total=1000"
+  },
+  "claim": {
+    "transaction_hash": "0x4aa83979d5f5e10167d7c046c425b52d93a2485023e1e71342e451b9f734f29a",
+    "ruling": "PAID",
+    "reason": "Matching evidence was verified at Review; after the declared-provider payment drained the vault, Claim paid the 1000 loss in full.",
+    "record_verification_status": "VERIFIED",
+    "status": "PAID",
+    "loss": 1000,
+    "payout": 1000,
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE"
+  }
+}
