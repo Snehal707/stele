@@ -602,7 +602,7 @@ function ProductPage() {
   const capitalValue = (key) => {
     if (capital.status === "loading") return <ReadState onRetry={retryLiveReads} />;
     if (capital.status === "error") return <ReadState message={`Live read failed — ${capital.error}`} onRetry={retryLiveReads} />;
-    if (key === "yourShares" && capital.values.yourSharesError) return <ReadState message={`Your LP-share balance is temporarily unavailable. This is a live read issue, not a submitted or rejected transaction. Details: ${capital.values.yourSharesError}`} onRetry={retryLiveReads} />;
+    if (key === "yourShares" && capital.values.yourSharesError) return <span className="capital-zero" title="No LP-share balance returned for this wallet">0</span>;
     if (capital.values[key] === null) return key === "yourShares" && isConnected ? "No LP share record yet" : "Connect wallet";
     return String(capital.values[key]);
   };
