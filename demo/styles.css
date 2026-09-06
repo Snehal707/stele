@@ -132,7 +132,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .c1-card-kicker strong { color: var(--ink); text-align: right; }
 .record-conflict .c1-card-kicker strong { color: var(--red); }
 .c1-card-heading { display: flex; align-items: baseline; gap: 8px; margin: 28px 0 14px; }
-.c1-card-heading strong { font: 800 clamp(1.2rem, 2.5vw, 2rem)/1 var(--mono); letter-spacing: -.06em; overflow-wrap: anywhere; }
+.c1-card-heading strong { font: 800 clamp(1rem, 1.7vw, 1.65rem)/1 var(--mono); letter-spacing: -.08em; white-space: nowrap; word-break: normal; }
 .c1-card-heading strong.on { color: var(--green); }
 .c1-card-heading strong.off, .c1-card-heading strong.conflict { color: var(--red); }
 .claim-paid .c1-card-heading strong { color: var(--accent); }
