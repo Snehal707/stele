@@ -405,6 +405,14 @@ wrong spelling cost three failed deploys.
 returning empty or non-JSON despite strict criteria; `-32005` capacity errors
 on Bradbury.
 
+**Fee-aware SDK compatibility:** the v2 fee estimator currently cannot be used
+against this Bradbury deployment. `estimateTransactionFeesForWrite()` reaches
+Bradbury's FeeManager and the live RPC reverts on `quoteGasPrice()` before a
+transaction hash exists. This is a protocol/SDK release mismatch, not wallet
+balance or transaction capacity. Test the v2 fee-funded flow on GenLayer's
+Studio-dev environment (`https://studio-next.genlayer.com/contracts`) until
+Bradbury exposes the matching fee-manager interface.
+
 ---
 
 ## Limitations
