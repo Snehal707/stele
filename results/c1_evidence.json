@@ -1,30 +1,30 @@
 {
   "status": "reviews_verified_external_timestamp_confirmation_pending",
   "network": "testnet-bradbury",
-  "governor": "0x5FB523beAb086E2133992e944D362d61f093ffbC",
-  "governor_deployment_transaction": "0x0ec45a051723b11c00ded18413bfbfd8d06ea56fd95cba500384144f110f2330",
+  "governor": "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
+  "governor_deployment_transaction": "0x5ac890f7d5ce794148b6afb8d03a557975e29925efc7ae247049b119081018a6",
   "agreement_case": {
     "agent": "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a",
     "vault": "0xD1c7E47c916e934701df2751591994bD1c3506E0",
     "record_url": "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt",
     "record_hash": "356FBA068599C25B04F532537E539E3604174FD9E9DCAF87E16FA3E14A131438",
-    "enrollment_transaction": "0x9f5b74e97ce908e21b69d6fadb6fc2c6320f78d89c0dc2cc45024c295ec896d6",
-    "review_transaction": "0xe49745854dee7b48280f2259679b99612e0e9fb1eb444f7d381c68e596fa7ae7",
-    "ruling": "ON_MANDATE",
+    "enrollment_transaction": "0x3d0b848bdfb460c6de9f8766b9221862620290c2b63a51aab522da0653f87a01",
+    "review_transaction": "0xdd5c2f9748ee17e7917d5b8a45b1f4e70b5f437fbdf7636086703d7e478c86f9",
+    "ruling": "OFF_MANDATE",
     "execution": "FINISHED_WITH_RETURN",
     "consensus": "AGREE",
     "web_evidence_status": "VERIFIED",
     "web_source": "none",
     "pinned_state": "spend_total=220\ndestination_count=1\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220",
-    "reason": "The pinned state shows 48 payments to the declared provider 0x1111111111111111111111111111111111111111, which is not dozens in a short window, and the enrolled record confirms a total spend of 220, which does not empty the vault balance of 780."
+    "reason": "The pinned state shows 48 payments to the declared provider 0x1111111111111111111111111111111111111111, and the enrolled record confirms this number, which exceeds 23 and thus constitutes dozens in the short window, violating the mandate."
   },
   "conflict_case": {
     "agent": "0x851705477939F31D2699c86547782fecabF470C0",
     "vault": "0x539d3Ba32d909396Df9B5977048B4338cF94575F",
     "record_url": "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
     "record_hash": "A257FF4C9D87199F34020EE2A109BA6C437E76415CCE27A3CE0CD12CDF47B504",
-    "enrollment_transaction": "0xb98bdcf02e6b6feec56a55bc2e35e8b50e3492f4d9d0c897c8bee681de31ef35",
-    "review_transaction": "0x7806152a37dc3c0f18b5665d39bb3154c9c39c9f88e8939aa08e75ea33590831",
+    "enrollment_transaction": "0x47f7865854d7a8fe03aba140489af690649e177ad5722f400a6b6de22ff47dfa",
+    "review_transaction": "0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3",
     "ruling": "EVIDENCE_CONFLICT",
     "execution": "FINISHED_WITH_RETURN",
     "consensus": "AGREE",
@@ -34,7 +34,7 @@
     "reason": "Evidence conflict: pinned vault state has spend_total=123, balance=877, and payments=28, but the enrolled record claims spend_total=123, balance=877, and payments=3; operator review is required."
   },
   "claim_conflict_case": {
-    "transaction": "0xb5eb5f1e33d67b1d9ce994d2135de37cc129d88aeb207942915d6a1238842397",
+    "transaction": "0x543c4af029c19dee95b7509923b0cdf90135026f22290496c2610cda0e92eed3",
     "execution": "FINISHED_WITH_RETURN",
     "consensus": "AGREE",
     "status": "DENIED_EVIDENCE_CONFLICT",
