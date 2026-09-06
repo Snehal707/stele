@@ -105,6 +105,15 @@ function describeWriteError(error) {
   return parts.join(" | ");
 }
 
+function describeReadError(error) {
+  const raw = error?.shortMessage || error?.message || String(error || "Unknown Bradbury read error");
+  const message = String(raw).replace(/\s+/g, " ").trim();
+  if (/missing or invalid parameters/i.test(message)) return "Bradbury rejected the view parameters.";
+  if (/timeout|timed out|deadline/i.test(message)) return "Bradbury did not answer before the read timed out.";
+  if (/network|fetch|transport|connect/i.test(message)) return "The Bradbury RPC could not be reached.";
+  return message.length > 180 ? `${message.slice(0, 177)}…` : message;
+}
+
 function parsePinnedFields(pinned) {
   if (typeof pinned !== "string") return null;
   const lines = pinned.split("\n");
@@ -144,7 +153,7 @@ function ReadState({ message = "Loading live Bradbury read…", onRetry }) {
 
 function renderCase(item, record, onRetry, labelOverride = item.label) {
   if (!record || record.status === "loading") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState onRetry={onRetry} /></article>;
-  if (record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState message={`Live read failed, retrying: ${record.error}`} onRetry={onRetry} /></article>;
+  if (record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState message={`Live read failed — ${record.error}`} onRetry={onRetry} /></article>;
   const fields = record.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && String(fieldValue) !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{String(fieldValue)}</strong><EvidenceTag>live read</EvidenceTag></div>);
   return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}>
     <div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div>
@@ -486,7 +495,8 @@ function ProductPage() {
           ]);
           return { status: "ready", ...liveFixtureRecord(state, verdict) };
         } catch (error) {
-          return { status: "error", error: describeWriteError(error) };
+          console.error("Stele live fixture read failed", error);
+          return { status: "error", error: describeReadError(error) };
         }
       };
       const readLineage = async () => {
@@ -498,7 +508,8 @@ function ProductPage() {
           ]);
           return { status: "ready", versionOne, versionTwo, claim };
         } catch (error) {
-          return { status: "error", error: describeWriteError(error) };
+          console.error("Stele live lineage read failed", error);
+          return { status: "error", error: describeReadError(error) };
         }
       };
       const [healthy, burst, drain, strangers, lineageResult] = await Promise.all([
@@ -536,8 +547,10 @@ function ProductPage() {
         }
       } catch (error) {
         if (active) {
-          setCapital({ status: "error", error: describeWriteError(error) });
-          setReadStatus(`Live Bradbury read failed, retrying: ${describeWriteError(error)}`);
+          console.error("Stele live capital read failed", error);
+          const message = describeReadError(error);
+          setCapital({ status: "error", error: message });
+          setReadStatus(`Live Bradbury reads unavailable — ${message} Retry live reads.`);
         }
       }
     })();
@@ -546,7 +559,7 @@ function ProductPage() {
 
   const capitalValue = (key) => {
     if (capital.status === "loading") return <ReadState onRetry={retryLiveReads} />;
-    if (capital.status === "error") return <ReadState message={`Live read failed, retrying: ${capital.error}`} onRetry={retryLiveReads} />;
+    if (capital.status === "error") return <ReadState message={`Live read failed — ${capital.error}`} onRetry={retryLiveReads} />;
     if (capital.values[key] === null) return "Connect wallet";
     return String(capital.values[key]);
   };
@@ -590,7 +603,7 @@ function ProductPage() {
         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / CONNECTED ACTIONS</div></div><ActionPanel /></section>}
         {activeProductSection === "judgment" && <div className="evidence-panel"><section className="contrast" aria-labelledby="contrast-title"><div className="section-intro compact"><div className="eyebrow">02 / JUDGMENT</div></div><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div><ReceiptLinks title="Historical Bradbury receipts · healthy" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Historical Bradbury receipts · burst" hashes={RECEIPTS.judgmentBurst} /></section><section className="drain" aria-labelledby="drain-title"><div className="section-intro compact"><div className="eyebrow">02 / JUDGMENT · DRAIN</div></div><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "v1 drain fixture · live current state" }, live.fixtures.drain, retryLiveReads, "V1 / DRAIN")}{renderCase(FIXTURES.drain, live.fixtures.drain, retryLiveReads, "V2 / DRAIN")}</div><ReceiptLinks title="Historical Bradbury receipts · v1 drain" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Historical Bradbury receipts · v2 drain" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Consolidated drain suite" hashes={RECEIPTS.drainSuite} /></section></div>}
         {activeProductSection === "halt" && <section className="halt evidence-panel" aria-labelledby="halt-title"><div className="section-intro compact"><div className="eyebrow">03 / HALT</div></div><ReceiptLinks title="Bradbury halt sequence · seed, OFF review, rejected spend, expiry, successful spend" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /></section>}
-        {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">04 / LINEAGE</div></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionTwo.text}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed, retrying: ${lineage.error}`} onRetry={retryLiveReads} />}<ReceiptLinks title="Lineage receipts · claim, proposal, promotion" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></section>}
+        {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">04 / LINEAGE</div></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionTwo.text}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}<ReceiptLinks title="Lineage receipts · claim, proposal, promotion" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">05 / COVER</div></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">06 / CAPITAL AND YIELD</div></div><div className="pricing-grid capital-grid"><div><span>LP POOL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES</span><strong>{isConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
         {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">07 / CHAIN RECORD</div></div><div className="chain-list"><article className="chain-record"><div><strong>Consolidated Governor</strong><small>judgment · halt · cover/lifeform · economics</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
