@@ -124,7 +124,7 @@ function classifyWriteFailure(error, message) {
   if (error?.code === 4001 || lower.includes("user rejected") || lower.includes("rejected the request")) return { category: "Wallet rejected the request", guidance: "The wallet declined this action. No transaction hash was returned." };
   if (lower.includes("insufficient funds") || lower.includes("insufficient balance") || lower.includes("0 gen") || lower.includes("balance")) return { category: "Insufficient Bradbury GEN", guidance: "The connected account did not have enough native GEN for this action and its fee." };
   if (lower.includes("wrong network") || lower.includes("chain") || lower.includes("network")) return { category: "Wrong network or chain", guidance: "The wallet/provider rejected the request because it was not using GenLayer Bradbury (4221)." };
-  if (message.includes("-32005") || lower.includes("capacity")) return { category: "Bradbury capacity", guidance: "Bradbury is at capacity. No transaction hash was returned; wait and retry." };
+  if (message.includes("-32005") || lower.includes("capacity")) return { category: "Bradbury is busy", guidance: "Bradbury is busy — retry later. This is a known network capacity limit, not an app error. No transaction hash was returned." };
   if (lower.includes("nonce")) return { category: "Nonce or pending-transaction conflict", guidance: "The wallet and public RPC disagreed about the next transaction nonce." };
   if (message.includes("-32603") || lower.includes("transaction failed") || lower.includes("originalerror")) return { category: "Wallet/RPC internal error", guidance: "The request failed without a transaction hash. The raw details below are needed to identify whether the wallet or Bradbury RPC rejected it." };
   return { category: "Wallet/RPC error", guidance: "The request failed before a transaction hash was returned." };
@@ -520,7 +520,7 @@ function ActionPanel({ onResultChange }) {
         setActiveAction(null);
         setWriteFailure({ label, ...failure, details: message, hashReturned: false });
         setStatus(capacity
-          ? `${label}: network at capacity; try again later.`
+          ? `${label}: Bradbury is busy — retry later.`
           : `${label}: ${message}`);
       }
     } finally {
