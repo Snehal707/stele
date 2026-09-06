@@ -796,7 +796,7 @@ function LandingPage() {
       <a className="brand-mark" href="/">STELE</a>
       <div className="landing-nav-links"><a href="#why">Why Stele</a><a href="#mechanism">Mechanism</a><a className="nav-product" href="/product">Open live product ↗</a></div>
     </nav>
-    <section className="landing-hero wrap" style={{ backgroundImage: `url(${steleHero})` }}>
+    <section className="landing-hero wrap" style={{ "--hero-image": `url(${steleHero})` }}>
       <div className="hero-overlay" aria-hidden="true" />
       <div className="hero-copy">
         <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>

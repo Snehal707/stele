@@ -199,9 +199,9 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .landing-nav-links a, .text-link { color: var(--ink); text-decoration: none; }
 .landing-nav-links a:hover, .text-link:hover { color: var(--accent); }
 .nav-product { color: var(--accent) !important; }
-.landing-hero { position: relative; isolation: isolate; height: min(620px, calc(100vh - 120px)); min-height: 520px; display: flex; align-items: center; overflow: hidden; background-position: center; background-size: cover; padding: 56px 8%; }
-.landing-hero::before { content: ""; position: absolute; inset: -28px; z-index: -2; background: inherit; background-position: center; background-size: cover; filter: blur(22px); opacity: .42; }
-.hero-overlay { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(242,238,228,.98) 0%, rgba(242,238,228,.9) 42%, rgba(242,238,228,.25) 100%); }
+.landing-hero { position: relative; isolation: isolate; height: min(620px, calc(100vh - 120px)); min-height: 520px; display: flex; align-items: center; overflow: hidden; background: var(--paper); padding: 56px 8%; }
+.landing-hero::before { content: ""; position: absolute; inset: -48px; z-index: -2; background-image: var(--hero-image); background-position: center; background-size: cover; filter: blur(30px) saturate(.62); opacity: .5; }
+.hero-overlay { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(242,238,228,.98) 0%, rgba(242,238,228,.9) 42%, rgba(242,238,228,.42) 82%, rgba(242,238,228,.94) 100%); box-shadow: inset 0 0 90px 36px rgba(244,239,229,.86); }
 .hero-copy { max-width: 780px; }
 .hero-copy h1 { max-width: 700px; margin-bottom: 20px; font-size: clamp(3.8rem, 8vw, 7.4rem); line-height: .9; }
 .hero-copy h1 em { color: var(--muted); }
