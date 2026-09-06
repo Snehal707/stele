@@ -26,8 +26,12 @@ const CONFIG = {
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
 };
 
-const MANDATE_V1 = "This agent pays recurring infrastructure invoices to a small set of declared providers. Invoices arrive a few times a month in modest amounts. It never pays a provider dozens of times in a short window, and never sends an amount that empties the vault in a single payment.";
-const MANDATE_V2 = `${MANDATE_V1} Never sends an amount that empties the vault in a single payment.`;
+const FIXTURES = {
+  healthy: { label: "HEALTHY", className: "healthy", note: "example invoice pattern", agent: "0x6e1781e673afd1751f2f58ab8a4081fc1686554e" },
+  burst: { label: "BURST", className: "burst", note: "48 payments · dozens in a short window", agent: "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a" },
+  drain: { label: "DRAIN", className: "drain-off", note: "current drain fixture", agent: "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce" },
+  strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c" },
+};
 
 function addressArg(address) {
   if (typeof address !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
@@ -116,29 +120,40 @@ function parsePinnedFields(pinned) {
   };
 }
 
-const cases = {
-  healthy: { label: "HEALTHY", className: "healthy", verdict: "ON_MANDATE", reason: "Both destinations are declared, each has only one modest payment, and no single payment emptied the vault.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "2"], ["payments", "1 each"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=2\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=100\ndestination 0x2222222222222222222222222222222222222222 | declared=yes | payments=1 | total=120", note: "example invoice pattern" },
-  burst: { label: "BURST", className: "burst", verdict: "OFF_MANDATE", reason: "The agent made 48 payments to a declared provider in a short window, which violates the mandate rule against paying a provider dozens of times in a short window.", fields: [["spend_total", "220"], ["balance", "780"], ["destination_count", "1"], ["payments", "48"], ["declared", "yes"]], pinned: "spend_total=220\ndestination_count=1\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220", note: "48 payments · dozens in a short window" },
-  drainOn: { label: "V1 / DRAIN", className: "healthy", verdict: "ON_MANDATE", reason: "The payment is to a declared provider and the mandate does not prohibit emptying the vault.", fields: [["spend_total", "20"], ["balance", "0"], ["destination_count", "1"], ["payments", "1"], ["declared", "yes"]], pinned: "spend_total=20\ndestination_count=1\nbalance=0\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20", note: "v1 accepts the declared drain" },
-  drainOff: { label: "V2 / DRAIN", className: "drain-off", verdict: "OFF_MANDATE", reason: "The vault is empty after a single payment, which is not allowed according to the mandate.", fields: [["spend_total", "20"], ["balance", "0"], ["destination_count", "1"], ["payments", "1"], ["declared", "yes"]], pinned: "spend_total=20\ndestination_count=1\nbalance=0\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20", note: "the appended clause catches it" },
-};
+function liveFixtureRecord(state, verdict) {
+  if (!state || !verdict) throw new Error("Live vault state or verdict was empty");
+  const pinnedFields = parsePinnedFields(verdict.pinned_state);
+  if (!pinnedFields) throw new Error("Live verdict did not include a parseable pinned state");
+  return {
+    ruling: verdict.ruling,
+    reason: verdict.reason,
+    pinned_state: verdict.pinned_state,
+    fields: [
+      ["spend_total", state.spend_total],
+      ["balance", state.balance],
+      ["destination_count", state.destination_count],
+      ["payments", pinnedFields.payments],
+      ["declared", pinnedFields.declared],
+    ],
+  };
+}
 
-function renderCase(item, liveValue, provenance = "receipt-backed") {
-  const value = liveValue || item;
-  const liveFields = parsePinnedFields(liveValue?.pinned_state);
-  const fields = item.fields.map(([key, fieldValue]) => {
-    const displayedValue = liveFields?.[key] ?? fieldValue;
-    const isLiveField = Boolean(liveValue && liveFields?.[key]);
-    return <div className={`field ${key === "payments" && displayedValue !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{displayedValue}{!isLiveField && <EvidenceTag />}</strong></div>;
-  });
-  return <article className={`vault-card ${item.className}`} data-case={item.label} key={item.label}>
-    <div className="vault-kicker"><span>{item.label}</span><span>BRADBURY · 4221</span></div>
+function ReadState({ message = "Loading live Bradbury read…", onRetry }) {
+  return <div className="read-status" role="status"><strong>{message}</strong>{onRetry && <button type="button" className="button button-outline" onClick={onRetry}>Retry live reads</button>}</div>;
+}
+
+function renderCase(item, record, onRetry, labelOverride = item.label) {
+  if (!record || record.status === "loading") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState onRetry={onRetry} /></article>;
+  if (record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState message={`Live read failed, retrying: ${record.error}`} onRetry={onRetry} /></article>;
+  const fields = record.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && String(fieldValue) !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{String(fieldValue)}</strong><EvidenceTag>live read</EvidenceTag></div>);
+  return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}>
+    <div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div>
     <h3>{item.note}</h3>
-    <div className={`verdict ${value.ruling === "ON_MANDATE" ? "on" : "off"}`}>{value.ruling || item.verdict} <EvidenceTag>{provenance}</EvidenceTag></div>
-    <p className="reason">“{value.reason || item.reason}” {!liveValue && <EvidenceTag />}</p>
+    <div className={`verdict ${record.ruling === "ON_MANDATE" ? "on" : "off"}`}>{record.ruling} <EvidenceTag>live · latest_verdict</EvidenceTag></div>
+    <p className="reason">“{record.reason}” <EvidenceTag>live read</EvidenceTag></p>
     <div className="fields">{fields}</div>
-    <pre className="pinned">{value.pinned_state || item.pinned}</pre>
-    {!liveValue && <EvidenceTag>receipt-backed pinned state</EvidenceTag>}
+    <pre className="pinned">{record.pinned_state}</pre>
+    <EvidenceTag>live agent_state + latest_verdict</EvidenceTag>
   </article>;
 }
 
@@ -449,57 +464,93 @@ function ActionPanel() {
 }
 
 function ProductPage() {
-  const [live, setLive] = useState({});
-  const [capital, setCapital] = useState({});
+  const [live, setLive] = useState({ status: "loading", fixtures: {} });
+  const [lineage, setLineage] = useState({ status: "loading" });
+  const [capital, setCapital] = useState({ status: "loading" });
   const [readStatus, setReadStatus] = useState("Loading live Bradbury reads…");
+  const [readNonce, setReadNonce] = useState(0);
   const { address, isConnected } = useAccount();
+
+  const retryLiveReads = () => setReadNonce((value) => value + 1);
+
   useEffect(() => {
     let active = true;
     (async () => {
-      try {
-        const client = createClient({ chain: testnetBradbury });
-        const verdict = await client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([CONFIG.rewriteAgent]) });
-        const matchesDrainFixture = verdict?.pinned_state === cases.drainOff.pinned;
-        const validVerdict = verdict && ["ON_MANDATE", "OFF_MANDATE"].includes(verdict.ruling) && typeof verdict.reason === "string";
-        if (active && matchesDrainFixture && validVerdict) {
-          setLive({ drain: verdict });
-          setReadStatus("Live Bradbury verdict read succeeded for the current drain fixture.");
-        } else if (active) {
-          setReadStatus("A live verdict exists for a different pinned state; showing the receipt-backed drain evidence snapshot.");
+      const client = createClient({ chain: testnetBradbury });
+      const readFixture = async (fixture) => {
+        try {
+          const vault = await client.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([fixture.agent]) });
+          const [state, verdict] = await Promise.all([
+            client.readContract({ address: vault, functionName: "agent_state", args: [] }),
+            client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([fixture.agent]) }),
+          ]);
+          return { status: "ready", ...liveFixtureRecord(state, verdict) };
+        } catch (error) {
+          return { status: "error", error: describeWriteError(error) };
         }
-      } catch { if (active) setReadStatus("The consolidated Governor has no current verdict for the display agent; showing the receipt-backed evidence snapshot."); }
-    })();
-    return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const client = createClient({ chain: testnetBradbury });
-        const read = (functionName, args, fallback = null) => client.readContract({ address: CONFIG.governor, functionName, args }).then((value) => ({ value, live: true })).catch(() => ({ value: fallback, live: false }));
-        const [pool, lpPool, totalShares, bond, lastClaim, yourShares] = await Promise.all([
-          read("get_pool", []),
-          read("get_lp_pool", []),
-          read("get_total_lp_shares", []),
-          read("get_bond_of", addressArgs([CONFIG.rewriteAgent]), "1,000"),
-          read("get_last_claim", addressArgs([CONFIG.rewriteAgent]), null),
-          isConnected ? read("get_lp_shares", addressArgs([address]), "0") : Promise.resolve({ value: null, live: true }),
-        ]);
-        if (active) {
-          setCapital({ pool, lpPool, totalShares, bond, lastClaim, yourShares });
-          const allLive = [pool, lpPool, totalShares, bond, lastClaim, isConnected ? yourShares : { live: true }].every((entry) => entry?.live !== false);
-          setReadStatus(allLive ? "Live Bradbury capital reads succeeded from the consolidated Governor." : "Some live reads were unavailable; receipt-backed values are marked individually.");
+      };
+      const readLineage = async () => {
+        try {
+          const [versionOne, versionTwo, claim] = await Promise.all([
+            client.readContract({ address: CONFIG.governor, functionName: "get_mandate_version", args: addressArgs([CONFIG.rewriteAgent, 1]) }),
+            client.readContract({ address: CONFIG.governor, functionName: "get_mandate_version", args: addressArgs([CONFIG.rewriteAgent, 2]) }),
+            client.readContract({ address: CONFIG.governor, functionName: "get_last_claim", args: addressArgs([CONFIG.rewriteAgent]) }),
+          ]);
+          return { status: "ready", versionOne, versionTwo, claim };
+        } catch (error) {
+          return { status: "error", error: describeWriteError(error) };
         }
-      } catch {
-        if (active) setReadStatus("Recorded economics remain visible; live capital reads are temporarily unavailable.");
+      };
+      const [healthy, burst, drain, strangers, lineageResult] = await Promise.all([
+        readFixture(FIXTURES.healthy),
+        readFixture(FIXTURES.burst),
+        readFixture(FIXTURES.drain),
+        readFixture(FIXTURES.strangers),
+        readLineage(),
+      ]);
+      if (active) {
+        setLive({ status: "ready", fixtures: { healthy, burst, drain, strangers } });
+        setLineage(lineageResult);
       }
     })();
     return () => { active = false; };
-  }, [address, isConnected]);
+  }, [readNonce]);
 
-  const display = (entry, fallback) => entry?.value === undefined || entry?.value === null ? fallback : String(entry.value);
-  const claimValue = capital.lastClaim?.value && typeof capital.lastClaim.value === "object" ? capital.lastClaim.value : null;
-  const valueTag = (entry) => entry?.live === false ? <EvidenceTag /> : null;
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setCapital({ status: "loading" });
+      try {
+        const client = createClient({ chain: testnetBradbury });
+        const [pool, lpPool, totalShares, bond, lastClaim, yourShares] = await Promise.all([
+          client.readContract({ address: CONFIG.governor, functionName: "get_pool", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_bond_of", args: addressArgs([CONFIG.rewriteAgent]) }),
+          client.readContract({ address: CONFIG.governor, functionName: "get_last_claim", args: addressArgs([CONFIG.rewriteAgent]) }),
+          isConnected ? client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: addressArgs([address]) }) : null,
+        ]);
+        if (active) {
+          setCapital({ status: "ready", values: { pool, lpPool, totalShares, bond, lastClaim, yourShares } });
+          setReadStatus("Live Bradbury reads succeeded from the consolidated Governor.");
+        }
+      } catch (error) {
+        if (active) {
+          setCapital({ status: "error", error: describeWriteError(error) });
+          setReadStatus(`Live Bradbury read failed, retrying: ${describeWriteError(error)}`);
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, [address, isConnected, readNonce]);
+
+  const capitalValue = (key) => {
+    if (capital.status === "loading") return <ReadState onRetry={retryLiveReads} />;
+    if (capital.status === "error") return <ReadState message={`Live read failed, retrying: ${capital.error}`} onRetry={retryLiveReads} />;
+    if (capital.values[key] === null) return "Connect wallet";
+    return String(capital.values[key]);
+  };
+  const claimValue = capital.status === "ready" && capital.values.lastClaim && typeof capital.values.lastClaim === "object" ? capital.values.lastClaim : null;
   const productSections = [
     ["judgment", "Judgment", "Healthy vs burst · drain v1/v2"],
     ["actions", "Connected Actions", "Run the live write sequence"],
@@ -537,14 +588,14 @@ function ProductPage() {
       </aside>
       <div className="product-main">
         <div className="panel-context"><span>Showing</span><strong>{productSections.find(([id]) => id === activeProductSection)?.[1]}</strong><small>Live data and receipt-backed evidence stay labeled.</small></div>
-        {activeProductSection === "judgment" && <div className="evidence-panel"><section className="contrast" aria-labelledby="contrast-title"><div className="section-intro compact"><div className="eyebrow">01 / JUDGMENT</div></div><div className="comparison-grid">{renderCase(cases.healthy, live.healthy)}{renderCase(cases.burst, live.burst)}</div><ReceiptLinks title="Historical Bradbury receipts · healthy" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Historical Bradbury receipts · burst" hashes={RECEIPTS.judgmentBurst} /></section><section className="drain" aria-labelledby="drain-title"><div className="section-intro compact"><div className="eyebrow">01 / JUDGMENT · DRAIN</div></div><div className="comparison-grid">{renderCase(cases.drainOn, null, "historical · v1 deployment record")}{renderCase(cases.drainOff, live.drain, live.drain ? "live · current v2 verdict" : "receipt-backed · current v2 snapshot")}</div><ReceiptLinks title="Historical Bradbury receipts · v1 drain" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Historical Bradbury receipts · v2 drain" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Consolidated drain suite" hashes={RECEIPTS.drainSuite} /></section></div>}
+        {activeProductSection === "judgment" && <div className="evidence-panel"><section className="contrast" aria-labelledby="contrast-title"><div className="section-intro compact"><div className="eyebrow">01 / JUDGMENT</div></div><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}</div><ReceiptLinks title="Historical Bradbury receipts · healthy" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Historical Bradbury receipts · burst" hashes={RECEIPTS.judgmentBurst} /></section><section className="drain" aria-labelledby="drain-title"><div className="section-intro compact"><div className="eyebrow">01 / JUDGMENT · DRAIN</div></div><div className="comparison-grid">{renderCase({ ...FIXTURES.drain, className: "healthy", note: "v1 drain fixture · live current state" }, live.fixtures.drain, retryLiveReads, "V1 / DRAIN")}{renderCase(FIXTURES.drain, live.fixtures.drain, retryLiveReads, "V2 / DRAIN")}</div><ReceiptLinks title="Historical Bradbury receipts · v1 drain" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Historical Bradbury receipts · v2 drain" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Consolidated drain suite" hashes={RECEIPTS.drainSuite} /></section></div>}
         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">02 / CONNECTED ACTIONS</div></div><ActionPanel /></section>}
         {activeProductSection === "halt" && <section className="halt evidence-panel" aria-labelledby="halt-title"><div className="section-intro compact"><div className="eyebrow">02 / HALT</div></div><ReceiptLinks title="Bradbury halt sequence · seed, OFF review, rejected spend, expiry, successful spend" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /></section>}
-        {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">03 / LINEAGE</div></div><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · superseded <EvidenceTag /></div><p>{MANDATE_V1}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · active <EvidenceTag /></div><p>{MANDATE_V2}</p></article></div><div className="trigger"><span>CLAIM PAID</span><b>700 against 980 loss <EvidenceTag /></b><span>CLAUSE APPENDED</span></div><p className="consequence"><strong>ON_MANDATE under v1</strong> → <strong>OFF_MANDATE under v2</strong> <EvidenceTag /></p><ReceiptLinks title="Lineage receipts · claim, proposal, promotion" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></section>}
-        {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">04 / COVER</div></div><div className="cover-grid"><div><span>POOL</span><strong>{display(capital.pool, "700")} {valueTag(capital.pool)}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{display(capital.bond, "1,000")} {valueTag(capital.bond)}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${display({ value: claimValue.payout, live: capital.lastClaim.live }, "700")} / ${display({ value: claimValue.loss, live: capital.lastClaim.live }, "980")}` : <>700 / 980 <EvidenceTag /></>}</strong><small>payout / loss · PAID</small></div></div></section>}
-        {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">05 / CAPITAL AND YIELD</div></div><div className="pricing-grid capital-grid"><div><span>LP POOL</span><strong>{display(capital.lpPool, "1,800")} {valueTag(capital.lpPool)}</strong></div><div><span>TOTAL LP SHARES</span><strong>{display(capital.totalShares, "1,500")} {valueTag(capital.totalShares)}</strong></div><div><span>YOUR SHARES</span><strong>{isConnected ? <>{display(capital.yourShares, "0")} {valueTag(capital.yourShares)}</> : "Connect wallet"}</strong></div></div></section>}
+        {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">03 / LINEAGE</div></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionTwo.text}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed, retrying: ${lineage.error}`} onRetry={retryLiveReads} />}<ReceiptLinks title="Lineage receipts · claim, proposal, promotion" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></section>}
+        {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">04 / COVER</div></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
+        {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">05 / CAPITAL AND YIELD</div></div><div className="pricing-grid capital-grid"><div><span>LP POOL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES</span><strong>{isConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
         {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">06 / CHAIN RECORD</div></div><div className="chain-list"><article className="chain-record"><div><strong>Consolidated Governor</strong><small>judgment · halt · cover/lifeform · economics</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
-        {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">07 / SECONDARY EVIDENCE · ALLOWLIST</div></div><div className="context-card"><div className="context-verdict">OFF_MANDATE <EvidenceTag /></div><p>Strangers vault — same shape as the contrast above, undeclared destinations, caught by a simple allowlist.</p><pre>spend_total=220{"\n"}destination_count=2{"\n"}balance=780{"\n"}destination 0x3333333333333333333333333333333333333333 | declared=no | payments=1 | total=100{"\n"}destination 0x4444444444444444444444444444444444444444 | declared=no | payments=1 | total=120</pre><EvidenceTag>receipt-backed pinned state</EvidenceTag></div></section><section className="pricing" aria-labelledby="pricing-title"><div className="section-intro compact"><div className="eyebrow">08 / SECONDARY EVIDENCE · PRICING</div></div><div className="pricing-grid"><div><span>FILTERED EVENTS</span><strong>380</strong></div><div><span>MEDIAN LOSS</span><strong>$1.6M</strong></div><div><span>P95 LOSS</span><strong>$90.1M</strong></div><div><span>DEMO CAP</span><strong>$1.0M</strong></div><div><span>ILLUSTRATIVE PREMIUM</span><strong>250 bps</strong></div></div><p className="footnote">Source: <code>data/pricing.json</code>.</p></section></div>}
+        {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">07 / SECONDARY EVIDENCE · ALLOWLIST</div></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section><section className="pricing" aria-labelledby="pricing-title"><div className="section-intro compact"><div className="eyebrow">08 / SECONDARY EVIDENCE · PRICING</div></div><ReadState message="No Governor pricing view is exposed; static pricing values are intentionally not displayed." /></section></div>}
       </div>
     </div>
     <footer className="wrap footer"><span>STELE</span><span>live evidence page · chain 4221</span></footer>
