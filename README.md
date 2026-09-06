@@ -258,9 +258,9 @@ actually produced them:
 
 | Case | Governor | Receipt | Ruling | Reason |
 |---|---|---|---|---|
-| Burst agreement | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | `0xdd5c2f9748ee17e7917d5b8a45b1f4e70b5f437fbdf7636086703d7e478c86f9` | `OFF_MANDATE` | Pinned state and record agree on 48 payments; the review reason says this exceeds 23 and constitutes dozens in the short window. |
+| Burst agreement | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | `0xdd5c2f9748ee17e7917d5b8a45b1f4e70b5f437fbdf7636086703d7e478c86f9` | `OFF_MANDATE` | The pinned state shows 48 payments to the declared provider `0x1111111111111111111111111111111111111111`, and the enrolled record confirms this number, which exceeds 23 and thus constitutes dozens in the short window, violating the mandate. |
 | Burst conflict | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | `0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3` | `EVIDENCE_CONFLICT` | Pinned state says `payments=28`; the enrolled record says `payments=3`; operator review is required. |
-| Drain agreement | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | `0xdf2167c1373ff12e2f34a19c819ebdcc2fdf452df3796eb059a89b0f4500187a` | `ON_MANDATE` | Pinned state and record agree on the declared provider with `payments=0` and `total=0`, below the dozens threshold. |
+| Drain agreement | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | `0xdf2167c1373ff12e2f34a19c819ebdcc2fdf452df3796eb059a89b0f4500187a` | `ON_MANDATE` | The pinned state shows the single declared provider `0x1111111111111111111111111111111111111111` with payments=0 and total=0, and the verified enrolled record confirms spend_total=0 with 0 payments to that destination, far below the 24-payment dozens threshold. |
 | Drain claim | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | `0x4aa83979d5f5e10167d7c046c425b52d93a2485023e1e71342e451b9f734f29a` | `PAID` | Matching evidence was verified at Review; after the declared-provider payment drained the vault, Claim paid the 1000 loss in full. |
 
 Full machine-readable receipts are in `results/c1_evidence.json` (burst
