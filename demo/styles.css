@@ -135,6 +135,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .action-result-empty { padding: 18px 24px; }
 .action-result-empty .section-intro { margin-bottom: 10px; }
 .action-result-empty > span { display: block; margin-top: 6px; color: var(--muted); }
+.action-outcome { margin-top: 18px; }
 .result-meta, .result-status-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 14px; }
 .result-status-grid { grid-template-columns: repeat(2, 1fr); }
 .result-meta > div, .result-status-grid > div { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); }

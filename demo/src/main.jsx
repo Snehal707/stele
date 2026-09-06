@@ -213,9 +213,9 @@ function YourRunResult({ action, result }) {
   if (!result) return <section className="read-status your-result action-result-empty" role="status"><div className="section-intro compact"><div className="eyebrow">{title}</div></div><strong>Run {action} above to see your result here.</strong><span>This slot stays reserved for this action and will not be replaced by another result.</span></section>;
   return <section className="your-result" aria-labelledby="your-result-title">
     <div className="section-intro compact"><div className="eyebrow">{title}</div></div>
-    <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span>{result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>}</div></div>
+    <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>{result.hash ? "Transaction" : "Result"}</span>{result.hash ? (result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>) : <strong>NO TRANSACTION SUBMITTED</strong>}</div></div>
     <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
-    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : `${result.action} completed. This action does not produce a verdict.`}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
+    {result.outcomeMessage ? <div className="read-status action-outcome" role="status"><strong>{result.outcomeTitle || `${result.action} response`}</strong><span>{result.outcomeMessage}</span></div> : result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : `${result.action} completed. This action does not produce a verdict.`}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
   </section>;
 }
 
@@ -273,6 +273,11 @@ function ActionPanel({ onResultChange }) {
     return true;
   };
 
+  const showActionOutcome = (label, outcomeTitle, outcomeMessage) => {
+    onResultChange({ action: label, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Read result", execution: "NO_TRANSACTION", outcomeTitle, outcomeMessage });
+    setStatus(`${label}: ${outcomeMessage}`);
+  };
+
   const proposeMandate = async () => {
     if (!requireWallet()) return;
     if (localTestWallet) {
@@ -290,11 +295,11 @@ function ActionPanel({ onResultChange }) {
         });
       } catch (error) {
         console.info("Stele propose blocked: no claim record for configured agent", error);
-        setStatus("Propose: requires a paid claim first.");
+        showActionOutcome("Propose", "Proposal not submitted", "No paid claim was found for this agent, so a mandate proposal was not submitted.");
         return;
       }
       if (!claim || claim.status !== "PAID") {
-        setStatus("Propose: requires a paid claim first.");
+        showActionOutcome("Propose", "Proposal not submitted", "This agent has no paid claim yet, so a mandate proposal was not submitted.");
         return;
       }
       const [version, promotion] = await Promise.all([
@@ -310,14 +315,14 @@ function ActionPanel({ onResultChange }) {
         }).catch(() => null),
       ]);
       if (version?.status === "active" || promotion === "PASSED") {
-        setStatus("Propose: mandate v2 is already promoted for this agent.");
+        showActionOutcome("Propose", "Mandate already promoted", "Mandate v2 is already promoted for this agent.");
         return;
       }
       setStatus("Propose: paid-claim precondition passed; submitting…");
       await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
     } catch (error) {
       console.error("Stele propose preflight failed", error);
-      setStatus(`Propose preflight failed: ${describeWriteError(error)}`);
+      showActionOutcome("Propose", "Proposal preflight failed", describeWriteError(error));
     }
   };
 
@@ -336,18 +341,20 @@ function ActionPanel({ onResultChange }) {
           args: addressArgs([CONFIG.rewriteAgent]),
         });
         if (claim?.status === "PAID") {
-          setStatus("Claim: already settled for this agent.");
+          const payout = claim.payout ?? claim.paid ?? "unknown";
+          const loss = claim.loss ?? claim.loss_amount ?? "unknown";
+          showActionOutcome("Claim", "Claim already settled", `Claim already settled for this agent — paid ${String(payout)} against ${String(loss)} loss.`);
           return;
         }
       } catch (error) {
         console.error("Stele claim preflight failed", error);
-        setStatus(`Claim preflight failed: ${describeWriteError(error)}`);
+        showActionOutcome("Claim", "Claim preflight failed", describeWriteError(error));
         return;
       }
       await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
     } catch (error) {
       console.error("Stele claim preflight failed", error);
-      setStatus(`Claim preflight failed: ${describeWriteError(error)}`);
+      showActionOutcome("Claim", "Claim preflight failed", describeWriteError(error));
     }
   };
 
@@ -370,7 +377,7 @@ function ActionPanel({ onResultChange }) {
       await runWrite("Deposit", "deposit", [], minimum);
     } catch (error) {
       console.error("Stele deposit preflight failed", error);
-      setStatus(`Deposit preflight failed: ${describeWriteError(error)}`);
+      showActionOutcome("Deposit", "Deposit preflight failed", describeWriteError(error));
     }
   };
 
