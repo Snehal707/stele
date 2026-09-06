@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { RainbowKitProvider, ConnectButton, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -152,6 +152,21 @@ function ActionPanel() {
   const [uncertainSubmission, setUncertainSubmission] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
   const [now, setNow] = useState(Date.now());
+  const autoSwitchAttempted = useRef(false);
+
+  useEffect(() => {
+    if (!isConnected) {
+      autoSwitchAttempted.current = false;
+      return;
+    }
+    if (!chain || chain.id === bradbury.id || autoSwitchAttempted.current) return;
+    autoSwitchAttempted.current = true;
+    setStatus("Wallet connected · requesting GenLayer Bradbury (4221)…");
+    switchChain({ chainId: bradbury.id }).catch((error) => {
+      console.info("Stele automatic Bradbury switch was not approved", error);
+      setStatus("Wallet connected · approve the switch to GenLayer Bradbury (4221) before submitting.");
+    });
+  }, [isConnected, chain?.id, switchChain]);
 
   useEffect(() => {
     if (!transactions.some((transaction) => transaction.pending)) return undefined;
