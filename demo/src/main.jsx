@@ -533,16 +533,25 @@ function ProductPage() {
       setCapital({ status: "loading" });
       try {
         const client = createClient({ chain: testnetBradbury });
-        const [pool, lpPool, totalShares, bond, lastClaim, yourShares] = await Promise.all([
+        const [pool, lpPool, totalShares, bond, lastClaim] = await Promise.all([
           client.readContract({ address: CONFIG.governor, functionName: "get_pool", args: [] }),
           client.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
           client.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
           client.readContract({ address: CONFIG.governor, functionName: "get_bond_of", args: addressArgs([CONFIG.rewriteAgent]) }),
           client.readContract({ address: CONFIG.governor, functionName: "get_last_claim", args: addressArgs([CONFIG.rewriteAgent]) }),
-          isConnected ? client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: addressArgs([address]) }) : null,
         ]);
+        let yourShares = null;
+        let yourSharesError = null;
+        if (isConnected) {
+          try {
+            yourShares = await client.readContract({ address: CONFIG.governor, functionName: "get_lp_shares", args: addressArgs([address]) });
+          } catch (error) {
+            console.info("Stele wallet-specific LP share read unavailable", error);
+            yourSharesError = describeReadError(error);
+          }
+        }
         if (active) {
-          setCapital({ status: "ready", values: { pool, lpPool, totalShares, bond, lastClaim, yourShares } });
+          setCapital({ status: "ready", values: { pool, lpPool, totalShares, bond, lastClaim, yourShares, yourSharesError } });
           setReadStatus("Live Bradbury reads succeeded from the consolidated Governor.");
         }
       } catch (error) {
@@ -560,7 +569,8 @@ function ProductPage() {
   const capitalValue = (key) => {
     if (capital.status === "loading") return <ReadState onRetry={retryLiveReads} />;
     if (capital.status === "error") return <ReadState message={`Live read failed — ${capital.error}`} onRetry={retryLiveReads} />;
-    if (capital.values[key] === null) return "Connect wallet";
+    if (key === "yourShares" && capital.values.yourSharesError) return <ReadState message={`Your shares read unavailable — ${capital.values.yourSharesError}`} onRetry={retryLiveReads} />;
+    if (capital.values[key] === null) return key === "yourShares" && isConnected ? "No LP share record yet" : "Connect wallet";
     return String(capital.values[key]);
   };
   const claimValue = capital.status === "ready" && capital.values.lastClaim && typeof capital.values.lastClaim === "object" ? capital.values.lastClaim : null;
