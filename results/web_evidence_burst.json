@@ -1,0 +1,37 @@
+{
+  "status": "verified",
+  "timestamp_utc": "2026-09-07",
+  "fixture": "burst",
+  "agent": "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a",
+  "vault": "0xD1c7E47c916e934701df2751591994bD1c3506E0",
+  "explorer_url": "https://explorer-bradbury.genlayer.com/address/0xD1c7E47c916e934701df2751591994bD1c3506E0",
+  "studio_fetch_test": {
+    "text_mode": {"returned_payload": true, "payload_length": 283, "classification": "shell_only"},
+    "html_mode": {"returned_payload": true, "payload_length": 33241, "classification": "rendered_html_payload"},
+    "mode_used": "html",
+    "probe_deployment_transaction": "0x24500f4471d8be1e376502148e64e175589f0eb5ad61bf0fdb137126e4f15deb",
+    "probe_contract": "0xc56b4Fc48C14ec50e30F23Bd4c63E03761369D42",
+    "probe_transaction": "0xac40673bad4670b45cec0a1fdcb20eb0437f98df8ea3d0899d95b56c0f34ed46"
+  },
+  "bradbury_deployment": {
+    "governor": "0xedf355a9d78Cd5eEb5DB26a7A101E600d3fc1507",
+    "transaction": "0x2238e69525b46ca5b648d6324c756e48de3f7c3589b35a5f580b43db045f0c1b",
+    "enrollment_transaction": "0xb7775bbee0616f93cfcdb3a837727a0b4761346e6ee71211987dda1a1af0efcc"
+  },
+  "bradbury_review": {
+    "transaction_hash": "0xa3b41e55addb0635bd02bb95e3d5de692ac9bacf412025591760b866d2688b75",
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE",
+    "ruling": "OFF_MANDATE",
+    "reason": "The pinned vault state shows 48 payments totaling 220 to the declared provider, which violates the mandate's prohibition on paying a provider dozens of times in a short window, and the web evidence only confirms an explorer address page for 0xD1c7E47c916e934701df2751591994bD1c3506E0 without corroborating the mandate.",
+    "web_source": "explorer",
+    "render_mode": "html",
+    "pinned_state": "spend_total=220\\ndestination_count=1\\nbalance=780\\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220"
+  },
+  "fallback_pin": {
+    "path": "data/web2/pins/burst_explorer_fallback.txt",
+    "sha256": "73138595941AEE8B856CAF063E84E91D6065E7A99F22D18D1170C2BB673AA9D0",
+    "status": "fallback_only"
+  },
+  "implementation_note": "The code is lint-clean and derives the primary explorer URL from vault_of[agent]. The first deployment path exposed a callable API mistake: prompt_non_comparative requires a callable evidence provider. That was corrected before the verified receipt above."
+}

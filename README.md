@@ -207,6 +207,25 @@ Its `OFF_MANDATE` reason was: “The agent made 48 payments to a declared provid
 in a short window, which violates the mandate rule against paying a provider
 dozens of times in a short window.”
 
+### Web evidence path
+
+`review(agent)` derives the Bradbury explorer address at runtime from
+`vault_of[agent]`; the review API remains single-argument. Inside the consensus
+read it tries `gl.nondet.web.render(explorer_url, mode="text")`, rejects the
+known shell-only response, then tries `mode="html"`. A failed web read never
+halts review: Burst has a dated, hashed fallback-only pin at
+`data/web2/pins/burst_explorer_fallback.txt`, while other fixtures proceed on
+their pinned vault state when no matching fallback exists. The resulting
+`latest_verdict` includes `web_source` (`explorer`, `fallback`, or `none`).
+
+The live Studio probe for the Burst address returned shell-only text (283
+characters), while HTML returned a 33,241-character rendered payload. The
+payload was therefore accepted in `html` mode. The page exposed address/network
+context, not transaction-level payment facts, so the review reason must take
+the concrete payment count from pinned state and use the web page only as
+corroborating context. Full probe and Bradbury deployment evidence is recorded
+in `results/web_evidence_burst.json`.
+
 ---
 
 ### Autonomous agent — separate process

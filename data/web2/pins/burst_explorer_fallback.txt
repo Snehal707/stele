@@ -1,0 +1,7 @@
+snapshot_date_utc=2026-09-06
+source_url=https://explorer-bradbury.genlayer.com/address/0xD1c7E47c916e934701df2751591994bD1c3506E0
+snapshot_status=FALLBACK_ONLY
+network=Testnet Bradbury (Phase 1)
+page_title=Address 0xD1c7E47c916e934701df2751591994bD1c3506E0
+visible_text=Address 0xD1c7E47c916e934701df2751591994bD1c3506E0 | Testnet Bradbury (Phase 1) | Transactions | Validators | Epochs | Contracts | Analytics
+note=Fallback corpus only; never primary evidence.
