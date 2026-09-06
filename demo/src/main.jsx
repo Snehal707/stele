@@ -108,7 +108,7 @@ function describeWriteError(error) {
 function describeReadError(error) {
   const raw = error?.shortMessage || error?.message || String(error || "Unknown Bradbury read error");
   const message = String(raw).replace(/\s+/g, " ").trim();
-  if (/missing or invalid parameters/i.test(message)) return "Bradbury rejected the view parameters.";
+  if (/missing or invalid parameters/i.test(message)) return "Bradbury did not return this live read. No wallet action was submitted.";
   if (/timeout|timed out|deadline/i.test(message)) return "Bradbury did not answer before the read timed out.";
   if (/network|fetch|transport|connect/i.test(message)) return "The Bradbury RPC could not be reached.";
   return message.length > 180 ? `${message.slice(0, 177)}…` : message;
@@ -172,7 +172,7 @@ function YourRunResult({ result }) {
     <div className="section-intro compact"><div className="eyebrow">YOUR RESULT · {result.action.toUpperCase()}</div></div>
     <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span><a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a></div></div>
     <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
-    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : "Action resolved without a Review verdict."}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
+    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : "This action does not produce a Review verdict."}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
   </section>;
 }
 
@@ -585,7 +585,7 @@ function ProductPage() {
         }
         if (active) {
           setCapital({ status: "ready", values: { pool, lpPool, totalShares, bond, lastClaim, yourShares, yourSharesError } });
-          setReadStatus("Live Bradbury reads succeeded from the consolidated Governor.");
+          setReadStatus(yourSharesError ? "Global Bradbury reads succeeded; your wallet LP-share read is unavailable." : "Live Bradbury reads succeeded from the consolidated Governor.");
         }
       } catch (error) {
         if (active) {
@@ -602,7 +602,7 @@ function ProductPage() {
   const capitalValue = (key) => {
     if (capital.status === "loading") return <ReadState onRetry={retryLiveReads} />;
     if (capital.status === "error") return <ReadState message={`Live read failed — ${capital.error}`} onRetry={retryLiveReads} />;
-    if (key === "yourShares" && capital.values.yourSharesError) return <ReadState message={`Your shares read unavailable — ${capital.values.yourSharesError}`} onRetry={retryLiveReads} />;
+    if (key === "yourShares" && capital.values.yourSharesError) return <ReadState message={`Your LP-share balance is temporarily unavailable. This is a live read issue, not a submitted or rejected transaction. Details: ${capital.values.yourSharesError}`} onRetry={retryLiveReads} />;
     if (capital.values[key] === null) return key === "yourShares" && isConnected ? "No LP share record yet" : "Connect wallet";
     return String(capital.values[key]);
   };
