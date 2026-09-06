@@ -109,6 +109,9 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .chain-record a { color: var(--accent); font: 11px var(--mono); text-decoration: none; } .chain-record a:hover { text-decoration: underline; }
 .read-status { margin-top: 28px; padding: 16px; border: 1px dashed var(--line); color: var(--muted); font-size: .9rem; line-height: 1.5; }
 .read-status strong { color: var(--ink); } .method-list { display: block; margin-top: 8px; font-size: 11px; }
+.read-status span { display: block; margin-top: 6px; }
+.section-note { max-width: 720px; margin: 0; color: var(--muted); line-height: 1.5; }
+.history-list { max-width: 980px; }
 .footer { display: flex; justify-content: space-between; gap: 20px; padding: 30px 0 42px; color: var(--muted); font: 11px var(--mono); letter-spacing: .1em; }
 @media (max-width: 760px) {
   .wrap { width: min(100% - 28px, 600px); } .masthead { padding-top: 48px; } section { padding: 48px 0; }
