@@ -166,7 +166,17 @@ function renderCase(item, record, onRetry, labelOverride = item.label) {
   </article>;
 }
 
-function ActionPanel() {
+function YourRunResult({ result }) {
+  if (!result) return <div className="read-status your-result" role="status"><strong>Run an action above to see your result here.</strong><span>Your connected wallet’s transaction, Bradbury consensus status, and Review verdict will appear in this panel.</span></div>;
+  return <section className="your-result" aria-labelledby="your-result-title">
+    <div className="section-intro compact"><div className="eyebrow">YOUR RESULT · {result.action.toUpperCase()}</div></div>
+    <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span><a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a></div></div>
+    <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
+    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : "Action resolved without a Review verdict."}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
+  </section>;
+}
+
+function ActionPanel({ onResultChange }) {
   const { address, isConnected, chain, connector } = useAccount();
   const { data: walletClient } = useWalletClient({ chainId: bradbury.id });
   const { switchChain } = useSwitchChain();
@@ -382,6 +392,7 @@ function ActionPanel() {
       const startedAt = Date.now();
       setUncertainSubmission(null);
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
+      onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "pending", consensus: "Pending", execution: null });
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
       pollReceipt(hash, label, startedAt);
     } catch (error) {
@@ -438,7 +449,27 @@ function ActionPanel() {
           const execution = receipt.txExecutionResultName || ({ 0: "NOT_VOTED", 1: "FINISHED_WITH_RETURN", 2: "FINISHED_WITH_ERROR" }[receipt.txExecutionResult] || "receipt received");
           setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
           setActiveAction(null);
-          setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
+          if (label === "Review" && execution === "FINISHED_WITH_RETURN") {
+            setStatus("Review: consensus resolved ✓ Reading the verdict from the reviewed agent…");
+            try {
+              const readClient = createClient({ chain: testnetBradbury });
+              const vault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([CONFIG.rewriteAgent]) });
+              const [state, verdict] = await Promise.all([
+                readClient.readContract({ address: vault, functionName: "agent_state", args: [] }),
+                readClient.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([CONFIG.rewriteAgent]) }),
+              ]);
+              const record = liveFixtureRecord(state, verdict);
+              onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, verdict: true, ...record });
+              setStatus("Review: resolved verdict loaded from the reviewed agent ✓");
+            } catch (error) {
+              console.error("Stele resolved Review read failed", error);
+              onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, verdictError: describeReadError(error) });
+              setStatus("Review: transaction resolved, but the verdict read needs a retry.");
+            }
+          } else {
+            onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution });
+            setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
+          }
           return;
         }
       } catch { /* keep background polling quiet */ }
@@ -454,6 +485,7 @@ function ActionPanel() {
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     <div className="write-panel-head"><span>Connected wallet</span><span>{address}</span></div>
+    <div className="run-target"><strong>You are submitting actions for configured agent</strong><span>{CONFIG.rewriteAgent}</span><small>using wallet {address}</small></div>
     {chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
@@ -478,6 +510,7 @@ function ProductPage() {
   const [capital, setCapital] = useState({ status: "loading" });
   const [readStatus, setReadStatus] = useState("Loading live Bradbury reads…");
   const [readNonce, setReadNonce] = useState(0);
+  const [yourRun, setYourRun] = useState(null);
   const { address, isConnected } = useAccount();
 
   const retryLiveReads = () => setReadNonce((value) => value + 1);
@@ -575,8 +608,7 @@ function ProductPage() {
   };
   const claimValue = capital.status === "ready" && capital.values.lastClaim && typeof capital.values.lastClaim === "object" ? capital.values.lastClaim : null;
   const productSections = [
-    ["actions", "Connected Actions", "Run the live write sequence"],
-    ["judgment", "Your Judgment", "Connected review result"],
+    ["actions", "Your Run", "Wallet actions + your result"],
     ["halt", "Halt", "OFF review · rejection · expiry"],
     ["lineage", "Lineage", "Claim · mandate · scoring"],
     ["cover", "Cover", "Pool · bond · last claim"],
@@ -612,8 +644,7 @@ function ProductPage() {
         <nav>{productSections.map(([id, label, detail]) => <button key={id} className={activeProductSection === id ? "active" : ""} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button>)}</nav>
       </aside>
       <div className="product-main">
-        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / CONNECTED ACTIONS</div></div><ActionPanel /></section>}
-        {activeProductSection === "judgment" && <section className="judgment evidence-panel" aria-labelledby="judgment-title"><div className="section-intro compact"><div className="eyebrow">02 / YOUR LIVE JUDGMENT</div></div><div className="read-status" role="status"><strong>Your review result appears here after you submit Review.</strong><span>Connect your wallet, run Review in Connected Actions, and wait for Bradbury consensus. This panel is reserved for the connected run—not global demo fixtures.</span></div></section>}
+        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={setYourRun} /><YourRunResult result={yourRun} /></section>}
         {activeProductSection === "halt" && <section className="halt evidence-panel" aria-labelledby="halt-title"><div className="section-intro compact"><div className="eyebrow">03 / HALT</div></div><p className="section-note">Current live actions are shown in Connected Actions. Historical demo receipts are grouped under Historical Evidence.</p></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">04 / LINEAGE</div></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionTwo.text}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">05 / COVER</div></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
