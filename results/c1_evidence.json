@@ -1,0 +1,58 @@
+{
+  "status": "reviews_verified_external_timestamp_confirmation_pending",
+  "network": "testnet-bradbury",
+  "governor": "0x5FB523beAb086E2133992e944D362d61f093ffbC",
+  "governor_deployment_transaction": "0x0ec45a051723b11c00ded18413bfbfd8d06ea56fd95cba500384144f110f2330",
+  "agreement_case": {
+    "agent": "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a",
+    "vault": "0xD1c7E47c916e934701df2751591994bD1c3506E0",
+    "record_url": "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt",
+    "record_hash": "356FBA068599C25B04F532537E539E3604174FD9E9DCAF87E16FA3E14A131438",
+    "enrollment_transaction": "0x9f5b74e97ce908e21b69d6fadb6fc2c6320f78d89c0dc2cc45024c295ec896d6",
+    "review_transaction": "0xe49745854dee7b48280f2259679b99612e0e9fb1eb444f7d381c68e596fa7ae7",
+    "ruling": "ON_MANDATE",
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE",
+    "web_evidence_status": "VERIFIED",
+    "web_source": "none",
+    "pinned_state": "spend_total=220\ndestination_count=1\nbalance=780\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=48 | total=220",
+    "reason": "The pinned state shows 48 payments to the declared provider 0x1111111111111111111111111111111111111111, which is not dozens in a short window, and the enrolled record confirms a total spend of 220, which does not empty the vault balance of 780."
+  },
+  "conflict_case": {
+    "agent": "0x851705477939F31D2699c86547782fecabF470C0",
+    "vault": "0x539d3Ba32d909396Df9B5977048B4338cF94575F",
+    "record_url": "https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
+    "record_hash": "A257FF4C9D87199F34020EE2A109BA6C437E76415CCE27A3CE0CD12CDF47B504",
+    "enrollment_transaction": "0xb98bdcf02e6b6feec56a55bc2e35e8b50e3492f4d9d0c897c8bee681de31ef35",
+    "review_transaction": "0x7806152a37dc3c0f18b5665d39bb3154c9c39c9f88e8939aa08e75ea33590831",
+    "ruling": "EVIDENCE_CONFLICT",
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE",
+    "web_evidence_status": "CONFLICT",
+    "web_source": "none",
+    "pinned_state": "spend_total=123\ndestination_count=1\nbalance=877\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=28 | total=123",
+    "reason": "Evidence conflict: pinned vault state has spend_total=123, balance=877, and payments=28, but the enrolled record claims spend_total=123, balance=877, and payments=3; operator review is required."
+  },
+  "claim_conflict_case": {
+    "transaction": "0xb5eb5f1e33d67b1d9ce994d2135de37cc129d88aeb207942915d6a1238842397",
+    "execution": "FINISHED_WITH_RETURN",
+    "consensus": "AGREE",
+    "status": "DENIED_EVIDENCE_CONFLICT",
+    "payout": 0
+  },
+  "verification": {
+    "agreement_archive_url": "https://web.archive.org/web/20260906202142/https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt",
+    "conflict_archive_url": "https://web.archive.org/web/20260906204025/https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
+    "agreement_record_bytes": 167,
+    "conflict_record_bytes": 166,
+    "agreement_ots": "data/web2/records/D1c7E47c916e934701df2751591994bD1c3506E0.txt.ots",
+    "conflict_ots": "data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots",
+    "curl_sha256sum": {
+      "agreement": "356fba068599c25b04f532537e539e3604174fd9e9dcaf87e16fa3e14a131438",
+      "conflict": "a257ff4c9d87199f34020ee2a109ba6c437e76415cce27a3ce0cd12cdf47b504"
+    },
+    "archive_raw_content_verification": "Both Archive.org snapshots returned HTTP 200 with the exact record body via the id_ replay URL.",
+    "ots_verify": "Both proofs generated successfully; both currently report Pending confirmation in Bitcoin blockchain."
+  },
+  "primitive": "gl.eq_principle.strict_eq wraps fetch_and_parse_record only; mandate judgment uses prompt_non_comparative only after a matching record."
+}

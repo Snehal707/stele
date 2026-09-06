@@ -226,6 +226,63 @@ the concrete payment count from pinned state and use the web page only as
 corroborating context. Full probe and Bradbury deployment evidence is recorded
 in `results/web_evidence_burst.json`.
 
+### C1 hash-locked evidence records
+
+The C1 evidence path makes the enrolled record load-bearing. At enrollment,
+each agent stores a runtime-derived `record_url` and the SHA-256 `record_hash`
+of a frozen plain-text record in `data/web2/records/<vault>.txt`. Every
+validator independently fetches and parses that record inside
+`gl.eq_principle.strict_eq`; raw page bytes are never compared. The record is
+then compared with the pinned vault state before the mandate judgment runs.
+
+The review branches are explicit:
+
+- Matching fields run the normal mandate judgment with both sources in the
+  input.
+- A failed fetch or hash check records `UNAVAILABLE` or `HASH_MISMATCH` and
+  continues on pinned vault state alone; a website cannot halt review.
+- A field mismatch records the distinct `EVIDENCE_CONFLICT` ruling, halts the
+  agent, and `claim()` records `DENIED_EVIDENCE_CONFLICT` with zero payout.
+
+The explorer fetch remains available only through the separate
+`supplementary_explorer_check` path. It is not used by `review()` and cannot
+decide a ruling.
+
+These guarantees must not be conflated:
+
+1. **Tamper-evident.** Every validator independently fetches and hashes the
+   record; a record edited or inconsistently served after enrollment fails
+   consensus before judgment runs.
+2. **Backdating-resistant.** The record's content and existence at enrollment
+   time are independently corroborated by an Internet Archive snapshot and an
+   OpenTimestamps proof anchored toward Bitcoin. The current `.ots` files are
+   awaiting Bitcoin confirmation; `ots verify` reports that pending state.
+3. **Load-bearing.** A record that disagrees with pinned vault state produces
+   `EVIDENCE_CONFLICT` and blocks payout, rather than being decorative evidence.
+
+The records are still authored and hosted by this project. These checks do
+**not** prove that their content is objectively true or constitute independent
+third-party payment data.
+
+#### Judge verification sequence
+
+1. Compute the record URL from the enrolled vault address, exactly as the
+   contract does: `https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/<vault>.txt`.
+2. Run `curl -s <record_url>` and confirm the displayed fields.
+3. Hash the exact fetched bytes with `sha256sum` and compare the result with
+   the enrolled on-chain `record_hash`.
+4. Open the matching Archive.org snapshot and confirm it shows the same record
+   content and timestamp.
+5. Run `ots verify <file>.ots`; wait for Bitcoin confirmation before claiming
+   the timestamp is finalized.
+6. Open the review transaction and confirm the reason cites the pinned fields
+   and the enrolled record.
+7. For a conflict case, confirm the reason names the on-chain/record mismatch
+   and confirm a subsequent `claim()` has status
+   `DENIED_EVIDENCE_CONFLICT` with payout `0`.
+
+The deployed Bradbury proof is recorded in `results/c1_evidence.json`.
+
 ---
 
 ### Autonomous agent — separate process
