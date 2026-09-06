@@ -475,10 +475,24 @@ function ActionPanel({ onResultChange }) {
       if (balance === 0n) {
         throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
       }
+      const write = {
+        address: CONFIG.governor,
+        functionName,
+        args: addressArgs(args),
+        value,
+      };
+      setStatus(`${label}: estimating Bradbury fees…`);
+      const estimate = await client.estimateTransactionFeesForWrite(write);
+      const fees = {
+        distribution: estimate.distribution,
+        ...(estimate.messageAllocations ? { messageAllocations: estimate.messageAllocations } : {}),
+        feeValue: estimate.feeValue,
+      };
+      console.debug(`Stele ${label} fee estimate`, { distribution: estimate.distribution, feeValue: estimate.feeValue, messageAllocations: estimate.messageAllocations });
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: CONFIG.governor, functionName, args: addressArgs(args), value });
+          hash = await client.writeContract({ ...write, fees });
           break;
         } catch (error) {
           const message = describeWriteError(error);
