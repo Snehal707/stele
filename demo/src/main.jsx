@@ -28,7 +28,12 @@ const CONFIG = {
 
 const LOCAL_TEST_WALLET = {
   address: "0x0000000000000000000000000000000000000421",
-  hash: "0x0000000000000000000000000000000000000000000000000000000000000421",
+  hashes: {
+    Review: "0x0000000000000000000000000000000000000000000000000000000000000421",
+    Claim: "0x0000000000000000000000000000000000000000000000000000000000000422",
+    Propose: "0x0000000000000000000000000000000000000000000000000000000000000423",
+    Deposit: "0x0000000000000000000000000000000000000000000000000000000000000424",
+  },
 };
 
 function isLocalTestWalletEnabled() {
@@ -192,13 +197,14 @@ function CompactReadFailure({ onRetry }) {
   return <span className="compact-read-failure" role="status" title="Live read unavailable"><strong>—</strong><button type="button" onClick={onRetry} aria-label="Retry live read">↻</button></span>;
 }
 
-function YourRunResult({ result }) {
-  if (!result) return <div className="read-status your-result" role="status"><strong>Run an action above to see your result here.</strong><span>Your connected wallet’s transaction, Bradbury consensus status, and Review verdict will appear in this panel.</span></div>;
+function YourRunResult({ action, result }) {
+  const title = `YOUR ${action.toUpperCase()} RESULT`;
+  if (!result) return <section className="read-status your-result action-result-empty" role="status"><div className="section-intro compact"><div className="eyebrow">{title}</div></div><strong>Run {action} above to see your result here.</strong><span>This slot stays reserved for this action and will not be replaced by another result.</span></section>;
   return <section className="your-result" aria-labelledby="your-result-title">
-    <div className="section-intro compact"><div className="eyebrow">YOUR RESULT · {result.action.toUpperCase()}</div></div>
+    <div className="section-intro compact"><div className="eyebrow">{title}</div></div>
     <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>Transaction</span>{result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>}</div></div>
     <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
-    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : "This action does not produce a Review verdict."}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
+    {result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>live state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : `${result.action} completed. This action does not produce a verdict.`}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span></div>}
   </section>;
 }
 
@@ -257,6 +263,10 @@ function ActionPanel({ onResultChange }) {
 
   const proposeMandate = async () => {
     if (!requireWallet()) return;
+    if (localTestWallet) {
+      await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
+      return;
+    }
     try {
       const readClient = createClient({ chain: testnetBradbury });
       let claim;
@@ -301,6 +311,10 @@ function ActionPanel({ onResultChange }) {
 
   const fileClaim = async () => {
     if (!requireWallet()) return;
+    if (localTestWallet) {
+      await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
+      return;
+    }
     try {
       const readClient = createClient({ chain: testnetBradbury });
       try {
@@ -327,6 +341,10 @@ function ActionPanel({ onResultChange }) {
 
   const depositMinimum = async () => {
     if (!requireWallet()) return;
+    if (localTestWallet) {
+      await runWrite("Deposit", "deposit", [], 1n);
+      return;
+    }
     try {
       const readClient = createClient({ chain: testnetBradbury });
       const [lpPool, totalShares] = await Promise.all([
@@ -359,7 +377,7 @@ function ActionPanel({ onResultChange }) {
     setStatus(`${label}: submitting…`);
     if (localTestWallet) {
       const startedAt = Date.now();
-      const hash = LOCAL_TEST_WALLET.hash;
+      const hash = LOCAL_TEST_WALLET.hashes[label];
       setTransactions((previous) => [{ label, hash, startedAt, pending: true, localTest: true }, ...previous]);
       onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "pending", consensus: "Pending", execution: null, localTest: true });
       setStatus(`${label}: local test simulation · consensus pending…`);
@@ -575,7 +593,7 @@ function ProductPage() {
   const [capital, setCapital] = useState({ status: "loading" });
   const [readStatus, setReadStatus] = useState("Loading live Bradbury reads…");
   const [readNonce, setReadNonce] = useState(0);
-  const [yourRun, setYourRun] = useState(null);
+  const [yourRun, setYourRun] = useState({});
   const { address, isConnected } = useAccount();
   const localTestWallet = isLocalTestWalletEnabled();
   const walletConnected = isConnected || localTestWallet;
@@ -711,7 +729,7 @@ function ProductPage() {
         <nav>{productSections.map(([id, label, detail, zone], index) => <React.Fragment key={id}>{(index === 0 || productSections[index - 1][3] !== zone) && <div className="zone-divider">{zone}</div>}<button className={activeProductSection === id ? "active" : ""} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button></React.Fragment>)}</nav>
       </aside>
       <div className="product-main">
-        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={setYourRun} /><YourRunResult result={yourRun} /></section>}
+        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}

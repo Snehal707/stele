@@ -130,6 +130,11 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .run-target small { color: var(--muted); }
 .your-result { margin-top: 28px; padding: 24px; border: 2px solid var(--accent); background: rgba(244,239,229,.72); }
 .your-result .section-intro { margin-bottom: 18px; }
+.your-run-results { display: grid; gap: 16px; margin-top: 28px; }
+.your-run-results .your-result, .your-run-results .action-result-empty { margin-top: 0; }
+.action-result-empty { padding: 18px 24px; }
+.action-result-empty .section-intro { margin-bottom: 10px; }
+.action-result-empty > span { display: block; margin-top: 6px; color: var(--muted); }
 .result-meta, .result-status-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 14px; }
 .result-status-grid { grid-template-columns: repeat(2, 1fr); }
 .result-meta > div, .result-status-grid > div { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); }
