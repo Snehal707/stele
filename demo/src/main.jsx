@@ -119,6 +119,17 @@ function describeWriteError(error) {
   return parts.join(" | ");
 }
 
+function classifyWriteFailure(error, message) {
+  const lower = message.toLowerCase();
+  if (error?.code === 4001 || lower.includes("user rejected") || lower.includes("rejected the request")) return { category: "Wallet rejected the request", guidance: "The wallet declined this action. No transaction hash was returned." };
+  if (lower.includes("insufficient funds") || lower.includes("insufficient balance") || lower.includes("0 gen") || lower.includes("balance")) return { category: "Insufficient Bradbury GEN", guidance: "The connected account did not have enough native GEN for this action and its fee." };
+  if (lower.includes("wrong network") || lower.includes("chain") || lower.includes("network")) return { category: "Wrong network or chain", guidance: "The wallet/provider rejected the request because it was not using GenLayer Bradbury (4221)." };
+  if (message.includes("-32005") || lower.includes("capacity")) return { category: "Bradbury capacity", guidance: "Bradbury is at capacity. No transaction hash was returned; wait and retry." };
+  if (lower.includes("nonce")) return { category: "Nonce or pending-transaction conflict", guidance: "The wallet and public RPC disagreed about the next transaction nonce." };
+  if (message.includes("-32603") || lower.includes("transaction failed") || lower.includes("originalerror")) return { category: "Wallet/RPC internal error", guidance: "The request failed without a transaction hash. The raw details below are needed to identify whether the wallet or Bradbury RPC rejected it." };
+  return { category: "Wallet/RPC error", guidance: "The request failed before a transaction hash was returned." };
+}
+
 function describeReadError(error) {
   const raw = error?.shortMessage || error?.message || String(error || "Unknown Bradbury read error");
   const message = String(raw).replace(/\s+/g, " ").trim();
@@ -220,6 +231,7 @@ function ActionPanel({ onResultChange }) {
   const [submitting, setSubmitting] = useState(false);
   const [uncertainSubmission, setUncertainSubmission] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
+  const [writeFailure, setWriteFailure] = useState(null);
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
 
@@ -374,6 +386,7 @@ function ActionPanel({ onResultChange }) {
     }
     setSubmitting(true);
     setActiveAction(label);
+    setWriteFailure(null);
     setStatus(`${label}: submitting…`);
     if (localTestWallet) {
       const startedAt = Date.now();
@@ -487,15 +500,18 @@ function ActionPanel({ onResultChange }) {
       });
       const message = describeWriteError(error);
       const lowerMessage = message.toLowerCase();
+      const failure = classifyWriteFailure(error, message);
       const capacity = message.includes("-32005") || lowerMessage.includes("capacity");
       const userRejected = error?.code === 4001 || lowerMessage.includes("user rejected") || lowerMessage.includes("rejected the request");
       const ambiguous = !capacity && !userRejected && (message.includes("-32603") || lowerMessage.includes("transaction failed") || lowerMessage.includes("originalerror"));
       if (ambiguous) {
         setActiveAction(null);
         setUncertainSubmission({ label, functionName, args, value });
-        setStatus(`${label}: submission uncertain — the wallet returned no transaction hash. Verify wallet activity and Bradbury before retrying.`);
+        setWriteFailure({ label, ...failure, details: message, hashReturned: false });
+        setStatus(`${label}: ${failure.category} — submission status is uncertain.`);
       } else {
         setActiveAction(null);
+        setWriteFailure({ label, ...failure, details: message, hashReturned: false });
         setStatus(capacity
           ? `${label}: network at capacity; try again later.`
           : `${label}: ${message}`);
@@ -579,6 +595,7 @@ function ActionPanel({ onResultChange }) {
     </div>
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
+    {writeFailure && <details className="write-diagnostic"><summary>Why {writeFailure.label} stopped · {writeFailure.category}</summary><p><strong>{writeFailure.guidance}</strong></p><p>Transaction hash returned: <strong>{writeFailure.hashReturned ? "yes" : "no"}</strong></p><pre>{writeFailure.details}</pre></details>}
     {transactions.map(({ label, hash, startedAt, pending, execution, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
       {localTest ? <strong>{hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>}
