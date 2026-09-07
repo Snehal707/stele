@@ -1,0 +1,5 @@
+vault=0x87147c7908fc117612dc7b8aa2dcf8aa96ff8c93
+spend_total=0
+destination_count=1
+balance=1000
+dest=0x1111111111111111111111111111111111111111 payments=0 total=0
