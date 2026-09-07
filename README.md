@@ -373,8 +373,49 @@ The halt VaultTwin is `0xd6b583a251E7B4C9c18cC9af628F068D0240e2e9`.
 
 ## 3. Cover and Lifeform
 
-The complete Bradbury rewrite arc is receipt-backed in `results/runs.jsonl` on
-the consolidated Governor.
+The full lifecycle is provable on one address; C1's evidence-conflict path is
+provable on another. Agent C is the canonical single-address demonstration on
+Bradbury Governor `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172`, with vault
+`0xdc27E76344356C7AE42DB20A889b42895BaD2784` and agent
+`0x434f6b35ccde8c02f07d9693958f4890d2954f41`.
+
+This one contract proves the complete halt/govern/lifeform loop: thin mandate,
+ON review, drain, paid claim, proposal, promotion, v2 activation, and a genuine
+v2 drain that rules OFF. Agent C has no enrolled C1 record, so
+`RECORD_STATUS=UNAVAILABLE` and `web_source=none` are correct and expected for
+this pin-only lifecycle proof. The separate C1 evidence-conflict branch remains
+demonstrated by Agent A on the earlier burst and drain Governors below.
+
+### Canonical Agent C sequence — one Governor
+
+The fixture deployment finalized as
+`0xedf0aafabd6706c536f16928465ced85ef2893e54baec368a3a90e6d5140fc9a`.
+Every lifecycle transaction below used the same Governor; the two seed/reset
+transactions are included so the judge can reproduce the exact pre- and
+post-drain states.
+
+| Step | Transaction hash | Result |
+|---|---|---|
+| enroll covered Agent C | `0x9010ac8c6a7c69b21dbed507dfad22b5370774c673d9721a9d5c8b8ef835a2ed` | thin mandate enrolled |
+| seed initial state | `0x7ec777ebe8ec8d1f38d691e1c1b34081e7d6480dc2d2984d99eb1e91504a212e` | `spend_total=20`, balance `980` |
+| review v1 | `0xd644075c748ef7241d7c4a46050f94cb7b5153ccb368900896e586d7107a84f8` | **ON_MANDATE** |
+| drain v1 | `0x9414184e69ad1dba19cb6b0f7a115cdbe162a0a9557ac2b88db1b5c066439406` | balance `0` |
+| claim | `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb` | **PAID 980** |
+| propose mandate | `0xaaff0848cffd1b360bacb81d5587e14119713f309473d61be4a98746fe031587` | version `10`, `dead_branch` |
+| promote mandate | `0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d` | **PASSED**; v1 `9` superseded, v2 `10` active |
+| reset fixture for genuine v2 drain | `0xf1a00f484ad7731e9d0067ebd70a9f3bfc3a3d0d43785289ba5b330c2b009c52` | funded baseline restored |
+| genuine v2 drain | `0x8953b0cdf3254c109bcde8643142234717f764ecde22800683affff9750782bc` | balance `0` |
+| review v2 regression | `0x7ab41c1f083f2d78a1034149318ec8af9c9ecc02f023bbbd93d7d3f819f9c17a` | **ON_MANDATE** on the one-payment fixture |
+| corrected genuine drain seed | `0x50d73dd9d67b946ef226431344603e043977f944fd5fd1bb013ae3d8069efa7f` | `spend_total=1000`, one payment totaling `1000`, balance `0` |
+| final v2 review | `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956` | **OFF_MANDATE**; unanimous consensus |
+
+The first v2 regression above intentionally exposed an insufficient fixture:
+one payment totaling `20` did not represent the proven drain shape, so its
+`ON_MANDATE` result was correct. The corrected final review uses one payment
+that empties the vault and records this reason: “The pinned state shows a single
+payment of total=1000 to `0x1111111111111111111111111111111111111111` with
+spend_total=1000 and balance=0, which empties the vault in one payment; this
+mandate judgment uses pin-only evidence because `RECORD_STATUS=UNAVAILABLE`.”
 
 The mandate starts **thin** — no clause about emptying the vault. The contract
 rules ON, the vault is drained, the pool pays, and the contract then writes the
