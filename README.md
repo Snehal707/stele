@@ -6,6 +6,8 @@
 - **Drain → Claim — `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb`** — `PAID 980`: the pool pays when the judgment was wrong.
 - **Propose → Promote — `0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d`** — `PASSED`: the contract rewrites its mandate after a paid claim, with no vote.
 - **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
+- `0xe42d9198…3ea3` — C1 `EVIDENCE_CONFLICT` → claim denied, payout 0 (Governor `0xb77B…f0AF`; evidence path required a redeploy)  
+  Studio replay: `gltest --network studionet tests/test_evidence_conflict.py` — 1 passed in 67.17s
 
 All four run on one Governor: `0x8fb0…F172`. Full walkthrough below.
 
