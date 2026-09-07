@@ -191,6 +191,12 @@ does not replace a Bradbury consensus receipt.
 
 Known issue: `genlayer-test`'s temp-file cleanup fails on native Windows (WinError 32); run via WSL or Linux/Mac for a clean pass.
 
+Known limitation: `genlayer-test` 0.29.2 direct mode cannot deploy two
+contracts in one local test process, so this cross-contract test documents the
+expected assertions but cannot complete under the direct runner. Use the
+Studio/integration runner for the two-contract deployment; the Bradbury C1
+conflict receipt is recorded as `0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3`.
+
 ---
 
 ## 1. Judgment — four vaults (Bradbury)

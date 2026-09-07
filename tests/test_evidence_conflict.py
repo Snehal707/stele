@@ -1,6 +1,10 @@
 """Focused direct-mode regression for the C1 conflict-to-deny path.
 
-Requires the GenLayer direct-test pytest plugin (``genlayer-test``).
+Requires the GenLayer direct-test pytest plugin (``genlayer-test``). The
+current direct runner is single-contract-per-process; the Governor + VaultTwin
+deployment below is therefore executable documentation of the expected
+cross-contract assertions and should be run through Studio integration when
+the direct runner raises its contract-registry limitation.
 """
 
 import hashlib
@@ -17,13 +21,29 @@ def address_text(value):
     return str(value)
 
 
+def reset_direct_contract_registry():
+    """Allow gltest 0.29.2 to load a second contract in one test process."""
+    import genlayer.gl.genvm_contracts as genvm_contracts
+
+    genvm_contracts.__known_contract__ = None
+
+
 def test_evidence_conflict_denies_claim_with_zero_payout(
     direct_vm, direct_deploy, direct_alice, direct_bob
 ):
-    governor = direct_deploy("contracts/governor.py")
-    agent = direct_alice
-    provider = direct_bob
-    vault = direct_deploy("contracts/vault_twin.py", 1000, agent, governor.address)
+    governor = direct_deploy("contracts/governor.py", sdk_version="v0.2.12")
+    from genlayer.py.types import Address
+
+    agent = Address(direct_alice)
+    provider = Address(direct_bob)
+    reset_direct_contract_registry()
+    vault = direct_deploy(
+        "contracts/vault_twin.py",
+        1000,
+        agent,
+        governor.address,
+        sdk_version="v0.2.12",
+    )
 
     record = (
         f"vault={address_text(vault.address)}\n"
@@ -35,7 +55,7 @@ def test_evidence_conflict_denies_claim_with_zero_payout(
     record_hash = hashlib.sha256(record.encode("utf-8")).hexdigest()
     direct_vm.mock_web(r".*conflict-record.*", {"status": 200, "body": record})
 
-    direct_vm.sender = direct_alice
+    direct_vm.sender = agent
     governor.enroll_one(
         agent,
         vault.address,
