@@ -11,6 +11,8 @@
 
 First four on `0x8fb0…`; conflict on `0xb77B…` after the evidence redeploy.
 
+A governor judges a vault against a written mandate. Off-mandate → halt. A wrong halt that costs money → the pool pays, then the mandate grows a clause. No vote.
+
 # Stele
 
 An upright inscribed stone where laws were published in public and added to over time.

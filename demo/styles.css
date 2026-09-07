@@ -196,6 +196,22 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .proof-receipt:hover { background: rgba(177,120,66,.08); }
 .proof-receipt:hover code { text-decoration-color: var(--accent); }
 .proof-footnote { max-width: 760px; margin: 18px 0 0; color: var(--muted); font: 12px/1.5 var(--mono); }
+.proof-comparison { margin-top: 30px; padding: 20px; border: 1px solid var(--line); background: rgba(244,239,229,.55); }
+.proof-comparison-lede { margin: 9px 0 16px; color: var(--ink); font: 1.1rem var(--serif); }
+.proof-comparison-grid { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.proof-comparison-grid > div { display: grid; grid-template-columns: minmax(120px, 1fr) repeat(2, minmax(90px, 1fr)); gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(183,174,157,.5); }
+.proof-comparison-grid > div:last-child { border-bottom: 0; }
+.proof-comparison-grid span { color: var(--muted); font: 11px var(--mono); }
+.proof-comparison-grid strong { color: var(--ink); font: 700 12px var(--mono); overflow-wrap: anywhere; }
+.proof-comparison-head { color: var(--accent); border-bottom: 2px solid var(--accent) !important; }
+.proof-comparison-head strong { color: var(--accent); letter-spacing: .1em; }
+.proof-comparison-grid .proof-burst-value { color: var(--red); }
+.proof-comparison-grid .proof-on { color: var(--green); }
+.proof-comparison-grid .proof-off { color: var(--red); }
+.proof-comparison-note { margin: 16px 0 0; color: var(--muted); font: 12px/1.5 var(--mono); }
+.proof-comparison-note code { color: var(--ink); }
+.docs-related-links { color: var(--muted) !important; font: 12px var(--mono) !important; }
+.docs-related-links a { color: var(--accent); }
 .proof-lineage-block { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
 .proof-lineage-block h3 { margin: 9px 0 0; font: 500 clamp(1.8rem, 3vw, 2.8rem)/1 var(--serif); }
 .proof-capital-details, .proof-lineage-block + .receipt-appendix { margin-top: 24px; }
@@ -245,6 +261,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .proof-receipt { grid-template-columns: 1fr auto; gap: 8px 12px; }
   .proof-receipt code { grid-column: 1 / -1; grid-row: 2; }
   .proof-receipt b { grid-column: 2; grid-row: 1; }
+  .proof-comparison-grid > div { grid-template-columns: minmax(100px, 1fr) repeat(2, minmax(70px, 1fr)); gap: 8px; }
   .lineage-arrow { transform: rotate(90deg); }
   .cover-grid > div, .pricing-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .cover-grid > div:last-child, .pricing-grid > div:last-child { border-bottom: 0; }
