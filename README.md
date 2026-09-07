@@ -274,8 +274,16 @@ These guarantees must not be conflated:
    consensus before judgment runs.
 2. **Backdating-resistant.** The record's content and existence at enrollment
    time are independently corroborated by an Internet Archive snapshot and an
-   OpenTimestamps proof anchored toward Bitcoin. The current `.ots` files are
-   awaiting Bitcoin confirmation; `ots verify` reports that pending state.
+   OpenTimestamps proof anchored toward Bitcoin. The burst-agreement proof is
+   now confirmed in Bitcoin block `965831` (2026-09-06 20:58:43 UTC). The
+   conflict proof has since independently resolved through the OpenTimestamps
+   calendars. The public verifier returned Bitcoin attestations at blocks
+   `965831`, `965832`, `965862`, and `965884`; the strongest independent
+   cross-check is [block 965884 on Blockstream](https://blockstream.info/block-height/965884),
+   timestamped `2026-09-07 04:57:21 UTC`. Open the [DGI OpenTimestamps
+   verifier](https://www.dgi.io/ots/) and upload the [conflict proof
+   file](https://github.com/Snehal707/stele/blob/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots)
+   to independently reproduce the result.
 3. **Load-bearing.** A record that disagrees with pinned vault state produces
    `EVIDENCE_CONFLICT` and blocks payout, rather than being decorative evidence.
 
@@ -292,8 +300,14 @@ third-party payment data.
    the enrolled on-chain `record_hash`.
 4. Open the matching Archive.org snapshot and confirm it shows the same record
    content and timestamp.
-5. Run `ots verify <file>.ots`; wait for Bitcoin confirmation before claiming
-   the timestamp is finalized.
+5. Run `ots verify <file>.ots`; only claim the timestamp is finalized when the
+   output includes a Bitcoin block attestation. The burst-agreement proof
+   resolves to block `965831` (2026-09-06 20:58:43 UTC). The conflict proof
+   independently resolves through the [DGI verifier](https://www.dgi.io/ots/),
+   with a public Bitcoin cross-check at [block 965884](https://blockstream.info/block-height/965884)
+   (`2026-09-07 04:57:21 UTC). The raw [conflict `.ots` proof](https://github.com/Snehal707/stele/blob/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots)
+   and [conflict record](https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt)
+   are both public.
 6. Open the review transaction and confirm the reason cites the pinned fields
    and the enrolled record.
 7. For a conflict case, confirm the reason names the on-chain/record mismatch

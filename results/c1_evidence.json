@@ -1,5 +1,5 @@
 {
-  "status": "reviews_verified_external_timestamp_confirmation_pending",
+  "status": "burst_agreement_timestamp_confirmed_conflict_timestamp_confirmed",
   "network": "testnet-bradbury",
   "governor": "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
   "governor_deployment_transaction": "0x5ac890f7d5ce794148b6afb8d03a557975e29925efc7ae247049b119081018a6",
@@ -52,7 +52,16 @@
       "conflict": "a257ff4c9d87199f34020ee2a109ba6c437e76415cce27a3ce0cd12cdf47b504"
     },
     "archive_raw_content_verification": "Both Archive.org snapshots returned HTTP 200 with the exact record body via the id_ replay URL.",
-    "ots_verify": "Both proofs generated successfully; both currently report Pending confirmation in Bitcoin blockchain."
+    "ots_verify": "Burst agreement proof verified with Bitcoin block 965831 (2026-09-06 20:58:43 UTC). Conflict proof independently resolved through the OpenTimestamps calendars with Bitcoin attestations at blocks 965831, 965832, 965862, and 965884; Blockstream reports block 965884 at 2026-09-07 04:57:21 UTC.",
+    "conflict_verifier_url": "https://www.dgi.io/ots/",
+    "conflict_ots_public_url": "https://github.com/Snehal707/stele/blob/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots",
+    "conflict_bitcoin_block_url": "https://blockstream.info/block-height/965884",
+    "conflict_bitcoin_attestations": [
+      {"height": 965831, "timestamp": "2026-09-06T20:58:43Z", "url": "https://blockstream.info/block-height/965831"},
+      {"height": 965832, "timestamp": "2026-09-06T21:07:12Z", "url": "https://blockstream.info/block-height/965832"},
+      {"height": 965862, "timestamp": "2026-09-07T01:08:34Z", "url": "https://blockstream.info/block-height/965862"},
+      {"height": 965884, "timestamp": "2026-09-07T04:57:21Z", "url": "https://blockstream.info/block-height/965884"}
+    ]
   },
   "primitive": "gl.eq_principle.strict_eq wraps fetch_and_parse_record only; mandate judgment uses prompt_non_comparative only after a matching record."
 }
