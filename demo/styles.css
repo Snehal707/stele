@@ -254,6 +254,9 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .hero-copy h1 { max-width: 700px; margin-bottom: 20px; font-size: clamp(3.8rem, 8vw, 7.4rem); line-height: .9; }
 .hero-copy h1 em { color: var(--muted); }
 .hero-lede { max-width: 520px; color: #5e5a51; font-size: 1.18rem; line-height: 1.55; }
+.primary-governor { margin: 18px 0 0; color: var(--ink); font: .8rem/1.5 var(--mono); }
+.primary-governor strong { color: var(--accent); text-transform: uppercase; letter-spacing: .08em; }
+.primary-governor code { overflow-wrap: anywhere; }
 .hero-actions { display: flex; align-items: center; gap: 22px; margin-top: 34px; }
 .button { display: inline-block; padding: 14px 18px; font: 700 11px var(--mono); text-decoration: none; }
 .button-dark { color: var(--paper); background: var(--ink); }

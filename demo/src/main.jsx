@@ -872,7 +872,7 @@ function DocsPage() {
       <div className="docs-topbar-links"><a href="/product">Product</a><a className="active" href="/docs">Docs</a></div>
     </nav>
     <header className="docs-header wrap">
-      <div><div className="eyebrow">STELE / DOCUMENTATION</div><h1>How the record becomes a response.</h1></div>
+      <div><div className="eyebrow">STELE / DOCUMENTATION</div><h1>How the record becomes a response.</h1><p className="primary-governor"><strong>Primary Governor · Bradbury</strong> · <code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code><br /><span>Other Governors appear only as secondary C1 or historical verification paths.</span></p></div>
     </header>
     <div className="docs-layout wrap">
       <aside className="docs-nav"><a href="#judgment">Judgment</a><a href="#halt">Halt</a><a href="#cover">Cover</a><a href="#capital">Capital</a><a href="#lineage">Lineage</a><a href="#engineering">Engineering notes</a></aside>
@@ -900,6 +900,7 @@ function LandingPage() {
         <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>
         <h1>Rules for agents.<br /><em>Held in public.</em></h1>
         <p className="hero-lede">Stele gives an agent's payment behavior a visible rulebook, a funded response, and a record that can grow without rewriting history.</p>
+        <p className="primary-governor"><strong>Primary Governor · Bradbury</strong><br /><code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code></p>
         <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
       </div>
       <span className="image-caption">A public rule, made legible.</span>
@@ -911,7 +912,7 @@ function LandingPage() {
     <section id="mechanism" className="landing-mechanism">
       <div className="wrap mechanism-grid"><div><div className="eyebrow">THE MECHANISM</div><h2>From observed state to public consequence.</h2><p>Review pins the vault state, then C1-enrolled agents add a fetched, hash-locked record checked with <code>strict_eq</code>. Agreement reaches the mandate judgment; disagreement produces <code>EVIDENCE_CONFLICT</code> and blocks the claim.</p><p>Agent C proves the full lifecycle: enroll → ON_MANDATE → drain → PAID → propose → promote → v2 → OFF_MANDATE. <a href="/product">See the full evidence on the live product ↗</a></p></div><div className="flow-card"><div className="flow-step"><b>01</b><span>Pin + record</span><small>vault state · fetch · hash · strict_eq</small></div><div className="flow-line" /><div className="flow-step"><b>02</b><span>Validator ruling</span><small>ON · OFF · or EVIDENCE_CONFLICT</small></div><div className="flow-line" /><div className="flow-step"><b>03</b><span>Recorded response</span><small>halt · paid claim · next clause</small></div></div></div>
     </section>
-    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY · PRIMARY CONSOLIDATED GOVERNOR</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</strong><a href="/product#chain">Open public record ↗</a></div></section>
+    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY · PRIMARY CONSOLIDATED GOVERNOR</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</strong><a href="/product#chain">Open public record ↗</a></div><small className="landing-secondary-note">C1 burst and drain Governors remain secondary verification paths in the product evidence record.</small></section>
     <footer className="wrap footer landing-footer"><span>STELE</span><span>an upright inscribed stone where laws are published in public and added to over time.</span></footer>
   </main>;
 }

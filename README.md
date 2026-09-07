@@ -6,6 +6,17 @@ One contract governs a vault against a plain-language mandate, halts it when
 behaviour drifts, pays when that judgment was wrong, and appends the missing
 clause to its own mandate.
 
+**Primary Governor: `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172` (Bradbury). The primary lifecycle proof can be verified against this one address.**
+
+### Four proof receipts to start with
+
+- **Enroll / Review — `0xd644075c748ef7241d7c4a46050f94cb7b5153ccb368900896e586d7107a84f8`** — `ON_MANDATE`: the mandate is judged, not assumed.
+- **Drain → Claim — `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb`** — `PAID 980`: the pool pays when the judgment was wrong.
+- **Propose → Promote — `0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d`** — `PASSED`: the contract rewrites its mandate after a paid claim, with no vote.
+- **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
+
+All four run on one Governor: `0x8fb0…F172`. Full walkthrough below.
+
 **No vote and no multisig on the verdict.** The halt follows automatically from
 validator consensus, and no human approves or overrides a ruling. Humans still
 enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
@@ -34,9 +45,10 @@ behaviour, not about any single number.
 
 ### Why this needs GenLayer specifically
 
-- The judged state is read from the vault by `eth_call` in deterministic
-  context and pinned before any non-deterministic block. **No party authors the
-  evidence.**
+- The judged vault state is read by `eth_call` in deterministic context and
+  pinned before any non-deterministic block. C1 also checks a project-authored,
+  hash-locked record as a second source; that record is explicitly disclosed
+  below as a designed fixture, not live spend history.
 - Validators run different, undisclosed models (greyboxing), so a mandate or a
   state crafted to fool one model does not carry the committee.
 - Across **9 unique recorded Bradbury review transactions**, latency has a median
@@ -153,20 +165,31 @@ as historical context, but it is not the active review path.
 
 ---
 
-## What to look at
-
-| Role | Network | Governor | Persistence |
-|---|---|---|---|
-| C1 burst records | Bradbury | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | burst agreement + conflict receipts |
-| C1 drain records | Bradbury | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | drain agreement + covered claim receipts |
-| Pre-C1 consolidated demo | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | earlier judgment/halt/cover/lifeform/economics runs; not the C1 receipt source |
-
-Studio runs are recorded in the ephemeral appendix. **Do not mix addresses
-between deployments.**
-
 The [live demo](https://stele-gold.vercel.app) reads live contract state without
 a wallet. Connect a wallet to submit review, claim, `propose_mandate` and deposit
 actions; each write shows its transaction hash and explorer link immediately.
+
+---
+
+## Testing
+
+The focused regression test in `tests/test_evidence_conflict.py` runs the
+record-mismatch path in GenLayer direct mode: it deploys a fresh Governor and
+VaultTwin, enrolls a hash-matched but state-mismatched record, reviews to
+`EVIDENCE_CONFLICT`, then claims and asserts `DENIED_EVIDENCE_CONFLICT` with
+payout `0`.
+
+Use Python 3.12+ and install the GenLayer direct-test pytest plugin, then run:
+
+```bash
+python -m pip install genlayer-test
+pytest tests/test_evidence_conflict.py -q
+```
+
+Direct mode exercises the contract's leader path with mocked web evidence; it
+does not replace a Bradbury consensus receipt.
+
+Known issue: `genlayer-test`'s temp-file cleanup fails on native Windows (WinError 32); run via WSL or Linux/Mac for a clean pass.
 
 ---
 
@@ -231,6 +254,10 @@ transaction-level payment facts. That probe is recorded in
 `results/web_evidence_burst.json` and is not C1 evidence.
 
 ### C1 hash-locked evidence records
+
+This record is a hand-authored fixture matching a designed test scenario,
+hash-locked at enrollment. It is not derived from live spend history — see
+Limitations for what this does and does not prove.
 
 The C1 evidence path makes the enrolled record load-bearing. At enrollment,
 each agent stores a runtime-derived `record_url` and the SHA-256 `record_hash`
@@ -627,6 +654,23 @@ triggered by a paid claim rather than by a timer.
 **Research context:** the nearest published approach compiles natural-language
 policy into runtime prompt classifiers — same idea, single evaluator rather than
 a consensus committee across diverse models.
+
+---
+
+## Appendix — additional verification paths
+
+The primary lifecycle above uses Agent C's consolidated Governor. These
+additional deployments preserve the separately verified C1 evidence-conflict
+branch and earlier historical receipts. **Do not mix addresses between
+deployments.**
+
+| Role | Network | Governor | Persistence |
+|---|---|---|---|
+| C1 burst records | Bradbury | `0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF` | burst agreement + conflict receipts |
+| C1 drain records | Bradbury | `0x68781475569CFd451b7F061f64964eB1e17Ed64e` | drain agreement + covered claim receipts |
+| Pre-C1 consolidated demo | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | earlier judgment/halt/cover/lifeform/economics runs; not the C1 receipt source |
+
+Studio runs are recorded in the ephemeral appendix.
 
 ---
 
