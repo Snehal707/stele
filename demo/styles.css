@@ -228,7 +228,8 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .product-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; padding-top: 18px; }
   .product-layout > *, .product-sidebar, .product-main { min-width: 0; }
   .product-sidebar { position: static; }
-  .product-sidebar nav { display: flex; overflow-x: auto; gap: 7px; padding-bottom: 4px; scrollbar-width: thin; }
+  .product-sidebar nav { display: flex; overflow-x: auto; gap: 7px; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; }
+  .product-sidebar nav::-webkit-scrollbar { display: none; }
   .product-sidebar button { flex: 0 0 auto; width: auto; min-width: 150px; }
   .panel-context { display: grid; gap: 4px; }
   .panel-context small { margin-left: 0; }
