@@ -68,6 +68,15 @@ const PROOF_RECEIPTS = [
   },
 ];
 
+const LATEST_LIVE_REVIEW = {
+  date: "2026-09-08",
+  governor: CANONICAL_DEMO.governor,
+  agent: CANONICAL_DEMO.agent,
+  hash: "0x99d234f6867b1c9aaa54b79aa0710e20539ac5fa8ce91cc4d06cbd95076218aa",
+  ruling: "ON_MANDATE",
+  reason: "The pinned vault state shows only 1 payment to the declared provider 0x1111111111111111111111111111111111111111, which is less than the dozens threshold of 24 payments, and the mandate judgment uses pin-only evidence since the enrolled record is unavailable.",
+};
+
 const LOCAL_TEST_WALLET = {
   address: "0x0000000000000000000000000000000000000421",
   hashes: {
@@ -145,6 +154,7 @@ const C1_RECORD_EVIDENCE = {
   },
   burstConflict: {
     governor: "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
+    agent: "0x851705477939F31D2699c86547782fecabF470C0",
     label: "BURST · RECORD DISAGREES",
     tone: "record-conflict",
     status: "MISMATCH · VERIFIED",
@@ -235,6 +245,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
       <div className="eyebrow" id="proof-receipts-title">FIVE RECEIPTS · CLICK TO VERIFY</div>
       {PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
     </div>
+    <article className="latest-live-call" aria-labelledby="latest-live-call-title"><div className="eyebrow">LATEST LIVE CALL · {LATEST_LIVE_REVIEW.date}</div><div className="latest-live-call-head"><h3 id="latest-live-call-title">Fresh Agent C review on Bradbury</h3><strong className="proof-on">{LATEST_LIVE_REVIEW.ruling}</strong></div><p className="latest-live-call-meta">Governor <code>{LATEST_LIVE_REVIEW.governor}</code> · Agent <code>{LATEST_LIVE_REVIEW.agent}</code></p><p className="latest-live-call-reason">“{LATEST_LIVE_REVIEW.reason}”</p><a className="latest-live-call-hash" href={`${CONFIG.explorer}${LATEST_LIVE_REVIEW.hash}`} target="_blank" rel="noreferrer">{LATEST_LIVE_REVIEW.hash} ↗</a></article>
     <HealthyBurstComparison live={live} />
     <p className="proof-footnote">The first four receipts are the single-address Agent C lifecycle. The fifth is the separately redeployed C1 evidence-conflict proof; it demonstrates the deny branch without requiring a wallet to inspect it.</p>
     <section className="proof-lineage-block" aria-labelledby="proof-lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE · LIVE READ</div><h3 id="proof-lineage-title">Mandate history and last claim.</h3><p className="scope-note">The live lineage read stays here with the canonical proof instead of competing for a rail slot.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>
@@ -538,7 +549,7 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const runWrite = async (label, functionName, args, value = 0n) => {
+  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetGovernor = CONFIG.governor) => {
     if (!requireWallet()) return;
     if (uncertainSubmission) {
       setStatus(`${uncertainSubmission.label}: submission status is uncertain. Verify the wallet and explorer before retrying.`);
@@ -556,7 +567,7 @@ function ActionPanel({ onResultChange }) {
       const startedAt = Date.now();
       const hash = LOCAL_TEST_WALLET.hashes[label];
       setTransactions((previous) => [{ label, hash, startedAt, pending: true, localTest: true }, ...previous]);
-      onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "pending", consensus: "Pending", execution: null, localTest: true });
+      onResultChange({ action: label, hash, targetAgent, status: "pending", consensus: "Pending", execution: null, localTest: true });
       setStatus(`${label}: local test simulation · consensus pending…`);
       window.setTimeout(() => {
         const execution = "FINISHED_WITH_RETURN";
@@ -566,7 +577,7 @@ function ActionPanel({ onResultChange }) {
           onResultChange({
             action: label,
             hash,
-            targetAgent: CONFIG.rewriteAgent,
+            targetAgent,
             status: "resolved",
             consensus: "Resolved",
             execution,
@@ -579,7 +590,7 @@ function ActionPanel({ onResultChange }) {
           });
           setStatus("Review: local test verdict resolved ✓");
         } else {
-          onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, localTest: true });
+          onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, localTest: true });
           setStatus(`${label}: local test resolved ✓`);
         }
         setSubmitting(false);
@@ -635,7 +646,7 @@ function ActionPanel({ onResultChange }) {
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: CONFIG.governor, functionName, args: addressArgs(args), value });
+          hash = await client.writeContract({ address: targetGovernor, functionName, args: addressArgs(args), value });
           break;
         } catch (error) {
           const message = describeWriteError(error);
@@ -651,9 +662,9 @@ function ActionPanel({ onResultChange }) {
       const startedAt = Date.now();
       setUncertainSubmission(null);
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
-      onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "pending", consensus: "Pending", execution: null });
+      onResultChange({ action: label, hash, targetAgent, status: "pending", consensus: "Pending", execution: null });
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
-      pollReceipt(hash, label, startedAt);
+      pollReceipt(hash, label, startedAt, targetAgent, targetGovernor);
     } catch (error) {
       console.error("Stele write failed", error, {
         shortMessage: error?.shortMessage,
@@ -685,7 +696,7 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const pollReceipt = (hash, label, startedAt) => {
+  const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetGovernor = CONFIG.governor) => {
     const poll = async () => {
       try {
         const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
@@ -715,17 +726,17 @@ function ActionPanel({ onResultChange }) {
             setStatus("Review: consensus resolved ✓ Reading the verdict from the reviewed agent…");
             try {
               const readClient = createClient({ chain: testnetBradbury });
-              const vault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([CONFIG.rewriteAgent]) });
+              const vault = await readClient.readContract({ address: targetGovernor, functionName: "get_vault", args: addressArgs([targetAgent]) });
               const [state, verdict] = await Promise.all([
                 readClient.readContract({ address: vault, functionName: "agent_state", args: [] }),
-                readClient.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([CONFIG.rewriteAgent]) }),
+                readClient.readContract({ address: targetGovernor, functionName: "latest_verdict", args: addressArgs([targetAgent]) }),
               ]);
               const record = liveFixtureRecord(state, verdict);
-              onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, verdict: true, ...record });
+              onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, verdict: true, ...record });
               setStatus("Review: resolved verdict loaded from the reviewed agent ✓");
             } catch (error) {
               console.error("Stele resolved Review read failed", error);
-              onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution, verdictError: describeReadError(error) });
+              onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, verdictError: describeReadError(error) });
               setStatus("Review: transaction resolved, but the verdict read needs a retry.");
             }
           } else {
@@ -743,6 +754,12 @@ function ActionPanel({ onResultChange }) {
     window.setTimeout(poll, 5000);
   };
 
+  const runPresetReview = (presetLabel, targetAgent, targetGovernor) => {
+    if (!requireWallet()) return;
+    setStatus(`${presetLabel}: submitting… Bradbury consensus typically takes ~70s; this is normal, not stuck.`);
+    runWrite("Review", "review", [targetAgent], 0n, targetAgent, targetGovernor);
+  };
+
   if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
@@ -756,6 +773,14 @@ function ActionPanel({ onResultChange }) {
       <button className={activeAction === "Claim" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={fileClaim}>{activeAction === "Claim" ? <><span className="action-spinner" /> 2. File claim · waiting…</> : activeAction || uncertainSubmission ? "2. File claim · locked" : "2. File claim"}</button>
       <button className={activeAction === "Propose" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={proposeMandate}>{activeAction === "Propose" ? <><span className="action-spinner" /> 3. Propose mandate · waiting…</> : activeAction || uncertainSubmission ? "3. Propose mandate · locked" : "3. Propose mandate"}</button>
       <button className={activeAction === "Deposit" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={depositMinimum}>{activeAction === "Deposit" ? <><span className="action-spinner" /> 4. Deposit · waiting…</> : activeAction || uncertainSubmission ? "4. Deposit · locked" : "4. Deposit minimum GEN"}</button>
+    </div>
+    <div className="review-presets" aria-labelledby="review-presets-title">
+      <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
+      <div className="review-preset-grid">
+        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review drain fixture", FIXTURES.drain.agent, CONFIG.governor)}><strong>Review drain fixture</strong><small>Prefilled · expected OFF_MANDATE</small></button>
+        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review conflict fixture", C1_RECORD_EVIDENCE.burstConflict.agent, C1_RECORD_EVIDENCE.burstConflict.governor)}><strong>Review conflict fixture</strong><small>Prefilled · expected EVIDENCE_CONFLICT</small></button>
+      </div>
+      <p className="review-preset-note">Bradbury reviews typically take ~70s; this is normal, not stuck. Results appear in the Review result slot above.</p>
     </div>
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
