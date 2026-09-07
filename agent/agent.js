@@ -1,11 +1,17 @@
 // Stele autonomous vault agent: owns its wallet, chooses invoices, and stops on halt.
 import fs from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
-import { Wallet } from "file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/genlayer/node_modules/ethers/lib.esm/index.js";
-import { createClient, createAccount } from "file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/genlayer/node_modules/genlayer-js/dist/index.js";
-import { testnetBradbury } from "file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/genlayer/node_modules/genlayer-js/dist/chains/index.js";
-import { CalldataAddress } from "file:///C:/Users/ASUS/AppData/Roaming/npm/node_modules/genlayer/node_modules/genlayer-js/dist/chunk-EY35NPSE.js";
+
+// Set GENLAYER_MODULE_ROOT when using the CLI's bundled dependencies; otherwise
+// resolve the SDK packages from this repository's node_modules directory.
+const moduleRoot = path.resolve(process.env.GENLAYER_MODULE_ROOT ?? "node_modules");
+const moduleUrl = (relativePath) => pathToFileURL(path.join(moduleRoot, relativePath)).href;
+const { Wallet } = await import(moduleUrl("ethers/lib.esm/index.js"));
+const { createClient, createAccount } = await import(moduleUrl("genlayer-js/dist/index.js"));
+const { testnetBradbury } = await import(moduleUrl("genlayer-js/dist/chains/index.js"));
+const { CalldataAddress } = await import(moduleUrl("genlayer-js/dist/chunk-EY35NPSE.js"));
 
 const argv = process.argv.slice(2);
 const option = (name, fallback = undefined) => {
@@ -17,7 +23,7 @@ const profile = option("--profile", "normal");
 const governor = option("--governor");
 const vault = option("--vault");
 const requestedMandateVersion = option("--mandate-version");
-const keystorePath = option("--keystore", "C:/Users/ASUS/.genlayer/keystores/stele-agent.json");
+const keystorePath = option("--keystore", process.env.STELE_AGENT_KEYSTORE || path.resolve(".genlayer/keystores/stele-agent.json"));
 const password = process.env.STELE_AGENT_PASSWORD;
 const provider = "0x1111111111111111111111111111111111111111";
 const resultsPath = path.resolve("results/runs.jsonl");
