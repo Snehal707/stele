@@ -1,6 +1,6 @@
 **Primary Governor: `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172` (Bradbury). The primary lifecycle proof can be verified against this one address.**
 
-### Four proof receipts to start with
+### Proof receipts.
 
 - **Enroll / Review — `0xd644075c748ef7241d7c4a46050f94cb7b5153ccb368900896e586d7107a84f8`** — `ON_MANDATE`: the mandate is judged, not assumed.
 - **Drain → Claim — `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb`** — `PAID 980`: the pool pays when the judgment was wrong.
@@ -9,7 +9,7 @@
 - `0xe42d9198…3ea3` — C1 `EVIDENCE_CONFLICT` → claim denied, payout 0 (Governor `0xb77B…f0AF`; evidence path required a redeploy)  
   Studio replay: `gltest --network studionet tests/test_evidence_conflict.py` — 1 passed in 67.17s
 
-All four run on one Governor: `0x8fb0…F172`. Full walkthrough below.
+First four on `0x8fb0…`; conflict on `0xb77B…` after the evidence redeploy.
 
 # Stele
 
