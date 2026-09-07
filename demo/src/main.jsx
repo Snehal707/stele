@@ -40,6 +40,34 @@ const CANONICAL_DEMO = {
   ],
 };
 
+const PROOF_RECEIPTS = [
+  {
+    label: "Enroll / Review",
+    hash: "0xd644075c748ef7241d7c4a46050f94cb7b5153ccb368900896e586d7107a84f8",
+    meaning: "ON_MANDATE · the mandate is judged, not assumed.",
+  },
+  {
+    label: "Drain → Claim",
+    hash: "0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb",
+    meaning: "PAID 980 · the pool pays when the judgment was wrong.",
+  },
+  {
+    label: "Propose → Promote",
+    hash: "0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d",
+    meaning: "PASSED · the contract rewrites its mandate with no vote.",
+  },
+  {
+    label: "Fresh drain → Review",
+    hash: "0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956",
+    meaning: "OFF_MANDATE · the v2 clause catches the same drain pattern.",
+  },
+  {
+    label: "C1 record conflict",
+    hash: "0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3",
+    meaning: "EVIDENCE_CONFLICT · claim denied, payout 0.",
+  },
+];
+
 const LOCAL_TEST_WALLET = {
   address: "0x0000000000000000000000000000000000000421",
   hashes: {
@@ -182,6 +210,27 @@ function EvidenceRecordSection() {
   </section>;
 }
 
+function AlreadyProvedSection() {
+  return <section id="proof" className="already-proved evidence-panel" aria-labelledby="already-proved-title">
+    <div className="section-intro compact"><div className="eyebrow">01 / ALREADY PROVED</div><h2 id="already-proved-title">The proof is already on-chain.</h2><p className="scope-note">Read the canonical lifecycle without connecting a wallet. A wallet is only needed to submit a new action.</p></div>
+    <article className="proof-status-card">
+      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Governor ↗</a></div>
+      <code className="proof-governor">{CANONICAL_DEMO.governor}</code>
+      <div className="proof-status-grid" aria-label="Canonical proof status">
+        <div><span>MANDATE</span><strong>v2 · active</strong><small>promoted on-chain</small></div>
+        <div><span>LATEST RECORDED RULING</span><strong className="proof-off">OFF_MANDATE</strong><small>genuine v2 drain</small></div>
+        <div><span>HALTED</span><strong>Yes</strong><small>after the final review</small></div>
+        <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
+      </div>
+    </article>
+    <div className="proof-receipts" aria-labelledby="proof-receipts-title">
+      <div className="eyebrow" id="proof-receipts-title">FIVE RECEIPTS · CLICK TO VERIFY</div>
+      {PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
+    </div>
+    <p className="proof-footnote">The first four receipts are the single-address Agent C lifecycle. The fifth is the separately redeployed C1 evidence-conflict proof; it demonstrates the deny branch without requiring a wallet to inspect it.</p>
+  </section>;
+}
+
 function ReceiptLinks({ title, hashes }) {
   const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
   return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
@@ -306,7 +355,7 @@ function CompactReadFailure({ onRetry }) {
 
 function YourRunResult({ action, result }) {
   const title = `YOUR ${action.toUpperCase()} RESULT`;
-  if (!result) return <section className="read-status your-result action-result-empty" role="status"><div className="section-intro compact"><div className="eyebrow">{title}</div></div><strong>Run {action} above to see your result here.</strong><span>This slot stays reserved for this action and will not be replaced by another result.</span></section>;
+  if (!result) return <section className="read-status your-result action-result-empty" role="status"><div className="section-intro compact"><div className="eyebrow">{title}</div></div><strong>No {action} result in this wallet session yet.</strong><span>A wallet is only needed to submit a new action; existing on-chain evidence remains available in the sidebar.</span></section>;
   return <section className="your-result" aria-labelledby="your-result-title">
     <div className="section-intro compact"><div className="eyebrow">{title}</div></div>
     <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>{result.hash ? "Transaction" : "Result"}</span>{result.hash ? (result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>) : <strong>NO TRANSACTION SUBMITTED</strong>}</div></div>
@@ -814,6 +863,7 @@ function ProductPage() {
   };
   const claimValue = capital.status === "ready" && capital.values.lastClaim && typeof capital.values.lastClaim === "object" ? capital.values.lastClaim : null;
   const productSections = [
+    ["proof", "Already Proved", "Canonical receipts · no wallet needed", "Evidence Index"],
     ["actions", "Your Run", "Wallet actions + your result", "Your Run"],
     ["lineage", "Lineage", "Demo agent mandate history", "Protocol State"],
     ["cover", "Cover", "Pool · bond · last claim", "Protocol State"],
@@ -824,7 +874,7 @@ function ProductPage() {
     ["demo", "Demo Fixtures", "Healthy · burst · drain examples", "Demo Fixtures & Reference"],
     ["history", "Reference Receipts", "Historic runs · not current state", "Demo Fixtures & Reference"],
   ];
-  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "actions";
+  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "proof";
   const [activeProductSection, setActiveProductSection] = useState(initialProductSection);
   useEffect(() => {
     const onHashChange = () => {
@@ -847,9 +897,10 @@ function ProductPage() {
     <div className="product-layout wrap">
       <aside className="product-sidebar" aria-label="Evidence sections">
         <div className="sidebar-label">EVIDENCE INDEX</div>
-        <nav>{productSections.map(([id, label, detail, zone], index) => <React.Fragment key={id}>{(index === 0 || productSections[index - 1][3] !== zone) && <div className="zone-divider">{zone}</div>}<button className={activeProductSection === id ? "active" : ""} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button></React.Fragment>)}</nav>
+        <nav>{productSections.map(([id, label, detail, zone], index) => <React.Fragment key={id}>{(index === 0 || productSections[index - 1][3] !== zone) && <div className="zone-divider">{zone}</div>}<button className={`${activeProductSection === id ? "active" : ""} ${id === "cover" || id === "capital" ? "secondary-section" : ""}`} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button></React.Fragment>)}</nav>
       </aside>
       <div className="product-main">
+        {activeProductSection === "proof" && <AlreadyProvedSection />}
         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
