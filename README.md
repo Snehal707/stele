@@ -1,11 +1,3 @@
-# Stele
-
-An upright inscribed stone where laws were published in public and added to over time.
-
-One contract governs a vault against a plain-language mandate, halts it when
-behaviour drifts, pays when that judgment was wrong, and appends the missing
-clause to its own mandate.
-
 **Primary Governor: `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172` (Bradbury). The primary lifecycle proof can be verified against this one address.**
 
 ### Four proof receipts to start with
@@ -16,6 +8,14 @@ clause to its own mandate.
 - **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
 
 All four run on one Governor: `0x8fb0…F172`. Full walkthrough below.
+
+# Stele
+
+An upright inscribed stone where laws were published in public and added to over time.
+
+One contract governs a vault against a plain-language mandate, halts it when
+behaviour drifts, pays when that judgment was wrong, and appends the missing
+clause to its own mandate.
 
 **No vote and no multisig on the verdict.** The halt follows automatically from
 validator consensus, and no human approves or overrides a ruling. Humans still
@@ -174,28 +174,29 @@ actions; each write shows its transaction hash and explorer link immediately.
 ## Testing
 
 The focused regression test in `tests/test_evidence_conflict.py` runs the
-record-mismatch path in GenLayer direct mode: it deploys a fresh Governor and
-VaultTwin, enrolls a hash-matched but state-mismatched record, reviews to
-`EVIDENCE_CONFLICT`, then claims and asserts `DENIED_EVIDENCE_CONFLICT` with
-payout `0`.
+record-mismatch path in GenLayer Studio mode: it deploys a fresh Governor and
+VaultTwin through `get_contract_factory`, enrolls a hash-matched but
+state-mismatched record, reviews to `EVIDENCE_CONFLICT`, then claims and
+asserts `DENIED_EVIDENCE_CONFLICT` with payout `0`.
 
-Use Python 3.12+ and install the GenLayer direct-test pytest plugin, then run:
+Use Python 3.12+ and install `genlayer-test`, then run on hosted Studio:
 
-```bash
+```text
 python -m pip install genlayer-test
-pytest tests/test_evidence_conflict.py -q
+gltest --network studionet tests/test_evidence_conflict.py -v -s
 ```
 
-Direct mode exercises the contract's leader path with mocked web evidence; it
-does not replace a Bradbury consensus receipt.
+Verified on WSL/Linux with `genlayer-test` 0.29.2: `1 passed in 67.17s`.
+This Studio run exercises two real contract deployments and does not replace
+a Bradbury consensus receipt.
 
-Known issue: `genlayer-test`'s temp-file cleanup fails on native Windows (WinError 32); run via WSL or Linux/Mac for a clean pass.
+Native Windows may still hit `genlayer-test`'s temp-file cleanup issue
+(`WinError 32`); run the Studio test via WSL or Linux/Mac for a clean pass.
 
 Known limitation: `genlayer-test` 0.29.2 direct mode cannot deploy two
-contracts in one local test process, so this cross-contract test documents the
-expected assertions but cannot complete under the direct runner. Use the
-Studio/integration runner for the two-contract deployment; the Bradbury C1
-conflict receipt is recorded as `0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3`.
+contracts in one local test process. Use the Studio/integration runner for the
+two-contract deployment; the Bradbury C1 conflict receipt is recorded as
+`0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3`.
 
 ---
 
