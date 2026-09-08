@@ -67,6 +67,21 @@ const PROOF_RECEIPTS = [
     hash: "0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3",
     meaning: "EVIDENCE_CONFLICT · claim denied, payout 0.",
   },
+  {
+    label: "Enroll",
+    hash: "0x1a4846a02514ecbfa328259a8594cd5fe5a497570ba6f1f1aa88597b598f4a0b",
+    meaning: "New agent enrolled live via direct SDK call.",
+  },
+  {
+    label: "Halt-revert",
+    hash: "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896",
+    meaning: "Spend on a halted vault reverted · Vault is halted.",
+  },
+  {
+    label: "This week's fresh review",
+    hash: "0x6e66ba162a510ba49c0f4aa0ce6acf0167380935ac0e94e1f00f313440bade3b",
+    meaning: "Fresh call · separate from the canonical OFF_MANDATE / halted / PAID 980 loop.",
+  },
 ];
 
 const LATEST_LIVE_REVIEW = {

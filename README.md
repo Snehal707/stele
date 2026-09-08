@@ -8,6 +8,9 @@
 - **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
 - `0xe42d9198…3ea3` — C1 `EVIDENCE_CONFLICT` → claim denied, payout 0 (Governor `0xb77B…f0AF`; evidence path required a redeploy)  
   Studio replay: `gltest --network studionet tests/test_evidence_conflict.py` — 1 passed in 67.17s
+- **Enroll — `0x1a4846a02514ecbfa328259a8594cd5fe5a497570ba6f1f1aa88597b598f4a0b`** — new agent enrolled live via direct SDK call.
+- **Halt-revert — `0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896`** — spend attempted on a halted vault, reverted with “Vault is halted.”
+- **This week's fresh review — `0x6e66ba162a510ba49c0f4aa0ce6acf0167380935ac0e94e1f00f313440bade3b`** — fresh call, separate from the canonical `OFF_MANDATE` / halted / `PAID 980` lifecycle loop.
 
 First four on `0x8fb0…`; conflict on `0xb77B…` after the evidence redeploy.
 
