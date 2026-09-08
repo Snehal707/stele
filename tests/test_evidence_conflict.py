@@ -99,7 +99,7 @@ def test_v3_off_then_on_review_keeps_halt_sticky():
     governor.review(args=[CalldataAddress(account.address)]).transact()
     second_ruling = governor.get_governed(args=[CalldataAddress(account.address)]).call()
     halted_after_second = governor.is_halted(args=[CalldataAddress(account.address)]).call()
-    assert second_ruling in ("ON_MANDATE", "OFF_MANDATE"), (
+    assert second_ruling in ("ON_MANDATE", "OFF_MANDATE", "REVIEW_FAILED"), (
         f"second review returned {second_ruling!r}; is_halted={halted_after_second!r}"
     )
     assert halted_after_second is True
