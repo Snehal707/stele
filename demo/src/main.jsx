@@ -95,7 +95,7 @@ const LATEST_LIVE_REVIEW = {
 };
 
 const HALT_REVERT_PROOF = {
-  governor: CONFIG.governor,
+  governor: "0xB31bc62001219E8A9eF4026820A06A6799984D26",
   agent: "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce",
   vault: "0xA5c23d67317d4f5192c3Bb0441baE4AFAda9D19E",
   hash: "0x1bf05c92e1df7d720c32190b5568ee15c767715e425bb442f0f09ab0b5f0127c",
@@ -893,9 +893,6 @@ function ActionPanel({ onResultChange }) {
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
-      <button className={activeAction === "Claim" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={fileClaim}>{activeAction === "Claim" ? <><span className="action-spinner" /> 2. File claim · waiting…</> : activeAction || uncertainSubmission ? "2. File claim · locked" : "2. File claim"}</button>
-      <button className={activeAction === "Propose" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={proposeMandate}>{activeAction === "Propose" ? <><span className="action-spinner" /> 3. Propose mandate · waiting…</> : activeAction || uncertainSubmission ? "3. Propose mandate · locked" : "3. Propose mandate"}</button>
-      <button className={activeAction === "Deposit" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={depositMinimum}>{activeAction === "Deposit" ? <><span className="action-spinner" /> 4. Deposit · waiting…</> : activeAction || uncertainSubmission ? "4. Deposit · locked" : "4. Deposit minimum GEN"}</button>
     </div>
     <p className="review-target-note">Submits to interactive Governor <code>0x48E8…</code>, not the proof card.</p>
     <div className="review-presets" aria-labelledby="review-presets-title">
