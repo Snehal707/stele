@@ -25,6 +25,7 @@ const CONFIG = {
   addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
 };
+const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
 
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
@@ -400,6 +401,7 @@ function ActionPanel({ onResultChange }) {
   const [uncertainSubmission, setUncertainSubmission] = useState(null);
   const [activeAction, setActiveAction] = useState(null);
   const [writeFailure, setWriteFailure] = useState(null);
+  const [haltedSpend, setHaltedSpend] = useState(null);
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
 
@@ -549,7 +551,7 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetGovernor = CONFIG.governor) => {
+  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor) => {
     if (!requireWallet()) return;
     if (uncertainSubmission) {
       setStatus(`${uncertainSubmission.label}: submission status is uncertain. Verify the wallet and explorer before retrying.`);
@@ -646,7 +648,7 @@ function ActionPanel({ onResultChange }) {
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: targetGovernor, functionName, args: addressArgs(args), value });
+          hash = await client.writeContract({ address: targetContract, functionName, args: addressArgs(args), value });
           break;
         } catch (error) {
           const message = describeWriteError(error);
@@ -664,7 +666,7 @@ function ActionPanel({ onResultChange }) {
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       onResultChange({ action: label, hash, targetAgent, status: "pending", consensus: "Pending", execution: null });
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
-      pollReceipt(hash, label, startedAt, targetAgent, targetGovernor);
+      pollReceipt(hash, label, startedAt, targetAgent, targetContract);
     } catch (error) {
       console.error("Stele write failed", error, {
         shortMessage: error?.shortMessage,
@@ -696,7 +698,7 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetGovernor = CONFIG.governor) => {
+  const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor) => {
     const poll = async () => {
       try {
         const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
@@ -710,7 +712,7 @@ function ActionPanel({ onResultChange }) {
           const statusName = receipt.status_name || receipt.statusName;
           const numericStatus = Number(receipt.status);
           const terminalStatus = ["ACCEPTED", "UNDETERMINED", "FINALIZED", "CANCELED", "LEADER_TIMEOUT", "VALIDATORS_TIMEOUT"].includes(statusName)
-            || [5, 6, 7, 8, 12, 13].includes(numericStatus);
+            || [4, 5, 6, 7, 8, 12, 13].includes(numericStatus);
           const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number.isFinite(numericStatus));
           if (!hasReceipt || !terminalStatus) {
             if (Date.now() - startedAt >= 120000) {
@@ -726,12 +728,13 @@ function ActionPanel({ onResultChange }) {
             setStatus("Review: consensus resolved ✓ Reading the verdict from the reviewed agent…");
             try {
               const readClient = createClient({ chain: testnetBradbury });
-              const vault = await readClient.readContract({ address: targetGovernor, functionName: "get_vault", args: addressArgs([targetAgent]) });
+              const vault = await readClient.readContract({ address: targetContract, functionName: "get_vault", args: addressArgs([targetAgent]) });
               const [state, verdict] = await Promise.all([
                 readClient.readContract({ address: vault, functionName: "agent_state", args: [] }),
-                readClient.readContract({ address: targetGovernor, functionName: "latest_verdict", args: addressArgs([targetAgent]) }),
+                readClient.readContract({ address: targetContract, functionName: "latest_verdict", args: addressArgs([targetAgent]) }),
               ]);
               const record = liveFixtureRecord(state, verdict);
+              if (record.ruling === "OFF_MANDATE") setHaltedSpend({ vault, agent: targetAgent });
               onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, verdict: true, ...record });
               setStatus("Review: resolved verdict loaded from the reviewed agent ✓");
             } catch (error) {
@@ -740,7 +743,8 @@ function ActionPanel({ onResultChange }) {
               setStatus("Review: transaction resolved, but the verdict read needs a retry.");
             }
           } else {
-            onResultChange({ action: label, hash, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Resolved", execution });
+            const errorText = receipt.revertReason || receipt.error || receipt.executionError || receipt.txExecutionError || (label === "Spend" && execution === "FINISHED_WITH_ERROR" ? "Vault is halted" : null);
+            onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, ...(errorText ? { outcomeTitle: label === "Spend" ? "Spend rejected by halted vault" : `${label} execution error`, outcomeMessage: errorText } : {}) });
             setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
           }
           return;
@@ -758,6 +762,11 @@ function ActionPanel({ onResultChange }) {
     if (!requireWallet()) return;
     setStatus(`${presetLabel}: submitting… Bradbury consensus typically takes ~70s; this is normal, not stuck.`);
     runWrite("Review", "review", [targetAgent], 0n, targetAgent, targetGovernor);
+  };
+
+  const spendWhileHalted = () => {
+    if (!haltedSpend) return;
+    runWrite("Spend", "spend", [DECLARED_PROVIDER, 1n], 0n, haltedSpend.agent, haltedSpend.vault);
   };
 
   if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
@@ -782,13 +791,14 @@ function ActionPanel({ onResultChange }) {
       </div>
       <p className="review-preset-note">Bradbury reviews typically take ~70s; this is normal, not stuck. Results appear in the Review result slot above.</p>
     </div>
+    {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {writeFailure && <details className="write-diagnostic"><summary>Why {writeFailure.label} stopped · {writeFailure.category}</summary><p><strong>{writeFailure.guidance}</strong></p><p>Transaction hash returned: <strong>{writeFailure.hashReturned ? "yes" : "no"}</strong></p><pre>{writeFailure.details}</pre></details>}
     {transactions.map(({ label, hash, startedAt, pending, execution, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
       {localTest ? <strong>{hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>}
-      <small>{pending ? `Submitted ✓ · Waiting for Bradbury consensus… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ✓`}</small>
+      <small>{pending ? `Submitted ✓ · Waiting for Bradbury consensus… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ${execution === "FINISHED_WITH_ERROR" ? "✕" : "✓"}`}</small>
     </div>)}
   </div>;
 }
@@ -931,7 +941,7 @@ function ProductPage() {
       </aside>
       <div className="product-main">
         {activeProductSection === "proof" && <AlreadyProvedSection live={live} lineage={lineage} capital={capital} capitalValue={capitalValue} walletConnected={walletConnected} retryLiveReads={retryLiveReads} />}
-        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
+        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Spend" result={yourRun.Spend} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
