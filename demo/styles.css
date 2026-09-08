@@ -209,6 +209,8 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .proof-receipt b { color: var(--accent); font: 18px var(--mono); }
 .proof-receipt:hover { background: rgba(177,120,66,.08); }
 .proof-receipt:hover code { text-decoration-color: var(--accent); }
+.proof-receipt-detail { display: block; margin: -8px 0 8px; color: var(--accent); font: 12px/1.4 var(--sans); text-decoration: underline; text-decoration-color: var(--line); }
+.proof-receipt-detail:hover { text-decoration-color: var(--accent); }
 .proof-footnote { max-width: 760px; margin: 18px 0 0; color: var(--muted); font: 12px/1.5 var(--mono); }
 .proof-comparison { margin-top: 30px; padding: 20px; border: 1px solid var(--line); background: rgba(244,239,229,.55); }
 .proof-comparison-lede { margin: 9px 0 16px; color: var(--ink); font: 1.1rem var(--serif); }
@@ -324,6 +326,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .enroll-governor { margin: 0; color: var(--muted, #756f64); font: .68rem/1.45 var(--mono); overflow-wrap: anywhere; }
 .enroll-governor code { color: var(--ink); }
 .enroll-demo-note { margin: 0; color: var(--ink); font: .74rem/1.45 var(--mono); }
+.enroll-live-status { margin: 0; padding: .55rem .65rem; border-left: 3px solid var(--red, #8f463d); color: var(--ink); background: rgba(143,70,61,.07); font: .74rem/1.45 var(--mono); }
 .integration-example { border-top: 1px solid var(--line, #d8d2c6); padding-top: .7rem; display: grid; gap: .35rem; }
 .integration-example strong { font-size: .78rem; }
 .integration-example pre { margin: 0; padding: .65rem; background: rgba(0,0,0,.04); overflow: auto; white-space: pre-wrap; font: .72rem/1.45 var(--mono); }

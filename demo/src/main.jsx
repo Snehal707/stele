@@ -26,6 +26,7 @@ const CONFIG = {
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
+const HALT_REVERT_RECEIPT_HASH = "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896";
 
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
@@ -74,9 +75,8 @@ const PROOF_RECEIPTS = [
   },
   {
     label: "Halt-revert",
-    hash: "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896",
+    hash: HALT_REVERT_RECEIPT_HASH,
     meaning: "Spend on a halted vault reverted · Vault is halted.",
-    detail: "Spend reverted · Vault is halted",
   },
   {
     label: "This week's fresh review",
@@ -277,7 +277,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     </article>
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">PROOF RECEIPTS · CLICK TO VERIFY</div>
-      {PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span>{receipt.detail && <span>{receipt.detail}</span>}</div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
+      {PROOF_RECEIPTS.map((receipt) => <React.Fragment key={receipt.hash}><a className="proof-receipt" href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>{receipt.label === "Halt-revert" && <a className="proof-receipt-detail" href={`${CONFIG.explorer}${HALT_REVERT_RECEIPT_HASH}`} target="_blank" rel="noreferrer">Spend reverted · Vault is halted ↗</a>}</React.Fragment>)}
     </div>
     <article className="latest-live-call" aria-labelledby="latest-live-call-title"><div className="eyebrow">LATEST LIVE CALL · {LATEST_LIVE_REVIEW.date}</div><div className="latest-live-call-head"><h3 id="latest-live-call-title">Fresh Agent C review on Bradbury</h3><strong className="proof-on">{LATEST_LIVE_REVIEW.ruling}</strong></div><p className="latest-live-call-context">Separate latest live call — this ON_MANDATE result is a later read of a different state, not a replacement for the canonical lifecycle status above.</p><p className="latest-live-call-meta">Governor <code>{LATEST_LIVE_REVIEW.governor}</code> · Agent <code>{LATEST_LIVE_REVIEW.agent}</code></p><p className="latest-live-call-reason">“{LATEST_LIVE_REVIEW.reason}”</p><a className="latest-live-call-hash" href={`${CONFIG.explorer}${LATEST_LIVE_REVIEW.hash}`} target="_blank" rel="noreferrer">{LATEST_LIVE_REVIEW.hash} ↗</a></article>
     <HaltRevertProofCard />
