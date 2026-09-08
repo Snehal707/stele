@@ -27,6 +27,7 @@ const CONFIG = {
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
 const HALT_REVERT_RECEIPT_HASH = "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896";
+const INTERACTIVE_V4_AGENT = null;
 
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
@@ -288,13 +289,14 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">PROOF RECEIPTS · CLICK TO VERIFY</div>
       {PROOF_RECEIPTS.map((receipt) => <React.Fragment key={receipt.hash}><a className="proof-receipt" href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>{receipt.label === "Halt-revert" && <a className="proof-receipt-detail" href={`${CONFIG.explorer}${HALT_REVERT_RECEIPT_HASH}`} target="_blank" rel="noreferrer">Spend reverted · Vault is halted ↗</a>}</React.Fragment>)}
+      <p className="scope-note">1–4: Agent C lifecycle. 5: C1 evidence conflict. 6–8: enroll, halt-revert, this week&apos;s fresh review — supplementary.</p>
     </div>
     <article className="latest-live-call" aria-labelledby="latest-live-call-title"><div className="eyebrow">LATEST LIVE CALL · {LATEST_LIVE_REVIEW.date}</div><div className="latest-live-call-head"><h3 id="latest-live-call-title">Fresh Agent C review on Bradbury</h3><strong className="proof-on">{LATEST_LIVE_REVIEW.ruling}</strong></div><p className="latest-live-call-context">Separate latest live call — this ON_MANDATE result is a later read of a different state, not a replacement for the canonical lifecycle status above.</p><p className="latest-live-call-meta">Governor <code>{LATEST_LIVE_REVIEW.governor}</code> · Agent <code>{LATEST_LIVE_REVIEW.agent}</code></p><p className="latest-live-call-reason">“{LATEST_LIVE_REVIEW.reason}”</p><a className="latest-live-call-hash" href={`${CONFIG.explorer}${LATEST_LIVE_REVIEW.hash}`} target="_blank" rel="noreferrer">{LATEST_LIVE_REVIEW.hash} ↗</a><small>Later read, not the proof card.</small></article>
     <HaltRevertProofCard />
     <HealthyBurstComparison live={live} />
     <p className="proof-footnote">The first four receipts are the single-address Agent C lifecycle. The fifth is the separately redeployed C1 evidence-conflict proof; it demonstrates the deny branch without requiring a wallet to inspect it.</p>
     <section className="proof-lineage-block" aria-labelledby="proof-lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE · LIVE READ</div><h3 id="proof-lineage-title">Mandate history and last claim.</h3><p className="scope-note">The live lineage read stays here with the canonical proof instead of competing for a rail slot.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>
-    <details className="proof-capital-details"><summary>Show Capital &amp; Yield</summary><section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section></details>
+    <details className="proof-capital-details"><summary>Show Capital &amp; Yield</summary><section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p><p className="scope-note">Reads the interactive v4 Governor pool.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section></details>
     <details className="receipt-appendix"><summary>Show historic receipts and their purpose</summary><div className="read-status" role="note"><strong>These receipts document earlier global demo runs.</strong><span>They do not change when a new wallet connects and do not represent the current Review result.</span></div><div className="history-list"><ReceiptLinks title="Judgment · healthy fixture · reference run" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Judgment · burst fixture · reference run" hashes={RECEIPTS.judgmentBurst} /><ReceiptLinks title="Judgment · drain v1 · reference run" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Judgment · drain v2 · reference run" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Judgment · consolidated drain suite · reference run" hashes={RECEIPTS.drainSuite} /><ReceiptLinks title="Halt sequence · reference run" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /><ReceiptLinks title="Lineage · claim, proposal, promotion · reference run" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></div></details>
   </section>;
 }
@@ -497,114 +499,6 @@ function ActionPanel({ onResultChange }) {
       return false;
     }
     return true;
-  };
-
-  const showActionOutcome = (label, outcomeTitle, outcomeMessage) => {
-    onResultChange({ action: label, targetAgent: CONFIG.rewriteAgent, status: "resolved", consensus: "Read result", execution: "NO_TRANSACTION", outcomeTitle, outcomeMessage });
-    setStatus(`${label}: ${outcomeMessage}`);
-  };
-
-  const proposeMandate = async () => {
-    if (!requireWallet()) return;
-    if (localTestWallet) {
-      await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
-      return;
-    }
-    try {
-      const readClient = createClient({ chain: testnetBradbury });
-      let claim;
-      try {
-        claim = await readClient.readContract({
-          address: CONFIG.governor,
-          functionName: "get_last_claim",
-          args: addressArgs([CONFIG.rewriteAgent]),
-        });
-      } catch (error) {
-        console.info("Stele propose blocked: no claim record for configured agent", error);
-        showActionOutcome("Propose", "Proposal not submitted", "No paid claim was found for this agent, so a mandate proposal was not submitted.");
-        return;
-      }
-      if (!claim || claim.status !== "PAID") {
-        showActionOutcome("Propose", "Proposal not submitted", "This agent has no paid claim yet, so a mandate proposal was not submitted.");
-        return;
-      }
-      const [version, promotion] = await Promise.all([
-        readClient.readContract({
-          address: CONFIG.governor,
-          functionName: "get_mandate_version",
-          args: addressArgs([CONFIG.rewriteAgent, 2]),
-        }).catch(() => null),
-        readClient.readContract({
-          address: CONFIG.governor,
-          functionName: "get_promotion_result",
-          args: addressArgs([CONFIG.rewriteAgent]),
-        }).catch(() => null),
-      ]);
-      if (version?.status === "active" || promotion === "PASSED") {
-        showActionOutcome("Propose", "Mandate already promoted", "Mandate v2 is already promoted for this agent.");
-        return;
-      }
-      setStatus("Propose: paid-claim precondition passed; submitting…");
-      await runWrite("Propose", "propose_mandate", [CONFIG.rewriteAgent]);
-    } catch (error) {
-      console.error("Stele propose preflight failed", error);
-      showActionOutcome("Propose", "Proposal preflight failed", describeWriteError(error));
-    }
-  };
-
-  const fileClaim = async () => {
-    if (!requireWallet()) return;
-    if (localTestWallet) {
-      await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
-      return;
-    }
-    try {
-      const readClient = createClient({ chain: testnetBradbury });
-      try {
-        const claim = await readClient.readContract({
-          address: CONFIG.governor,
-          functionName: "get_last_claim",
-          args: addressArgs([CONFIG.rewriteAgent]),
-        });
-        if (claim?.status === "PAID") {
-          const payout = claim.payout ?? claim.paid ?? "unknown";
-          const loss = claim.loss ?? claim.loss_amount ?? "unknown";
-          showActionOutcome("Claim", "Claim already settled", `Claim already settled for this agent — paid ${String(payout)} against ${String(loss)} loss.`);
-          return;
-        }
-      } catch (error) {
-        console.error("Stele claim preflight failed", error);
-        showActionOutcome("Claim", "Claim preflight failed", describeWriteError(error));
-        return;
-      }
-      await runWrite("Claim", "claim", [CONFIG.rewriteAgent]);
-    } catch (error) {
-      console.error("Stele claim preflight failed", error);
-      showActionOutcome("Claim", "Claim preflight failed", describeWriteError(error));
-    }
-  };
-
-  const depositMinimum = async () => {
-    if (!requireWallet()) return;
-    if (localTestWallet) {
-      await runWrite("Deposit", "deposit", [], 1n);
-      return;
-    }
-    try {
-      const readClient = createClient({ chain: testnetBradbury });
-      const [lpPool, totalShares] = await Promise.all([
-        readClient.readContract({ address: CONFIG.governor, functionName: "get_lp_pool", args: [] }),
-        readClient.readContract({ address: CONFIG.governor, functionName: "get_total_lp_shares", args: [] }),
-      ]);
-      const pool = BigInt(lpPool || 0);
-      const shares = BigInt(totalShares || 0);
-      const minimum = pool > 0n && shares > 0n ? (pool + shares - 1n) / shares : 1n;
-      setStatus(`Deposit: submitting ${minimum} GEN so the deposit mints at least one LP share…`);
-      await runWrite("Deposit", "deposit", [], minimum);
-    } catch (error) {
-      console.error("Stele deposit preflight failed", error);
-      showActionOutcome("Deposit", "Deposit preflight failed", describeWriteError(error));
-    }
   };
 
   const enrollNewAgent = async (event) => {
@@ -864,12 +758,12 @@ function ActionPanel({ onResultChange }) {
     runWrite("Spend", "spend", [DECLARED_PROVIDER, 1n], 0n, haltedSpend.agent, haltedSpend.vault);
   };
 
-  if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>. The <code>genlayer</code> CLI has an address-encoding inconsistency across <code>enroll</code>'s parameters; the product page's writes already use <code>genlayer-js</code> directly and are unaffected.</p><ConnectButton /></div>;
+  if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>. The <code>genlayer</code> CLI has an address-encoding inconsistency across <code>enroll</code>'s parameters; the product page's writes already use <code>genlayer-js</code> directly and are unaffected.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
     <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
-    <div className="run-target"><strong>You are submitting actions for configured agent</strong><span>{CONFIG.rewriteAgent}</span><small>using wallet {connectedAddress}</small></div>
+    <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "You are submitting actions for configured agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>using wallet {connectedAddress}</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <form className="enroll-panel" onSubmit={enrollNewAgent}>
       <div className="review-presets-heading"><strong>Enroll a new agent</strong><span>Connected wallet becomes the agent · consolidated Governor</span></div>
@@ -892,9 +786,9 @@ function ActionPanel({ onResultChange }) {
     </form>
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
-      <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
+      <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-    <p className="review-target-note">Submits to interactive Governor <code>0x48E8…</code>, not the proof card.</p>
+      <p className="review-target-note">Interactive Governor <code>0x48E8…</code> has no verified enrolled agent yet; enroll one before running a configured-agent Review.</p>
     <div className="review-presets" aria-labelledby="review-presets-title">
       <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
       <div className="review-preset-grid">
