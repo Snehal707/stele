@@ -78,6 +78,15 @@ const LATEST_LIVE_REVIEW = {
   reason: "The pinned vault state shows only 1 payment to the declared provider 0x1111111111111111111111111111111111111111, which is less than the dozens threshold of 24 payments, and the mandate judgment uses pin-only evidence since the enrolled record is unavailable.",
 };
 
+const HALT_REVERT_PROOF = {
+  governor: CONFIG.governor,
+  agent: "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce",
+  vault: "0xA5c23d67317d4f5192c3Bb0441baE4AFAda9D19E",
+  hash: "0x1bf05c92e1df7d720c32190b5568ee15c767715e425bb442f0f09ab0b5f0127c",
+  execution: "FINISHED_WITH_ERROR",
+  reason: "Vault is halted",
+};
+
 const LOCAL_TEST_WALLET = {
   address: "0x0000000000000000000000000000000000000421",
   hashes: {
@@ -243,13 +252,15 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
         <div><span>HALTED</span><strong>Yes</strong><small>after the final review</small></div>
         <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
       </div>
+      <p className="proof-status-context">Canonical lifecycle loop: OFF_MANDATE, halted, PAID 980. This is the recorded v2 proof state.</p>
       <p className="proof-chain-note">Canonical: <a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">{CANONICAL_DEMO.governor}</a> · Legacy interactive: <a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">{CONFIG.governor}</a></p>
     </article>
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">FIVE RECEIPTS · CLICK TO VERIFY</div>
       {PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
     </div>
-    <article className="latest-live-call" aria-labelledby="latest-live-call-title"><div className="eyebrow">LATEST LIVE CALL · {LATEST_LIVE_REVIEW.date}</div><div className="latest-live-call-head"><h3 id="latest-live-call-title">Fresh Agent C review on Bradbury</h3><strong className="proof-on">{LATEST_LIVE_REVIEW.ruling}</strong></div><p className="latest-live-call-meta">Governor <code>{LATEST_LIVE_REVIEW.governor}</code> · Agent <code>{LATEST_LIVE_REVIEW.agent}</code></p><p className="latest-live-call-reason">“{LATEST_LIVE_REVIEW.reason}”</p><a className="latest-live-call-hash" href={`${CONFIG.explorer}${LATEST_LIVE_REVIEW.hash}`} target="_blank" rel="noreferrer">{LATEST_LIVE_REVIEW.hash} ↗</a></article>
+    <article className="latest-live-call" aria-labelledby="latest-live-call-title"><div className="eyebrow">LATEST LIVE CALL · {LATEST_LIVE_REVIEW.date}</div><div className="latest-live-call-head"><h3 id="latest-live-call-title">Fresh Agent C review on Bradbury</h3><strong className="proof-on">{LATEST_LIVE_REVIEW.ruling}</strong></div><p className="latest-live-call-context">Separate latest live call — this ON_MANDATE result is a later read of a different state, not a replacement for the canonical lifecycle status above.</p><p className="latest-live-call-meta">Governor <code>{LATEST_LIVE_REVIEW.governor}</code> · Agent <code>{LATEST_LIVE_REVIEW.agent}</code></p><p className="latest-live-call-reason">“{LATEST_LIVE_REVIEW.reason}”</p><a className="latest-live-call-hash" href={`${CONFIG.explorer}${LATEST_LIVE_REVIEW.hash}`} target="_blank" rel="noreferrer">{LATEST_LIVE_REVIEW.hash} ↗</a></article>
+    <HaltRevertProofCard />
     <HealthyBurstComparison live={live} />
     <p className="proof-footnote">The first four receipts are the single-address Agent C lifecycle. The fifth is the separately redeployed C1 evidence-conflict proof; it demonstrates the deny branch without requiring a wallet to inspect it.</p>
     <section className="proof-lineage-block" aria-labelledby="proof-lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE · LIVE READ</div><h3 id="proof-lineage-title">Mandate history and last claim.</h3><p className="scope-note">The live lineage read stays here with the canonical proof instead of competing for a rail slot.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>
@@ -261,6 +272,16 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
 function ReceiptLinks({ title, hashes }) {
   const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
   return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
+}
+
+function HaltRevertProofCard() {
+  return <article className="halt-revert-proof-card" aria-labelledby="halt-revert-proof-title">
+    <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
+    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">Spend rejected while halted</h3><p>Existing Bradbury receipt from the halt fixture — no wallet connection or new click required.</p></div><strong>REVERTED</strong></div>
+    <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
+    <p className="halt-revert-proof-governor">Governor <code>{HALT_REVERT_PROOF.governor}</code></p>
+    <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
+  </article>;
 }
 
 function EvidenceTag({ children = "receipt-backed" }) {
@@ -827,6 +848,7 @@ function ActionPanel({ onResultChange }) {
         <label>Record URL <span>(optional)</span><input value={enrollForm.recordUrl} onChange={(event) => setEnrollForm((form) => ({ ...form, recordUrl: event.target.value }))} placeholder="https://…" inputMode="url" /></label>
         <label>Record hash <span>(optional)</span><input value={enrollForm.recordHash} onChange={(event) => setEnrollForm((form) => ({ ...form, recordHash: event.target.value }))} placeholder="SHA-256 hex" autoComplete="off" /></label>
       </div>
+      <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows. Full custom configuration coming later</p>
       <p className="enroll-governor">Governor <code>{CANONICAL_DEMO.governor}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800 blocks</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
       <div className="integration-example"><strong>Minimal vault integration guard</strong><pre>{`function spend(address destination, uint256 amount) external {
