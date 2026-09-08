@@ -81,6 +81,7 @@ const LATEST_LIVE_REVIEW = {
 const LOCAL_TEST_WALLET = {
   address: "0x0000000000000000000000000000000000000421",
   hashes: {
+    Enroll: "0x0000000000000000000000000000000000000000000000000000000000000420",
     Review: "0x0000000000000000000000000000000000000000000000000000000000000421",
     Claim: "0x0000000000000000000000000000000000000000000000000000000000000422",
     Propose: "0x0000000000000000000000000000000000000000000000000000000000000423",
@@ -107,7 +108,9 @@ function addressArg(address) {
 }
 
 function addressArgs(args) {
-  return args.map((value) => typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value) ? addressArg(value) : value);
+  return args.map((value) => Array.isArray(value)
+    ? addressArgs(value)
+    : typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value) ? addressArg(value) : value);
 }
 
 const RECEIPTS = {
@@ -402,6 +405,8 @@ function ActionPanel({ onResultChange }) {
   const [activeAction, setActiveAction] = useState(null);
   const [writeFailure, setWriteFailure] = useState(null);
   const [haltedSpend, setHaltedSpend] = useState(null);
+  const [enrollForm, setEnrollForm] = useState({ vault: "", mandate: "", recordUrl: "", recordHash: "" });
+  const [enrolledAgent, setEnrolledAgent] = useState(null);
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
 
@@ -551,7 +556,38 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor) => {
+  const enrollNewAgent = async (event) => {
+    event.preventDefault();
+    if (!requireWallet()) return;
+    const vault = enrollForm.vault.trim();
+    const mandate = enrollForm.mandate.trim();
+    const recordUrl = enrollForm.recordUrl.trim();
+    const recordHash = enrollForm.recordHash.trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(vault)) {
+      setStatus("Enroll: enter a valid 20-byte vault address.");
+      return;
+    }
+    if (!mandate) {
+      setStatus("Enroll: enter the mandate text the Governor should enforce.");
+      return;
+    }
+    if ((recordUrl && !recordHash) || (!recordUrl && recordHash)) {
+      setStatus("Enroll: provide both the record URL and record hash, or leave both blank.");
+      return;
+    }
+    const agent = connectedAddress;
+    await runWrite(
+      "Enroll",
+      "enroll",
+      [agent, vault, mandate, [DECLARED_PROVIDER], 1800n, 1800n, recordUrl, recordHash],
+      0n,
+      agent,
+      CANONICAL_DEMO.governor,
+      { vault, mandate, recordUrl, recordHash },
+    );
+  };
+
+  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null) => {
     if (!requireWallet()) return;
     if (uncertainSubmission) {
       setStatus(`${uncertainSubmission.label}: submission status is uncertain. Verify the wallet and explorer before retrying.`);
@@ -592,6 +628,9 @@ function ActionPanel({ onResultChange }) {
           });
           setStatus("Review: local test verdict resolved ✓");
         } else {
+          if (label === "Enroll") {
+            setEnrolledAgent({ ...(meta || {}), agent: targetAgent, governor: targetContract, hash });
+          }
           onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, localTest: true });
           setStatus(`${label}: local test resolved ✓`);
         }
@@ -666,7 +705,7 @@ function ActionPanel({ onResultChange }) {
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       onResultChange({ action: label, hash, targetAgent, status: "pending", consensus: "Pending", execution: null });
       setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
-      pollReceipt(hash, label, startedAt, targetAgent, targetContract);
+      pollReceipt(hash, label, startedAt, targetAgent, targetContract, meta);
     } catch (error) {
       console.error("Stele write failed", error, {
         shortMessage: error?.shortMessage,
@@ -698,7 +737,7 @@ function ActionPanel({ onResultChange }) {
     }
   };
 
-  const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor) => {
+  const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null) => {
     const poll = async () => {
       try {
         const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
@@ -744,8 +783,12 @@ function ActionPanel({ onResultChange }) {
             }
           } else {
             const errorText = receipt.revertReason || receipt.error || receipt.executionError || receipt.txExecutionError || (label === "Spend" && execution === "FINISHED_WITH_ERROR" ? "Vault is halted" : null);
+            if (label === "Enroll" && execution === "FINISHED_WITH_RETURN") {
+              setEnrolledAgent({ ...meta, agent: targetAgent, governor: targetContract, hash });
+              setStatus("Enroll: new agent enrolled on the consolidated Governor ✓");
+            }
             onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, ...(errorText ? { outcomeTitle: label === "Spend" ? "Spend rejected by halted vault" : `${label} execution error`, outcomeMessage: errorText } : {}) });
-            setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
+            if (label !== "Enroll") setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: accepted, but contract execution failed.` : `${label}: ${execution} ✓`);
           }
           return;
         }
@@ -776,6 +819,23 @@ function ActionPanel({ onResultChange }) {
     <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>You are submitting actions for configured agent</strong><span>{CONFIG.rewriteAgent}</span><small>using wallet {connectedAddress}</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    <form className="enroll-panel" onSubmit={enrollNewAgent}>
+      <div className="review-presets-heading"><strong>Enroll a new agent</strong><span>Connected wallet becomes the agent · consolidated Governor</span></div>
+      <div className="enroll-form-grid">
+        <label>Vault address<input value={enrollForm.vault} onChange={(event) => setEnrollForm((form) => ({ ...form, vault: event.target.value }))} placeholder="0x…" autoComplete="off" /></label>
+        <label>Mandate text<textarea value={enrollForm.mandate} onChange={(event) => setEnrollForm((form) => ({ ...form, mandate: event.target.value }))} placeholder="Plain-language rule for this agent" rows="3" /></label>
+        <label>Record URL <span>(optional)</span><input value={enrollForm.recordUrl} onChange={(event) => setEnrollForm((form) => ({ ...form, recordUrl: event.target.value }))} placeholder="https://…" inputMode="url" /></label>
+        <label>Record hash <span>(optional)</span><input value={enrollForm.recordHash} onChange={(event) => setEnrollForm((form) => ({ ...form, recordHash: event.target.value }))} placeholder="SHA-256 hex" autoComplete="off" /></label>
+      </div>
+      <p className="enroll-governor">Governor <code>{CANONICAL_DEMO.governor}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800 blocks</p>
+      <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
+      <div className="integration-example"><strong>Minimal vault integration guard</strong><pre>{`function spend(address destination, uint256 amount) external {
+  require(msg.sender == agent, "Only the agent can spend");
+  require(!governor.is_halted(agent));
+  _transfer(destination, amount);
+}`}</pre></div>
+      {enrolledAgent && <div className="enrolled-agent-card"><div><strong>Agent enrolled · not yet reviewed</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
+    </form>
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runWrite("Review", "review", [CONFIG.rewriteAgent])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
@@ -941,7 +1001,7 @@ function ProductPage() {
       </aside>
       <div className="product-main">
         {activeProductSection === "proof" && <AlreadyProvedSection live={live} lineage={lineage} capital={capital} capitalValue={capitalValue} walletConnected={walletConnected} retryLiveReads={retryLiveReads} />}
-        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Spend" result={yourRun.Spend} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
+        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Enroll" result={yourRun.Enroll} /><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Spend" result={yourRun.Spend} /><YourRunResult action="Claim" result={yourRun.Claim} /><YourRunResult action="Propose" result={yourRun.Propose} /><YourRunResult action="Deposit" result={yourRun.Deposit} /></div></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
