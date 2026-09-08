@@ -14,7 +14,7 @@
 
 First four on `0x8fb0…`; conflict on `0xb77B…` after the evidence redeploy.
 
-A governor judges a vault against a written mandate. Off-mandate → halt. A wrong halt that costs money → the pool pays, then the mandate grows a clause. No vote.
+A governor cuts an agent's vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.
 
 # Stele
 

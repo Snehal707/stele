@@ -996,7 +996,7 @@ function LandingPage() {
       <div className="hero-copy">
         <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>
         <h1>A governor judges.<br /><em>Then acts.</em></h1>
-        <p className="hero-lede">A governor judges a vault against a written mandate. Off-mandate → halt. A wrong halt that costs money → the pool pays, then the mandate grows a clause. No vote.</p>
+        <p className="hero-lede">A governor cuts an agent&apos;s vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.</p>
         <p className="primary-governor"><strong>Primary Governor · Bradbury</strong><br /><code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code></p>
         <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
       </div>
