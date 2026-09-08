@@ -150,6 +150,10 @@ const RECEIPTS = {
   haltSpendSuccess: "0x8cc3a04b073d272eccc641cebc8edc4ffc899940669ab36c0d2a4e0cec2bb899",
 };
 
+function enrollArgs(args) {
+  return args;
+}
+
 const C1_RECORD_EVIDENCE = {
   burstAgreement: {
     governor: "0xb77B3050C3c61A0a77cBB966a4FDcB1B43A8f0AF",
@@ -605,10 +609,11 @@ function ActionPanel({ onResultChange }) {
       agent,
       CANONICAL_DEMO.governor,
       { vault, mandate, recordUrl, recordHash },
+      enrollArgs,
     );
   };
 
-  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null) => {
+  const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null, encodeArgs = addressArgs) => {
     if (!requireWallet()) return;
     if (uncertainSubmission) {
       setStatus(`${uncertainSubmission.label}: submission status is uncertain. Verify the wallet and explorer before retrying.`);
@@ -708,7 +713,7 @@ function ActionPanel({ onResultChange }) {
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: targetContract, functionName, args: addressArgs(args), value });
+          hash = await client.writeContract({ address: targetContract, functionName, args: encodeArgs(args), value });
           break;
         } catch (error) {
           const message = describeWriteError(error);
@@ -849,6 +854,7 @@ function ActionPanel({ onResultChange }) {
         <label>Record hash <span>(optional)</span><input value={enrollForm.recordHash} onChange={(event) => setEnrollForm((form) => ({ ...form, recordHash: event.target.value }))} placeholder="SHA-256 hex" autoComplete="off" /></label>
       </div>
       <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows. Full custom configuration coming later</p>
+      <p className="enroll-live-status">Bradbury status: one enrollment attempt failed on 2026-09-08; the feature works in local testing; live confirmation is still open.</p>
       <p className="enroll-governor">Governor <code>{CANONICAL_DEMO.governor}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800 blocks</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
       <div className="integration-example"><strong>Minimal vault integration guard</strong><pre>{`function spend(address destination, uint256 amount) external {
@@ -1055,7 +1061,7 @@ function DocsPage() {
         <section id="cover"><div className="eyebrow">03 / COVER</div><h2>A paid loss creates the evidence for a narrower rule.</h2><p>The thin mandate can allow a drain. If the pre-drain review was ON and the later balance falls, <code>claim()</code> pays <code>min(loss, bond, pool)</code> within the claim window. It stores the pre-drain ON trace and the post-loss trace separately.</p><p>A failed <code>get_governor</code> read is not treated as detachment. A permitted activity pattern is not silently reclassified as a thin-mandate denial.</p></section>
         <section id="capital"><div className="eyebrow">04 / CAPITAL</div><h2>Premium yield is separate from claims risk in this version.</h2><p><code>enroll_covered</code> splits premium 70/30 between the claims pool and LP pool. Deposits mint LP shares and withdrawals pay proportional LP pool value including yield. LPs do not back claims directly yet; the claims pool remains the paying pool.</p></section>
         <section id="lineage"><div className="eyebrow">05 / LINEAGE</div><h2>The original mandate remains visible inside the next version.</h2><p><code>propose_mandate</code> reads a paid claim and asks for a behavioral clause describing the missing pattern. The proposal must preserve the parent text as an exact prefix and starts as a dead branch.</p><p><code>promote_mandate</code> scores stored traces: the post-loss trace must become OFF, the pre-drain trace must remain ON, and any stored burst or strangers cases must keep their original rulings. Failed candidates remain stored and inactive. The enrollment envelope cannot widen providers, raise limits, or clear halts.</p></section>
-        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output and does not halt.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li></ul></section>
+        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output and does not halt.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>The CLI's Address-vs-string encoding for <code>enroll</code>'s parameters was inconsistent across three attempts — provider array, agent address, and halt window each required different type handling, and fixing one broke another. This appears to be a genuine CLI encoding ambiguity rather than a single contract bug; worth raising with GenLayer directly rather than continuing to guess.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li></ul></section>
       </article>
     </div>
   </main>;
