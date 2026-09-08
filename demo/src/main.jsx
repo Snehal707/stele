@@ -27,7 +27,8 @@ const CONFIG = {
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
 const HALT_REVERT_RECEIPT_HASH = "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896";
-const INTERACTIVE_V4_AGENT = null;
+const DEFAULT_V4_AGENT = "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce";
+const INTERACTIVE_V4_AGENT = DEFAULT_V4_AGENT;
 
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
@@ -816,7 +817,7 @@ function ActionPanel({ onResultChange }) {
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-    <p className="review-target-note">Interactive Governor <code>0x48E8…</code> has no verified enrolled agent yet; enroll one before running a configured-agent Review.</p>
+    <p className="review-target-note">Interactive Governor <code>0x48E8…</code> · configured Review agent <code>{INTERACTIVE_V4_AGENT}</code>.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
