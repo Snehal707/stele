@@ -7,7 +7,7 @@
 - **Propose → Promote — `0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d`** — `PASSED`: the contract rewrites its mandate after a paid claim, with no vote.
 - **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
 - `0xe42d9198…3ea3` — C1 `EVIDENCE_CONFLICT` → claim denied, payout 0 (Governor `0xb77B…f0AF`; evidence path required a redeploy)  
-  Studio replay: `gltest --network studionet tests/test_evidence_conflict.py` — 1 passed in 67.17s
+  Studio regression suite: `gltest --network studionet tests/test_evidence_conflict.py` — 3 tests covering double-enroll, sticky halt, and conflict/deny
 - **Enroll — `0x1a4846a02514ecbfa328259a8594cd5fe5a497570ba6f1f1aa88597b598f4a0b`** — new agent enrolled live via direct SDK call.
 - **Halt-revert — `0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896`** — spend attempted on a halted vault, reverted with “Vault is halted.”
 - **This week's fresh review — `0x6e66ba162a510ba49c0f4aa0ce6acf0167380935ac0e94e1f00f313440bade3b`** — fresh call, separate from the canonical `OFF_MANDATE` / halted / `PAID 980` lifecycle loop.
@@ -187,11 +187,10 @@ actions; each write shows its transaction hash and explorer link immediately.
 
 ## Testing
 
-The focused regression test in `tests/test_evidence_conflict.py` runs the
-record-mismatch path in GenLayer Studio mode: it deploys a fresh Governor and
-VaultTwin through `get_contract_factory`, enrolls a hash-matched but
-state-mismatched record, reviews to `EVIDENCE_CONFLICT`, then claims and
-asserts `DENIED_EVIDENCE_CONFLICT` with payout `0`.
+The v3/v4 regression tests in `tests/test_evidence_conflict.py` cover the
+current safety guarantees in GenLayer Studio mode: double enrollment rejects,
+an `ON_MANDATE` review cannot clear a prior halt, and a hash mismatch produces
+`EVIDENCE_CONFLICT` with `DENIED_EVIDENCE_CONFLICT` and payout `0`.
 
 Use Python 3.12+ and install `genlayer-test`, then run on hosted Studio:
 
@@ -200,9 +199,9 @@ python -m pip install genlayer-test
 gltest --network studionet tests/test_evidence_conflict.py -v -s
 ```
 
-Verified on WSL/Linux with `genlayer-test` 0.29.2: `1 passed in 67.17s`.
-This Studio run exercises two real contract deployments and does not replace
-a Bradbury consensus receipt.
+This runs all three regression tests against fresh Governor/VaultTwin pairs.
+The Studio run exercises two real contract deployments per scenario and does
+not replace a Bradbury consensus receipt.
 
 Native Windows may still hit `genlayer-test`'s temp-file cleanup issue
 (`WinError 32`); run the Studio test via WSL or Linux/Mac for a clean pass.
@@ -613,6 +612,10 @@ Bradbury exposes the matching fee-manager interface.
 ---
 
 ## Limitations
+
+Deployer can replace code via `upgrade()`, restricted to addresses in
+`root.upgraders`; rulings themselves have no admin unhalt — only the halt
+window or a fresh off-mandate/conflict review changes the flag.
 
 **Membership is pre-computed.** The contract decides `declared=yes|no` and hands
 validators the answer, so the strangers case is a deterministic check, not
