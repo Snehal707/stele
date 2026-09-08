@@ -125,10 +125,17 @@ same move telematics made for auto insurance.
 
 ### What it costs to adopt
 
-One line in the governed contract:
+Minimal integration in the governed contract:
 
 ```solidity
-require(!governor.is_halted(agent));
+interface IGovernor {
+    function is_halted(address agent) external view returns (bool);
+}
+function spend(address destination, uint256 amount) external {
+    require(msg.sender == agent, "Only the agent can spend");
+    require(!IGovernor(governor).is_halted(agent), "Vault is halted");
+    _transfer(destination, amount);
+}
 ```
 
 Plus a mandate written in plain language, a premium, and a bond. No change to
