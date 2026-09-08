@@ -784,6 +784,15 @@ function ActionPanel({ onResultChange }) {
     <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "You are submitting actions for configured agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>using wallet {connectedAddress}</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    <div className="your-run-proof-banner">Writes go to v4 <code>0x48E8…</code> · proof lifecycle stays on <code>0x8fb0…</code></div>
+    <div className="review-presets" aria-labelledby="review-presets-title">
+      <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
+      <div className="review-preset-grid">
+        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review drain fixture", FIXTURES.drain.agent, CONFIG.governor)}><strong>Review drain fixture</strong><small>Prefilled · expected OFF_MANDATE</small></button>
+        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review conflict fixture", C1_RECORD_EVIDENCE.burstConflict.agent, C1_RECORD_EVIDENCE.burstConflict.governor)}><strong>Review conflict fixture</strong><small>Prefilled · expected EVIDENCE_CONFLICT</small></button>
+      </div>
+      <p className="review-preset-note">Committee is voting — ~70s. This is normal, not stuck. Results appear in the Review result slot above.</p>
+    </div>
     <form className="enroll-panel" onSubmit={enrollNewAgent}>
       <div className="review-presets-heading"><strong>Enroll a new agent</strong><span>Connected wallet becomes the agent · interactive v4 Governor</span></div>
       <div className="enroll-form-grid">
@@ -807,15 +816,7 @@ function ActionPanel({ onResultChange }) {
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-      <p className="review-target-note">Interactive Governor <code>0x48E8…</code> has no verified enrolled agent yet; enroll one before running a configured-agent Review.</p>
-    <div className="review-presets" aria-labelledby="review-presets-title">
-      <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
-      <div className="review-preset-grid">
-        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review drain fixture", FIXTURES.drain.agent, CONFIG.governor)}><strong>Review drain fixture</strong><small>Prefilled · expected OFF_MANDATE</small></button>
-        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={() => runPresetReview("Review conflict fixture", C1_RECORD_EVIDENCE.burstConflict.agent, C1_RECORD_EVIDENCE.burstConflict.governor)}><strong>Review conflict fixture</strong><small>Prefilled · expected EVIDENCE_CONFLICT</small></button>
-      </div>
-      <p className="review-preset-note">Committee is voting — ~70s. This is normal, not stuck. Results appear in the Review result slot above.</p>
-    </div>
+    <p className="review-target-note">Interactive Governor <code>0x48E8…</code> has no verified enrolled agent yet; enroll one before running a configured-agent Review.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
