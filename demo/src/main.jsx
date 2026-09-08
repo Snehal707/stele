@@ -838,7 +838,7 @@ function ActionPanel({ onResultChange }) {
     runWrite("Spend", "spend", [DECLARED_PROVIDER, 1n], 0n, haltedSpend.agent, haltedSpend.vault);
   };
 
-  if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><ConnectButton /></div>;
+  if (!connected) return <div className="write-panel"><p>Connect a wallet to submit a review, claim, mandate proposal, or LP deposit.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>. The <code>genlayer</code> CLI has an address-encoding inconsistency across <code>enroll</code>'s parameters; the product page's writes already use <code>genlayer-js</code> directly and are unaffected.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
