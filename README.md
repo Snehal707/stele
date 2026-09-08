@@ -174,6 +174,8 @@ hash-check, parse, and compare the record to the pinned vault state before the
 mandate judgment. The C1 record is part of the ruling path, not a decorative
 citation. `claim()` rejects payout for `EVIDENCE_CONFLICT`.
 
+Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C.
+
 This supersedes the original pin-only design. The earlier design remains useful
 as historical context, but it is not the active review path.
 
@@ -695,7 +697,7 @@ deployments.**
 
 Studio runs are recorded in the ephemeral appendix.
 
-Governor v3 on Bradbury: `0x97626F9dD28592cf19A1F73ea61cd8e9Fd1aBbF5` adds the enrollment guard, sticky halt semantics, safe evidence-conflict handling, and trace-based promotion; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
+Governor v4 on Bradbury: `0x48E80c11a13e50D7017E9A3104A866deFD965D70` carries the enrollment guard, sticky halt semantics, safe evidence-conflict handling, trace-based promotion, and access-controlled upgrades; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
 
 ---
 

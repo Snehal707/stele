@@ -214,6 +214,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .proof-footnote { max-width: 760px; margin: 18px 0 0; color: var(--muted); font: 12px/1.5 var(--mono); }
 .proof-comparison { margin-top: 30px; padding: 20px; border: 1px solid var(--line); background: rgba(244,239,229,.55); }
 .proof-comparison-lede { margin: 9px 0 16px; color: var(--ink); font: 1.1rem var(--serif); }
+.proof-comparison-source { margin: -8px 0 12px; color: var(--muted); font: 11px/1.4 var(--mono); }
 .proof-comparison-grid { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .proof-comparison-grid > div { display: grid; grid-template-columns: minmax(120px, 1fr) repeat(2, minmax(90px, 1fr)); gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(183,174,157,.5); }
 .proof-comparison-grid > div:last-child { border-bottom: 0; }
@@ -309,6 +310,8 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .latest-live-call-meta { font: .72rem/1.45 var(--mono); overflow-wrap: anywhere; }
 .latest-live-call-reason { max-width: 72rem; line-height: 1.45; }
 .latest-live-call-hash { color: inherit; font: .72rem/1.4 var(--mono); overflow-wrap: anywhere; }
+.latest-live-call small, .review-target-note { color: var(--muted); font: .72rem/1.4 var(--mono); }
+.review-target-note { margin: 8px 0 0; }
 .review-presets { border: 1px solid var(--line, #d8d2c6); padding: .85rem; display: grid; gap: .65rem; background: rgba(177,120,66,.04); }
 .review-presets-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
 .review-presets-heading strong { font-size: .82rem; }
