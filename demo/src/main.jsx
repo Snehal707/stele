@@ -126,6 +126,13 @@ const FIXTURES = {
   strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c" },
 };
 
+const DEMO_FIXTURE_FALLBACKS = {
+  HEALTHY: { fields: [["spend_total", "220"], ["balance", "780"], ["payments", "1"]], ruling: "ON_MANDATE" },
+  BURST: { fields: [["spend_total", "220"], ["balance", "780"], ["payments", "48"]], ruling: "OFF_MANDATE" },
+  DRAIN: { fields: [["state", "emptied"]], ruling: "OFF_MANDATE" },
+  STRANGERS: { fields: [["destinations", "undeclared"]], ruling: "OFF_MANDATE" },
+};
+
 function addressArg(address) {
   if (typeof address !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
     throw new Error(`Invalid GenLayer address argument: ${address}`);
@@ -402,8 +409,8 @@ function ReadState({ message = "Loading live Bradbury read…", onRetry }) {
 }
 
 function renderCase(item, record, onRetry, labelOverride = item.label) {
-  if (!record || record.status === "loading") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState onRetry={onRetry} /></article>;
-  if (record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><ReadState message={`Live read failed — ${record.error}`} onRetry={onRetry} /></article>;
+  const fallback = DEMO_FIXTURE_FALLBACKS[item.label];
+  if (!record || record.status === "loading" || record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><div className={`verdict ${fallback.ruling === "ON_MANDATE" ? "on" : "off"}`}>{fallback.ruling}</div><p className="reason">Fixture (live read unavailable)</p><div className="fields">{fallback.fields.map(([key, fieldValue]) => <div className="field" key={key}><span>{key}</span><strong>{fieldValue}</strong><EvidenceTag>fixture</EvidenceTag></div>)}</div><ReadState message="Fixture (live read unavailable)" onRetry={onRetry} /></article>;
   const fields = record.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && String(fieldValue) !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{String(fieldValue)}</strong><EvidenceTag>live read</EvidenceTag></div>);
   return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}>
     <div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div>
