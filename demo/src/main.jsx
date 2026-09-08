@@ -297,7 +297,7 @@ function ReceiptLinks({ title, hashes }) {
 function HaltRevertProofCard() {
   return <article className="halt-revert-proof-card" aria-labelledby="halt-revert-proof-title">
     <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
-    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">Spend rejected while halted</h3><p>Existing Bradbury receipt from the halt fixture — no wallet connection or new click required.</p></div><strong>REVERTED</strong></div>
+    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">Historic halt (earlier demo, different transaction)</h3><p>Earlier Bradbury halt receipt — separate from the opening-list Halt-revert transaction; no wallet connection or new click required.</p></div><strong>REVERTED</strong></div>
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
     <p className="halt-revert-proof-governor">Governor <code>{HALT_REVERT_PROOF.governor}</code></p>
     <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
