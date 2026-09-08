@@ -878,6 +878,8 @@ class Governor(gl.Contract):
     @gl.public.write
     def upgrade(self, new_code: bytes) -> None:
         root = gl.storage.Root.get()
+        if gl.message.sender_address not in root.upgraders.get():
+            raise gl.vm.UserError("Not authorized to upgrade")
         code = root.code.get()
         code.truncate()
         code.extend(new_code)
