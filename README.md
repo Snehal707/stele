@@ -407,9 +407,8 @@ fixture has 48.
 | expiry-advance seed | 2026-09-05T15:04:24.806947Z | `0x865891e8eeb45f0bd211e195a6fda84a0898b33b545fa85ae86ca2fdaddebb0f`; consensus-time fixture transaction |
 | post-expiry `spend` | 2026-09-05T15:05:10.181777Z | `0x64af7688033ec67d7a4cae3775ea3dd390c58e12cd0266906bb024388e4174c8`; **succeeded; five AGREE** |
 
-An `ON_MANDATE` review also clears a halt immediately, so a halt is not a
-one-way freeze. **Halt expiry is measured in consensus time, not wall clock** —
-see Engineering notes.
+Halt is set by an off-mandate or evidence-conflict ruling. It is not cleared by
+a later ON_MANDATE review. It ends when the enrolled halt window expires.
 
 Hashes: clean review `0x682ecccc99261f3c2e32ee4bd8301759db545d03986e8045c623eb70932cb31e`,
 rejected spend `0xcf580c5918ef5c2a522ca9428668afcd940debe4404a7be332aad671ab010a20`,
@@ -692,6 +691,8 @@ deployments.**
 | Pre-C1 consolidated demo | Bradbury | `0xB31bc62001219E8A9eF4026820A06A6799984D26` | earlier judgment/halt/cover/lifeform/economics runs; not the C1 receipt source |
 
 Studio runs are recorded in the ephemeral appendix.
+
+Governor v3 on Bradbury: `0x97626F9dD28592cf19A1F73ea61cd8e9Fd1aBbF5` adds the enrollment guard, sticky halt semantics, safe evidence-conflict handling, and trace-based promotion; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
 
 ---
 

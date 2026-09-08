@@ -131,6 +131,9 @@ class Governor(gl.Contract):
         self.envelope_of[agent] = MANDATE_ENVELOPE
         self.next_version = version_id + u256(1)
 
+    def _is_enrolled(self, agent: Address) -> bool:
+        return bool(self.mandates.get_or_insert_default(agent).strip())
+
     def _canonical_state(self, agent: Address, state: dict) -> str:
         payments = state["payments"]
         totals = state["total"]
@@ -201,27 +204,33 @@ class Governor(gl.Contract):
     @gl.public.write
     def enroll(
         self,
-        agent: Address,
-        vault: Address,
+        agent: str,
+        vault: str,
         mandate_text: str,
-        providers: DynArray[Address],
+        providers: DynArray[str],
         halt_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
         claim_window: u256 = u256(DEFAULT_CLAIM_WINDOW_BRADBURY),
         record_url: str = "",
         record_hash: str = "",
     ) -> None:
-        self.vault_of[agent] = vault
-        self.mandates[agent] = mandate_text
-        self.halted[agent] = False
-        self.halt_expiry[agent] = u256(0)
-        self.halt_window[agent] = halt_window
-        self.claim_window[agent] = claim_window
-        self.record_url_of[agent] = record_url
-        self.record_hash_of[agent] = record_hash
-        self._register_mandate(agent, mandate_text)
-        declared = self.providers.get_or_insert_default(agent)
-        for provider in providers:
-            declared.append(provider)
+        agent_address = Address(agent)
+        vault_address = Address(vault)
+        if self._is_enrolled(agent_address):
+            raise gl.vm.UserError("Agent already enrolled")
+        if not mandate_text.strip():
+            raise gl.vm.UserError("Mandate must not be empty")
+        self.vault_of[agent_address] = vault_address
+        self.mandates[agent_address] = mandate_text
+        self.halted[agent_address] = False
+        self.halt_expiry[agent_address] = u256(0)
+        self.halt_window[agent_address] = halt_window
+        self.claim_window[agent_address] = claim_window
+        self.record_url_of[agent_address] = record_url
+        self.record_hash_of[agent_address] = record_hash
+        self._register_mandate(agent_address, mandate_text)
+        declared = self.providers.get_or_insert_default(agent_address)
+        for provider_text in providers:
+            declared.append(Address(provider_text))
 
     @gl.public.write
     def enroll_one(
@@ -236,6 +245,10 @@ class Governor(gl.Contract):
         record_hash: str = "",
     ) -> None:
         """CLI-compatible fixture entry point for one declared provider."""
+        if self._is_enrolled(agent):
+            raise gl.vm.UserError("Agent already enrolled")
+        if not mandate_text.strip():
+            raise gl.vm.UserError("Mandate must not be empty")
         self.vault_of[agent] = vault
         self.mandates[agent] = mandate_text
         self.halted[agent] = False
@@ -261,6 +274,10 @@ class Governor(gl.Contract):
         record_hash: str = "",
     ) -> None:
         premium = gl.message.value
+        if self._is_enrolled(agent):
+            raise gl.vm.UserError("Agent already enrolled")
+        if not mandate_text.strip():
+            raise gl.vm.UserError("Mandate must not be empty")
         if premium == u256(0):
             raise gl.vm.UserError("Premium and bond must be nonzero")
         self.vault_of[agent] = vault
@@ -362,12 +379,16 @@ class Governor(gl.Contract):
             try:
                 response = gl.nondet.web.get(record_url)
                 body = response.body.decode("utf-8")
-                digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
-                if digest.lower() != record_hash.lower():
-                    return {"status": "HASH_MISMATCH"}
-                return {"status": "VERIFIED", "fields": self._record_fields(body)}
             except Exception:
                 return {"status": "UNAVAILABLE"}
+            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            if digest.lower() != record_hash.lower():
+                return {"status": "HASH_MISMATCH"}
+            try:
+                fields = self._record_fields(body)
+            except Exception:
+                return {"status": "PARSE_FAILED"}
+            return {"status": "VERIFIED", "fields": fields}
 
         record = gl.eq_principle.strict_eq(fetch_and_parse_record)
         record_status = record["status"]
@@ -380,14 +401,19 @@ class Governor(gl.Contract):
         web_text = ""
 
         expected_record = self._expected_record_fields(vault_address, state)
-        if record_status == "VERIFIED" and record["fields"] != expected_record:
-            record_reason = (
-                f"Evidence conflict: pinned vault state has spend_total={expected_record['spend_total']}, "
-                f"balance={expected_record['balance']}, and payments="
-                f"{expected_record['destinations'][0]['payments']}, but the enrolled record claims "
-                f"spend_total={record['fields']['spend_total']}, balance={record['fields']['balance']}, "
-                f"and payments={record['fields']['destinations'][0]['payments']}; operator review is required."
-            )
+        if record_status == "HASH_MISMATCH" or (
+            record_status == "VERIFIED" and record["fields"] != expected_record
+        ):
+            if record_status == "HASH_MISMATCH":
+                record_reason = "Evidence conflict: the enrolled record hash does not match the hash locked at enrollment; operator review is required."
+            else:
+                record_reason = (
+                    f"Evidence conflict: pinned vault state has spend_total={expected_record['spend_total']}, "
+                    f"balance={expected_record['balance']}, and payments="
+                    f"{expected_record['destinations'][0]['payments']}, but the enrolled record claims "
+                    f"spend_total={record['fields']['spend_total']}, balance={record['fields']['balance']}, "
+                    f"and payments={record['fields']['destinations'][0]['payments']}; operator review is required."
+                )
             self.governed[agent] = "EVIDENCE_CONFLICT"
             self.halted[agent] = True
             self.halt_expiry[agent] = self._now() + self.halt_window[agent]
@@ -403,6 +429,26 @@ class Governor(gl.Contract):
                     ruling_time=self._now(),
                     web_source=web_source,
                     web_evidence_status="CONFLICT",
+                )
+            )
+            return
+
+        if record_status == "PARSE_FAILED":
+            self.governed[agent] = "REVIEW_FAILED"
+            self.halted[agent] = True
+            self.halt_expiry[agent] = self._now() + self.halt_window[agent]
+            self.verdicts.append(
+                Verdict(
+                    agent=agent,
+                    ruling="REVIEW_FAILED",
+                    reason="The enrolled evidence record could not be parsed; review halted for safety.",
+                    pinned_state=pinned,
+                    raw_output="",
+                    last_spend=u256(state["spend_total"]),
+                    last_balance=u256(state["balance"]),
+                    ruling_time=self._now(),
+                    web_source=web_source,
+                    web_evidence_status=record_status,
                 )
             )
             return
@@ -480,11 +526,14 @@ class Governor(gl.Contract):
                 )
 
         if parsed is None:
+            self.governed[agent] = "REVIEW_FAILED"
+            self.halted[agent] = True
+            self.halt_expiry[agent] = self._now() + self.halt_window[agent]
             self.verdicts.append(
                 Verdict(
                     agent=agent,
-                    ruling="",
-                    reason="",
+                    ruling="REVIEW_FAILED",
+                    reason="The review output could not be parsed; review halted for safety.",
                     pinned_state=pinned,
                     raw_output=ruling,
                     last_spend=u256(state["spend_total"]),
@@ -496,19 +545,10 @@ class Governor(gl.Contract):
             )
             return
 
-        if record_status == "VERIFIED" and "record" not in parsed["reason"].lower():
-            reason = parsed["reason"].strip()
-            if reason.endswith("."):
-                reason = reason[:-1]
-            parsed["reason"] = reason + ", and the enrolled record confirms the same pinned values."
-
         self.governed[agent] = parsed["ruling"]
         if parsed["ruling"] == "OFF_MANDATE":
             self.halted[agent] = True
             self.halt_expiry[agent] = self._now() + self.halt_window[agent]
-        else:
-            self.halted[agent] = False
-            self.halt_expiry[agent] = u256(0)
         self.verdicts.append(
             Verdict(
                 agent=agent,
@@ -730,13 +770,13 @@ class Governor(gl.Contract):
                 "labels TRACE_0 through TRACE_" + str(len(traces) - 1) + ", "
                 "with each value ON_MANDATE or OFF_MANDATE and no other keys. "
                 "The paid-claim trace must be OFF_MANDATE, the on-mandate trace "
-                "must be ON_MANDATE, and stored burst or strangers traces must "
-                "be OFF_MANDATE."
+                "must be ON_MANDATE, and every other trace must preserve its "
+                "stored ruling."
             ),
             criteria=(
                 "Every stored trace must be scored. The paid-claim trace must be "
-                "OFF_MANDATE, the on-mandate trace ON_MANDATE, and any stored "
-                "burst or strangers trace OFF_MANDATE. Use only pinned traces; "
+                "OFF_MANDATE, the on-mandate trace ON_MANDATE, and every other "
+                "trace must preserve its stored ruling. Use only pinned traces; "
                 "do not use live vault data."
             ),
         )
@@ -756,11 +796,8 @@ class Governor(gl.Contract):
                     break
             expected[f"TRACE_{index}"] = "OFF_MANDATE" if trace == paid_state else original
             if not expected[f"TRACE_{index}"]:
-                expected[f"TRACE_{index}"] = (
-                    "OFF_MANDATE"
-                    if "balance=0" in trace or "declared=no" in trace or "payments=48" in trace
-                    else "ON_MANDATE"
-                )
+                self.promotion_result[agent] = "INSUFFICIENT_STORED_TRACES"
+                return
         passed = isinstance(parsed, dict) and parsed == expected
         self.promotion_result[agent] = "PASSED" if passed else "FAILED"
         if not passed:
