@@ -205,6 +205,13 @@ This runs all three regression tests against fresh Governor/VaultTwin pairs.
 The Studio run exercises two real contract deployments per scenario and does
 not replace a Bradbury consensus receipt.
 
+The per-clause review-prompt regression is also covered by
+`tests/test_review_prompt_rules.py` and runs in hosted Studio with:
+
+```text
+gltest --network studionet tests/test_review_prompt_rules.py -v -s
+```
+
 Native Windows may still hit `genlayer-test`'s temp-file cleanup issue
 (`WinError 32`); run the Studio test via WSL or Linux/Mac for a clean pass.
 

@@ -23,7 +23,7 @@ const CONFIG = {
   governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   explorer: "https://explorer-bradbury.genlayer.com/tx/",
   addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
-  rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
+  rewriteAgent: "0xfcad0b19bb29d4674531d6f115237e16afce377c",
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
 const HALT_REVERT_RECEIPT_HASH = "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896";
@@ -123,8 +123,8 @@ function isLocalTestWalletEnabled() {
 const FIXTURES = {
   healthy: { label: "HEALTHY", className: "healthy", note: "example invoice pattern", agent: "0x6e1781e673afd1751f2f58ab8a4081fc1686554e" },
   burst: { label: "BURST", className: "burst", note: "48 payments · dozens in a short window", agent: "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a" },
-  drain: { label: "DRAIN", className: "drain-off", note: "drain fixture", agent: "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce" },
-  strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c" },
+  drain: { label: "DRAIN", className: "drain-off", note: "drain fixture", agent: DEFAULT_V4_AGENT },
+  strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c", governor: "0xB31bc62001219E8A9eF4026820A06A6799984D26" },
 };
 
 const DEMO_FIXTURE_FALLBACKS = {
@@ -785,7 +785,7 @@ function ActionPanel({ onResultChange }) {
     <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "You are submitting actions for configured agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>using wallet {connectedAddress}</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
-    <div className="your-run-proof-banner">Writes go to v4 <code>0x48E8…</code> · proof lifecycle stays on <code>0x8fb0…</code></div>
+    <div className="your-run-proof-banner">Writes go to v4 <code>{CONFIG.governor}</code> · proof lifecycle stays on <code>0x8fb0…</code></div>
     <div className="review-presets" aria-labelledby="review-presets-title">
       <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
       <div className="review-preset-grid">
@@ -817,7 +817,7 @@ function ActionPanel({ onResultChange }) {
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> 1. Review · waiting…</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-    <p className="review-target-note">Interactive Governor <code>0x48E8…</code> · configured Review agent <code>{INTERACTIVE_V4_AGENT}</code>.</p>
+    <p className="review-target-note">Interactive Governor <code>{CONFIG.governor}</code> · configured Review agent <code>{INTERACTIVE_V4_AGENT}</code>.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
@@ -850,10 +850,11 @@ function ProductPage() {
       const client = createClient({ chain: testnetBradbury });
       const readFixture = async (fixture) => {
         try {
-          const vault = await client.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([fixture.agent]) });
+          const fixtureGovernor = fixture.governor || CONFIG.governor;
+          const vault = await client.readContract({ address: fixtureGovernor, functionName: "get_vault", args: addressArgs([fixture.agent]) });
           const [state, verdict] = await Promise.all([
             client.readContract({ address: vault, functionName: "agent_state", args: [] }),
-            client.readContract({ address: CONFIG.governor, functionName: "latest_verdict", args: addressArgs([fixture.agent]) }),
+            client.readContract({ address: fixtureGovernor, functionName: "latest_verdict", args: addressArgs([fixture.agent]) }),
           ]);
           return { status: "ready", ...liveFixtureRecord(state, verdict) };
         } catch (error) {
@@ -1000,7 +1001,7 @@ function DocsPage() {
         <section id="cover"><div className="eyebrow">03 / COVER</div><h2>A paid loss creates the evidence for a narrower rule.</h2><p>The thin mandate can allow a drain. If the pre-drain review was ON and the later balance falls, <code>claim()</code> pays <code>min(loss, bond, pool)</code> within the claim window. It stores the pre-drain ON trace and the post-loss trace separately.</p><p>A failed <code>get_governor</code> read is not treated as detachment. A permitted activity pattern is not silently reclassified as a thin-mandate denial.</p></section>
         <section id="capital"><div className="eyebrow">04 / CAPITAL</div><h2>Premium yield is separate from claims risk in this version.</h2><p><code>enroll_covered</code> splits premium 70/30 between the claims pool and LP pool. Deposits mint LP shares and withdrawals pay proportional LP pool value including yield. LPs do not back claims directly yet; the claims pool remains the paying pool.</p></section>
         <section id="lineage"><div className="eyebrow">05 / LINEAGE</div><h2>The original mandate remains visible inside the next version.</h2><p><code>propose_mandate</code> reads a paid claim and asks for a behavioral clause describing the missing pattern. The proposal must preserve the parent text as an exact prefix and starts as a dead branch.</p><p><code>promote_mandate</code> scores stored traces: the post-loss trace must become OFF, the pre-drain trace must remain ON, and any stored burst or strangers cases must keep their original rulings. Failed candidates remain stored and inactive. The enrollment envelope cannot widen providers, raise limits, or clear halts.</p></section>
-        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output and does not halt.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>Resolved enrollment finding: the CLI's Address-vs-string encoding was inconsistent across <code>enroll</code>'s provider array, agent address, and halt-window parameters. Direct <code>genlayer-js</code> encoding succeeded with receipt <code>0x1a4846a0…</code>; product-page writes use that direct SDK path.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li></ul></section>
+        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output, marks <code>REVIEW_FAILED</code>, and halts for safety.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>Resolved enrollment finding: the CLI's Address-vs-string encoding was inconsistent across <code>enroll</code>'s provider array, agent address, and halt-window parameters. Direct <code>genlayer-js</code> encoding succeeded with receipt <code>0x1a4846a0…</code>; product-page writes use that direct SDK path.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li></ul></section>
       </article>
     </div>
   </main>;
