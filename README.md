@@ -639,6 +639,13 @@ built on top of it.
 hash and had in fact run to completion — the runner treated a missing FINALIZED
 receipt as a failed send.
 
+**`REVIEW_STALE` Bradbury deployment note.** `REVIEW_STALE` is implemented and
+Studio-verified (`1 passed in 280.04s`). The Bradbury deployment session was
+compromised partway through by an unrelated placeholder `Tiny` contract being
+deployed during nonce/gas debugging instead of the current `governor.py`; the
+resulting missing `review` method was not a defect in `REVIEW_STALE`. A clean
+Bradbury deployment attempt is queued for the next session.
+
 Also: `gl.vm.UserError` for the halt revert; `NOT_VOTED` receipts are distinct
 from `DETERMINISTIC_VIOLATION` and from timeout patterns — a receipt can show
 all validators unvoted rather than voting and disagreeing, so it must be
