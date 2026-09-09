@@ -91,11 +91,16 @@ const ARCHIVE_PROOF_RECEIPTS = PROOF_RECEIPTS.slice(0, 4);
 
 const INTERACTIVE_V4_EVIDENCE = {
   governor: CONFIG.governor,
-  enroll: "0x31d728037637f6d92cbf9480d278cd2ebf2a173a50f89930f2d38b9fa1d034ff",
-  drainSeed: "0xa7b9e3e9d7f2b227fa71d40ae87b0700fd21d8ebec1752d4909a5ec56c334c3d",
-  reviewOff: "0xbab9a405bf8ea13688801dbd6c2ce5aff78ba3af166df51ad8b5f1bdab065c99",
-  spendRevert: HALT_REVERT_RECEIPT_HASH,
-  reviewOffReason: "Rule 2 (single-payment drain) is violated because a single payment of 1000 to declared provider 0x1111111111111111111111111111111111111111 reduced the vault balance to zero, and the mandate judgment uses pin-only evidence.",
+  agent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
+  enroll: "0x4bd547cff84c5da9900840ee3e015b8282fffbfc77fa8bbb339eff80af2d2a88",
+  reviewOn: "0x2c1d5010ff39c0c8be047d08c206ea4393621754778018b263fdbebbef2e86dc",
+  drainSeed: "0x05ed80c604f54459ef93679fca16f5925a2583808beb7f0a036540930d6ab135",
+  claim: "0x5779f823632333389b0c25987184919480ec26bf02172b06db9bcb4ae98c5993",
+  propose: "0x57bb1197d32f174095bfa20397085b372248ded06e1d88e165dcc5dd0e482642",
+  promote: "0x95970c354e1ff690bcf275b333fe85597645bae0c3472bdef76b1c26671c6c70",
+  v2DrainSeed: "0xc1c804080704aff94ce8eb448bf0f8bde8efe4e9016a72f164b9ec614d41959c",
+  reviewOff: "0xf11037a7c950f69262087fe4637679d3dad2342acc3eb0b7a9005058da004073",
+  reviewOffReason: "Rule 2 (single-payment drain) was violated because the pin-only evidence shows balance=0 after the declared provider 0x1111111111111111111111111111111111111111 received payments=1 totaling 20, while Rule 1 was not violated because that provider had only 1 payment.",
 };
 
 const HALT_REVERT_PROOF = {
@@ -293,12 +298,15 @@ function InteractiveV4Evidence() {
     <div className="eyebrow">INTERACTIVE GOVERNOR · NO WALLET NEEDED</div>
     <div className="section-intro compact"><h3 id="interactive-v4-evidence-title">The v4 loop, recorded on {INTERACTIVE_V4_EVIDENCE.governor}</h3><p className="scope-note">A static evidence trail for the current interactive Governor. These receipts are separate from the frozen Agent C archive.</p></div>
     <div className="proof-receipts interactive-v4-receipts">
-      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, "agent enrolled on the current v4 Governor.")}
-      <div className="proof-receipt proof-receipt-unrecorded"><div><strong>Review ON_MANDATE</strong><span>Healthy pre-drain review was not separately recorded on this v4 sequence.</span></div><b aria-hidden="true">—</b></div>
-      {receipt("Drain", INTERACTIVE_V4_EVIDENCE.drainSeed, "genuine single-payment drain seeded; balance reached zero.")}
+      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, `agent ${INTERACTIVE_V4_EVIDENCE.agent} enrolled on the current v4 Governor.`)}
+      {receipt("Review ON_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOn, "healthy pre-drain snapshot; the mandate was still satisfied.")}
+      {receipt("Drain", INTERACTIVE_V4_EVIDENCE.drainSeed, "single-payment drain seeded; the later claim paid the 980 loss.")}
+      {receipt("Claim PAID · 980", INTERACTIVE_V4_EVIDENCE.claim, "wrongly paid claim; payout 980 against a 980 loss.")}
+      {receipt("Propose mandate", INTERACTIVE_V4_EVIDENCE.propose, "missing single-payment-drain clause proposed as a dead_branch candidate.")}
+      {receipt("Promote · PASSED", INTERACTIVE_V4_EVIDENCE.promote, "v2 promoted; the appended clause is now active.")}
+      {receipt("v2 genuine drain", INTERACTIVE_V4_EVIDENCE.v2DrainSeed, "same vault reseeded to balance=0 with one payment after promotion.")}
       {receipt("Review OFF_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOff, INTERACTIVE_V4_EVIDENCE.reviewOffReason)}
-      <div className="proof-receipt proof-receipt-static"><div><strong>Halted</strong><span>is_halted = true after the Rule 2 OFF_MANDATE ruling.</span></div><b aria-hidden="true">✓</b></div>
-      {receipt("Spend-revert", INTERACTIVE_V4_EVIDENCE.spendRevert, "FINISHED_WITH_ERROR · Vault is halted.")}
+      <div className="proof-receipt proof-receipt-static"><div><strong>Full loop complete</strong><span>All eight receipts are on the same interactive Governor; the final v2 ruling names Rule 2.</span></div><b aria-hidden="true">✓</b></div>
     </div>
   </section>;
 }

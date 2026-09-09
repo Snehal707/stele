@@ -441,6 +441,25 @@ v2 drain that rules OFF. Agent C has no enrolled C1 record, so
 this pin-only lifecycle proof. The separate C1 evidence-conflict branch remains
 demonstrated by Agent A on the earlier burst and drain Governors below.
 
+### Interactive v4 Lifeform sequence — same Governor
+
+The current interactive Governor carries the same complete loop for agent
+`0x434f6b35ccde8c02f07d9693958f4890d2954f41`: enroll
+`0x4bd547cff84c5da9900840ee3e015b8282fffbfc77fa8bbb339eff80af2d2a88` →
+healthy `ON_MANDATE` review
+`0x2c1d5010ff39c0c8be047d08c206ea4393621754778018b263fdbebbef2e86dc` →
+drain `0x05ed80c604f54459ef93679fca16f5925a2583808beb7f0a036540930d6ab135`
+→ `PAID 980` claim
+`0x5779f823632333389b0c25987184919480ec26bf02172b06db9bcb4ae98c5993` →
+proposal `0x57bb1197d32f174095bfa20397085b372248ded06e1d88e165dcc5dd0e482642`
+→ promotion **PASSED**
+`0x95970c354e1ff690bcf275b333fe85597645bae0c3472bdef76b1c26671c6c70` →
+v2 drain `0xc1c804080704aff94ce8eb448bf0f8bde8efe4e9016a72f164b9ec614d41959c`
+→ final **OFF_MANDATE** citing Rule 2
+`0xf11037a7c950f69262087fe4637679d3dad2342acc3eb0b7a9005058da004073`.
+This is the interactive/post-fix v4 story; the frozen Agent C address above
+remains the wallet-free canonical archive.
+
 ### Canonical Agent C sequence — one Governor
 
 The fixture deployment finalized as
@@ -566,6 +585,28 @@ public claims app did not return totals at pull time.
 ---
 
 ## Engineering notes
+
+**Complete interactive-v4 Lifeform loop.** On Governor
+`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`, agent
+`0x434f6b35ccde8c02f07d9693958f4890d2954f41` completed the full sequence:
+
+| Step | Transaction hash | Result |
+|---|---|---|
+| enroll covered | `0x4bd547cff84c5da9900840ee3e015b8282fffbfc77fa8bbb339eff80af2d2a88` | thin mandate enrolled |
+| healthy review | `0x2c1d5010ff39c0c8be047d08c206ea4393621754778018b263fdbebbef2e86dc` | **ON_MANDATE** |
+| drain after ON | `0x05ed80c604f54459ef93679fca16f5925a2583808beb7f0a036540930d6ab135` | balance reached `0` |
+| paid claim | `0x5779f823632333389b0c25987184919480ec26bf02172b06db9bcb4ae98c5993` | **PAID 980** |
+| propose mandate | `0x57bb1197d32f174095bfa20397085b372248ded06e1d88e165dcc5dd0e482642` | candidate version `3`, `dead_branch` |
+| promote mandate | `0x95970c354e1ff690bcf275b333fe85597645bae0c3472bdef76b1c26671c6c70` | **PASSED**; v2 active |
+| genuine v2 drain | `0xc1c804080704aff94ce8eb448bf0f8bde8efe4e9016a72f164b9ec614d41959c` | balance `0`, one payment |
+| v2 review | `0xf11037a7c950f69262087fe4637679d3dad2342acc3eb0b7a9005058da004073` | **OFF_MANDATE**, citing Rule 2 |
+
+This is the complete interactive story: enroll → ON → drain → PAID 980 →
+propose → promote PASSED → v2 genuine drain → OFF_MANDATE. Bradbury state
+reads can be stale when a dependent transaction is submitted immediately after
+the preceding write reaches `ACCEPTED`; wait for state visibility to stabilize
+before issuing the next review. The successful final review used the accepted
+seed state with `balance=0` confirmed before submission.
 
 Five things that only surfaced on deployment.
 
