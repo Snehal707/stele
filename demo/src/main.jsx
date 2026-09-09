@@ -267,6 +267,23 @@ function C1VerificationBlock({ item, label }) {
   return <div className="c1-verification-block"><div className="eyebrow">JUDGE VERIFICATION · {label}</div><p>Open the raw record, compare its bytes to the on-chain hash, then inspect the independent timestamp anchors.</p><div className="c1-verification-links"><div><a href={item.recordUrl} target="_blank" rel="noreferrer">Raw GitHub record ↗</a><code className="c1-url">{item.recordUrl}</code></div><span>record_hash · <code>{item.recordHash}</code> <em>click the raw record to verify</em></span><a href={item.archiveUrl} target="_blank" rel="noreferrer">Archive.org snapshot ↗</a><a href={item.otsUrl} target="_blank" rel="noreferrer">OpenTimestamps proof (.ots) ↗</a></div><pre className="c1-command-note">curl -L &lt;record-url&gt; | sha256sum{`\n`}Expected hash: {item.recordHash}</pre><p className="c1-honest-note">{item.confirmation || "OpenTimestamps proof is Bitcoin-confirmed in block 965831 (2026-09-06 20:58:43 UTC)."} This is project-authored evidence, not third-party evidence.</p></div>;
 }
 
+function C1ProofAccessSection() {
+  const records = [
+    ["Burst record", C1_RECORD_EVIDENCE.burstAgreement, "Bitcoin-confirmed in block 965831 (2026-09-06 20:58:43 UTC)."],
+    ["Conflict record", C1_RECORD_EVIDENCE.burstConflict, C1_RECORD_EVIDENCE.burstConflict.confirmation],
+  ];
+  return <section className="c1-proof-access" aria-labelledby="c1-proof-access-title">
+    <div className="eyebrow">C1 EVIDENCE · CLICK TO VERIFY</div>
+    <h3 id="c1-proof-access-title">Burst and conflict records</h3>
+    <div className="c1-proof-access-grid">{records.map(([label, item, confirmation]) => <article key={label}>
+      <strong>{label}</strong>
+      <span>{item.ruling} · record hash <code>{item.recordHash}</code></span>
+      <div><a href={item.archiveUrl} target="_blank" rel="noreferrer">Archive.org snapshot ↗</a><a href={item.otsUrl} target="_blank" rel="noreferrer">OpenTimestamps proof (.ots) ↗</a></div>
+      <small>{confirmation}</small>
+    </article>)}</div>
+  </section>;
+}
+
 function EvidenceRecordSection() {
   const verification = C1_RECORD_EVIDENCE.burstAgreement;
   return <section id="evidence-record" className="evidence-record evidence-panel" aria-labelledby="evidence-record-title">
@@ -357,6 +374,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
       <details className="proof-details"><summary>Evidence notes</summary><p>Agent C is pin-only; C1 is hash-locked. The vault is a Python twin, and the evidence is project-authored rather than third-party.</p></details>
     </article>
     <HealthyBurstComparison live={live} />
+    <C1ProofAccessSection />
     <PrimaryProofReceipts />
     <HaltRevertProofCard />
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">

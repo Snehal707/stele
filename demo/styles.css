@@ -237,6 +237,16 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .proof-comparison-grid .proof-off { color: var(--red); }
 .proof-comparison-note { margin: 16px 0 0; color: var(--muted); font: 12px/1.5 var(--mono); }
 .proof-comparison-note code { color: var(--ink); }
+.c1-proof-access { margin-top: 20px; padding: 20px; border: 1px solid var(--line); background: rgba(244,239,229,.55); }
+.c1-proof-access h3 { margin: 8px 0 16px; font: 700 1.3rem/1.1 var(--serif); }
+.c1-proof-access-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.c1-proof-access-grid article { display: grid; gap: 8px; padding-top: 12px; border-top: 2px solid var(--accent); }
+.c1-proof-access-grid article:last-child { border-top-color: var(--red); }
+.c1-proof-access-grid strong { font: 700 12px var(--mono); }
+.c1-proof-access-grid span, .c1-proof-access-grid small { color: var(--muted); font: 11px/1.45 var(--mono); }
+.c1-proof-access-grid code { color: var(--ink); overflow-wrap: anywhere; }
+.c1-proof-access-grid div { display: flex; flex-wrap: wrap; gap: 14px; }
+.c1-proof-access-grid a { color: var(--accent); font: 11px/1.45 var(--mono); text-decoration: underline; }
 .docs-related-links { color: var(--muted) !important; font: 12px var(--mono) !important; }
 .docs-related-links a { color: var(--accent); }
 .proof-lineage-block { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
