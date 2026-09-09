@@ -969,7 +969,7 @@ function ProductPage() {
   return <main className="product-page">
     <header className="product-label wrap"><span>STELE / LIVE EVIDENCE · GENLAYER BRADBURY · CHAIN 4221</span><a href="/docs">Read the docs ↗</a></header>
     <div className="product-cta wrap"><a href="#proof" onClick={(event) => { event.preventDefault(); selectProductSection("proof"); }}>View the proof →</a></div>
-    <div className="product-wedges wrap" aria-label="Stele in three lines"><p>Caps ask: permitted? We ask: still the job?</p><p>LEASH gates the next key. We halt the vault, pay if wrong, append a clause.</p><p>Courts referee two agents. We cut this vault when it leaves its mandate — nobody holds the switch.</p></div>
+    <div className="product-wedges wrap" aria-label="Stele in three lines"><p>Caps ask: permitted? We ask: still the job?</p><p>We do not gate the next key. We halt the vault, pay if that halt was wrong, and append the missing clause.</p><p>We do not referee two parties. We cut this vault when it leaves its mandate. Nobody holds the switch.</p></div>
     <div className="product-layout wrap">
       <aside className="product-sidebar" aria-label="Evidence sections">
         <nav>{productSections.map(([id, label, detail, zone], index) => <React.Fragment key={id}>{(index === 0 || productSections[index - 1][3] !== zone) && <div className="zone-divider">{zone}</div>}<button className={`${activeProductSection === id ? "active" : ""} ${id === "cover" || id === "capital" ? "secondary-section" : ""}`} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button></React.Fragment>)}</nav>
