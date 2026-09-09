@@ -357,6 +357,33 @@ function IntegrationGuard() {
   </section>;
 }
 
+function ProofAppendix({ live, lineage, retryLiveReads }) {
+  return <details className="proof-appendix">
+    <summary>More evidence · lineage, fixtures, receipts, chain record</summary>
+    <section className="proof-appendix-section" aria-labelledby="proof-lineage-title">
+      <div className="eyebrow">LINEAGE</div>
+      <h3 id="proof-lineage-title">The mandate grows after a paid claim.</h3>
+      {lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status}</div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status}</div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss</b><span>CLAUSE APPENDED</span></div></> : <LineageFallback onRetry={retryLiveReads} />}
+    </section>
+    <section className="proof-appendix-section" aria-labelledby="proof-fixtures-title">
+      <div className="eyebrow">DEMO FIXTURES</div>
+      <h3 id="proof-fixtures-title">Healthy, Burst, Drain, and Strangers</h3>
+      <p className="scope-note">Fixed examples; live reads are attempted and labeled when unavailable.</p>
+      <div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div>
+    </section>
+    <section className="proof-appendix-section" aria-labelledby="proof-references-title">
+      <div className="eyebrow">REFERENCE RECEIPTS</div>
+      <h3 id="proof-references-title">Historic verification runs</h3>
+      <div className="history-list"><ReceiptLinks title="Judgment · healthy fixture" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Judgment · burst fixture" hashes={RECEIPTS.judgmentBurst} /><ReceiptLinks title="Judgment · drain v1" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Judgment · drain v2" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Lineage · claim, proposal, promotion" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></div>
+    </section>
+    <section className="proof-appendix-section" aria-labelledby="proof-chain-title">
+      <div className="eyebrow">CHAIN RECORD</div>
+      <h3 id="proof-chain-title">Proof and interactive deployment</h3>
+      <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Interactive / post-fix Governor</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div>
+    </section>
+  </details>;
+}
+
 function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConnected, retryLiveReads }) {
   return <section id="proof" className="already-proved evidence-panel" aria-labelledby="already-proved-title">
     <div className="section-intro compact"><div className="eyebrow">01 / ALREADY PROVED</div><h2 id="already-proved-title">The proof is already on-chain.</h2><p className="scope-note">Read the canonical lifecycle without connecting a wallet. A wallet is only needed to submit a new action.</p></div>
@@ -377,6 +404,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <C1ProofAccessSection />
     <PrimaryProofReceipts />
     <HaltRevertProofCard />
+    <ProofAppendix live={live} lineage={lineage} retryLiveReads={retryLiveReads} />
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">PROOF RECEIPTS · CLICK TO VERIFY</div>
       {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}

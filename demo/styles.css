@@ -247,6 +247,14 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .c1-proof-access-grid code { color: var(--ink); overflow-wrap: anywhere; }
 .c1-proof-access-grid div { display: flex; flex-wrap: wrap; gap: 14px; }
 .c1-proof-access-grid a { color: var(--accent); font: 11px/1.45 var(--mono); text-decoration: underline; }
+.proof-appendix { margin-top: 24px; border-top: 1px solid var(--line); }
+.proof-appendix > summary { cursor: pointer; padding: 16px 0; color: var(--accent); font: 700 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.proof-appendix-section { margin-top: 14px; padding: 18px; border: 1px solid var(--line); background: rgba(244,239,229,.38); }
+.proof-appendix-section h3 { margin: 7px 0 14px; font: 700 1.35rem/1.1 var(--serif); }
+.proof-appendix-section .comparison-grid { margin-top: 14px; }
+.proof-appendix-section .comparison-grid .vault-card { min-width: 0; }
+.proof-appendix-section .history-list { display: grid; gap: 12px; }
+.proof-appendix-section .chain-list { display: grid; gap: 12px; }
 .docs-related-links { color: var(--muted) !important; font: 12px var(--mono) !important; }
 .docs-related-links a { color: var(--accent); }
 .proof-lineage-block { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
