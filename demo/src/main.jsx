@@ -902,10 +902,10 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
-    <div className="write-panel-head"><span>{localTestWallet ? "Test wallet" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
-    <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "You are submitting actions for configured agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>using wallet {connectedAddress}</small></div>
+    <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Signer"}</span><span>{connectedAddress}</span></div>
+    <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "Review agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>Full address retained for verification.</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
-    <div className="your-run-proof-banner">Writes target v4 <code>{CONFIG.governor}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
+    <div className="your-run-proof-banner">Writes target current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
     <div className="review-presets" aria-labelledby="review-presets-title">
       <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
       <div className="review-preset-grid">
@@ -924,7 +924,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       </div>
       <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows.</p>
        <p className="enroll-live-status">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>.</p>
-      <p className="enroll-governor">Governor <code>{CONFIG.governor}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
+      <p className="enroll-governor">Current v4 Governor <code>{shortAddress(CONFIG.governor)}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
       {enrolledAgent && <div className="enrolled-agent-card"><div><strong>Agent enrolled · not yet reviewed</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
     </form>
@@ -932,7 +932,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} aria-busy={activeAction === "Review" ? "true" : undefined} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> validators judging · typically 60–90s</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-    <p className="review-target-note">Interactive Governor <code>{CONFIG.governor}</code> · configured Review agent <code>{INTERACTIVE_V4_AGENT}</code>.</p>
+    <p className="review-target-note">Review agent <code>{INTERACTIVE_V4_AGENT}</code> · current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span><small>Only the enrolled agent key can spend; this receipt is that key hitting the halt.</small></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className={`write-status${activeAction ? " is-waiting" : ""}`} role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
