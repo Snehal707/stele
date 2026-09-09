@@ -30,6 +30,11 @@ const HALT_REVERT_RECEIPT_HASH = "0xd98033826d9737f6598e35cd23b862fe0207a3057f59
 const DEFAULT_V4_AGENT = "0xfcad0b19bb29d4674531d6f115237e16afce377c";
 const INTERACTIVE_V4_AGENT = DEFAULT_V4_AGENT;
 
+function shortAddress(address) {
+  if (typeof address !== "string" || address.length < 12) return address;
+  return `${address.slice(0, 6)}…${address.slice(-6)}`;
+}
+
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
   vault: "0xdc27E76344356C7AE42DB20A889b42895BaD2784",
@@ -311,6 +316,18 @@ function InteractiveV4Evidence() {
   </section>;
 }
 
+function PrimaryProofReceipts() {
+  const receipts = [
+    ["Paid claim", INTERACTIVE_V4_EVIDENCE.claim, "PAID · 980 — the pool pays when the judgment was wrong."],
+    ["V2 ruling", INTERACTIVE_V4_EVIDENCE.reviewOff, "OFF_MANDATE — the appended Rule 2 catches a genuine drain."],
+    ["Halt-revert", HALT_REVERT_PROOF.hash, "REVERTED — Vault is halted; money cannot move."],
+  ];
+  return <div className="primary-proof-receipts" aria-label="Primary interactive receipts">
+    <div className="eyebrow">LOAD-BEARING RECEIPTS</div>
+    {receipts.map(([label, hash, meaning]) => <a className="proof-receipt" key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{shortAddress(hash)}</code><b aria-hidden="true">↗</b></a>)}
+  </div>;
+}
+
 function IntegrationGuard() {
   return <section className="integration-example standalone-integration-example" aria-labelledby="integration-guard-title">
     <strong id="integration-guard-title">How to wire the halt into your own contract</strong>
@@ -327,8 +344,8 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
   return <section id="proof" className="already-proved evidence-panel" aria-labelledby="already-proved-title">
     <div className="section-intro compact"><div className="eyebrow">01 / ALREADY PROVED</div><h2 id="already-proved-title">The proof is already on-chain.</h2><p className="scope-note">Read the canonical lifecycle without connecting a wallet. A wallet is only needed to submit a new action.</p></div>
     <article className="proof-status-card">
-      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Governor ↗</a></div>
-      <code className="proof-governor">{CANONICAL_DEMO.governor}</code>
+      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Governor {shortAddress(CANONICAL_DEMO.governor)} ↗</a></div>
+      <code className="proof-governor">{shortAddress(CANONICAL_DEMO.governor)}</code>
       <div className="proof-status-grid" aria-label="Canonical proof status">
         <div><span>MANDATE</span><strong>v2 · active</strong><small>promoted on-chain</small></div>
         <div><span>LATEST RECORDED RULING</span><strong className="proof-off">OFF_MANDATE</strong><small>genuine v2 drain</small></div>
@@ -336,8 +353,11 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
         <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
       </div>
       <p className="proof-status-context">Canonical lifecycle loop: OFF_MANDATE, halted, PAID 980. This is the recorded v2 proof state.</p>
-      <p className="proof-chain-note">Canonical Agent C archive: <a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">{CANONICAL_DEMO.governor}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>See interactive v4 evidence in #actions →</a></p>
+      <p className="proof-chain-note">Canonical Agent C archive: <a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">{shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>See interactive v4 evidence in #actions →</a></p>
     </article>
+    <HealthyBurstComparison live={live} />
+    <PrimaryProofReceipts />
+    <HaltRevertProofCard />
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">PROOF RECEIPTS · CLICK TO VERIFY</div>
       {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
@@ -369,7 +389,7 @@ function HaltRevertProofCard() {
     <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
     <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Interactive Governor receipt from the current v4 drain path; no wallet connection or new click required.</p></div><strong>REVERTED</strong></div>
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
-    <p className="halt-revert-proof-governor">Governor <code>{HALT_REVERT_PROOF.governor}</code></p>
+    <p className="halt-revert-proof-governor">Governor <code>{shortAddress(HALT_REVERT_PROOF.governor)}</code></p>
     <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
     <p className="halt-revert-proof-key-note">Only the enrolled agent key can spend; this receipt is that key hitting the halt.</p>
   </article>;
@@ -975,10 +995,8 @@ function ProductPage() {
   const productSections = [
     ["proof", "Already Proved", "Canonical receipts · no wallet needed", "Evidence Index"],
     ["actions", "Your Run", "Wallet actions + your result", "Your Run"],
-    ["evidence-record", "Evidence Record", "C1 hash-locked cases", "Evidence Record"],
-    ["demo", "Demo Fixtures", "Healthy · burst · drain examples", "Demo Fixtures & Reference"],
   ];
-  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "actions";
+  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "proof";
   const [activeProductSection, setActiveProductSection] = useState(initialProductSection);
   useEffect(() => {
     const onHashChange = () => {
@@ -997,15 +1015,15 @@ function ProductPage() {
 
   return <main className="product-page">
     <header className="product-label wrap"><span>STELE / LIVE EVIDENCE · GENLAYER BRADBURY · CHAIN 4221</span><a href="/docs">Read the docs ↗</a></header>
-    <div className="product-cta wrap"><a href="#proof" onClick={(event) => { event.preventDefault(); selectProductSection("proof"); }}>View the proof →</a></div>
-    <div className="product-wedges wrap" data-copy-version="stele-only" aria-label="Stele in three lines"><p>Caps ask: permitted? We ask: still the job?</p><p>We do not gate the next key. We halt the vault, pay if that halt was wrong, and append the missing clause.</p><p>We do not referee two parties. We cut this vault when it leaves its mandate. Nobody holds the switch.</p></div>
+    <div className="product-cta wrap"><span>Proof is live on Bradbury · no wallet needed to inspect it.</span><a href="#actions" onClick={(event) => { event.preventDefault(); selectProductSection("actions"); }}>Run an action →</a></div>
+    <div className="product-wedges wrap" data-copy-version="stele-only" aria-label="Stele mechanism"><p>A governor cuts an agent&apos;s vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.</p></div>
     <div className="product-layout wrap">
       <aside className="product-sidebar" aria-label="Evidence sections">
         <nav>{productSections.map(([id, label, detail, zone], index) => <React.Fragment key={id}>{(index === 0 || productSections[index - 1][3] !== zone) && <div className="zone-divider">{zone}</div>}<button className={`${activeProductSection === id ? "active" : ""} ${id === "cover" || id === "capital" ? "secondary-section" : ""}`} aria-current={activeProductSection === id ? "page" : undefined} onClick={() => selectProductSection(id)}><span>{label}</span><small>{detail}</small></button></React.Fragment>)}</nav>
       </aside>
       <div className="product-main">
         {activeProductSection === "proof" && <AlreadyProvedSection live={live} lineage={lineage} capital={capital} capitalValue={capitalValue} walletConnected={walletConnected} retryLiveReads={retryLiveReads} />}
-        {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">01 / YOUR RUN</div><p className="scope-note">Interactive story on Governor <code>{CONFIG.governor}</code>. The frozen Agent C lifecycle remains in Already Proved.</p></div><InteractiveV4Evidence /><IntegrationGuard /><HealthyBurstComparison live={live} /><HaltRevertProofCard /><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results"><YourRunResult action="Enroll" result={yourRun.Enroll} /><YourRunResult action="Review" result={yourRun.Review} /><YourRunResult action="Spend" result={yourRun.Spend} /></div></section>}
+         {activeProductSection === "actions" && <section id="actions" className="actions evidence-panel" aria-labelledby="actions-title"><div className="section-intro compact"><div className="eyebrow">02 / YOUR RUN</div><h2 id="actions-title">Try the circuit breaker.</h2><p className="scope-note">Interactive writes target <code>{shortAddress(CONFIG.governor)}</code>. The proof tab is the source of truth for the recorded lifecycle.</p></div><ActionPanel onResultChange={(result) => setYourRun((previous) => ({ ...previous, [result.action]: result }))} /><div className="your-run-results" aria-label="Your action results">{yourRun.Enroll && <YourRunResult action="Enroll" result={yourRun.Enroll} />}{yourRun.Review && <YourRunResult action="Review" result={yourRun.Review} />}{yourRun.Spend && <YourRunResult action="Spend" result={yourRun.Spend} />}</div></section>}
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}

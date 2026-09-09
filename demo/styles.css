@@ -298,6 +298,17 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .c1-evidence-grid, .c1-guarantee-grid, .c1-verification-links { grid-template-columns: 1fr; }
   .canonical-demo-sequence div { grid-template-columns: 1fr; gap: 4px; }
 }
+
+/* Evidence-first layout keeps the single mechanism line from creating an empty grid cell. */
+.product-page .product-wedges { display: block; grid-template-columns: none; }
+.product-page .product-wedges p { width: 100%; }
+.product-page .product-layout { padding-top: 20px; }
+.product-page .product-main > section { padding-top: 34px; }
+.product-page .product-main .section-intro.compact { margin-bottom: 18px; }
+.product-page .product-main .section-intro h2 { max-width: 760px; font-size: clamp(2.4rem, 5vw, 4.8rem); }
+.product-page .proof-status-card { padding: 20px; }
+.product-page .proof-comparison, .product-page .primary-proof-receipts { margin-top: 20px; }
+
 /* Connected actions stay inside the existing chain-record surface. */
 .write-panel { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line, #d8d2c6); display: grid; gap: .8rem; }
 .local-test-banner { padding: .55rem .7rem; border: 1px dashed var(--accent); color: var(--accent); background: rgba(177,120,66,.1); font: 700 .7rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
