@@ -208,6 +208,7 @@ const C1_RECORD_EVIDENCE = {
     recordHash: "A257FF4C9D87199F34020EE2A109BA6C437E76415CCE27A3CE0CD12CDF47B504",
     archiveUrl: "https://web.archive.org/web/20260906204025/https://raw.githubusercontent.com/Snehal707/stele/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt",
     otsUrl: "https://github.com/Snehal707/stele/blob/master/data/web2/records/539d3Ba32d909396Df9B5977048B4338cF94575F.txt.ots",
+    confirmation: "OpenTimestamps proof is Bitcoin-confirmed in block 965884 (2026-09-07 04:57:21 UTC).",
     recordStatus: "The record is hash-verified, but it conflicts with the pinned state.",
   },
   drainAgreement: {
@@ -250,6 +251,10 @@ function C1EvidenceCard({ item }) {
   </article>;
 }
 
+function C1VerificationBlock({ item, label }) {
+  return <div className="c1-verification-block"><div className="eyebrow">JUDGE VERIFICATION · {label}</div><p>Open the raw record, compare its bytes to the on-chain hash, then inspect the independent timestamp anchors.</p><div className="c1-verification-links"><div><a href={item.recordUrl} target="_blank" rel="noreferrer">Raw GitHub record ↗</a><code className="c1-url">{item.recordUrl}</code></div><span>record_hash · <code>{item.recordHash}</code> <em>click the raw record to verify</em></span><a href={item.archiveUrl} target="_blank" rel="noreferrer">Archive.org snapshot ↗</a><a href={item.otsUrl} target="_blank" rel="noreferrer">OpenTimestamps proof (.ots) ↗</a></div><pre className="c1-command-note">curl -L &lt;record-url&gt; | sha256sum{`\n`}Expected hash: {item.recordHash}</pre><p className="c1-honest-note">{item.confirmation || "OpenTimestamps proof is Bitcoin-confirmed in block 965831 (2026-09-06 20:58:43 UTC)."} This is project-authored evidence, not third-party evidence.</p></div>;
+}
+
 function EvidenceRecordSection() {
   const verification = C1_RECORD_EVIDENCE.burstAgreement;
   return <section id="evidence-record" className="evidence-record evidence-panel" aria-labelledby="evidence-record-title">
@@ -257,7 +262,8 @@ function EvidenceRecordSection() {
     <p className="evidence-record-explainer">The full lifecycle is provable on one address: Agent C's primary Governor <code>{CANONICAL_DEMO.governor}</code> covers enrollment, ON review, drain, paid claim, proposal, promotion, v2 activation, and the final genuine drain that ruled OFF. Agent C has no enrolled C1 record, so <code>RECORD_STATUS=UNAVAILABLE</code> and pin-only evidence are correct here. Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C. C1's separate evidence-conflict path remains proven by the burst and drain Governors below.</p>
     <div className="canonical-demo-record"><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3><p><span>Vault</span> <code>{CANONICAL_DEMO.vault}</code> · <span>Agent</span> <code>{CANONICAL_DEMO.agent}</code></p><div className="canonical-demo-sequence">{CANONICAL_DEMO.sequence.map(([label, hash]) => <div key={hash}><span>{label}</span><a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash} ↗</a></div>)}</div><p className="canonical-demo-note">The first v2 regression used only one modest payment and correctly stayed ON. The final corrected fixture emptied the vault with one payment and produced OFF_MANDATE. This proof is pin-only by design; the EVIDENCE_CONFLICT branch is shown separately in the C1 records.</p></div>
     <div className="c1-evidence-grid"><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstConflict} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainClaim} /></div>
-    <div className="c1-verification-block"><div className="eyebrow">JUDGE VERIFICATION · BURST RECORD</div><p>Open the raw record, compare its bytes to the on-chain hash, then inspect the independent timestamp anchors.</p><div className="c1-verification-links"><div><a href={verification.recordUrl} target="_blank" rel="noreferrer">Raw GitHub record ↗</a><code className="c1-url">{verification.recordUrl}</code></div><span>record_hash · <code>{verification.recordHash}</code> <em>click the raw record to verify</em></span><a href={verification.archiveUrl} target="_blank" rel="noreferrer">Archive.org snapshot ↗</a><a href={verification.otsUrl} target="_blank" rel="noreferrer">OpenTimestamps proof (.ots) ↗</a></div><pre className="c1-command-note">curl -L &lt;record-url&gt; | sha256sum{`\n`}Expected hash: {verification.recordHash}</pre><p className="c1-honest-note">OpenTimestamps proof is Bitcoin-confirmed in block 965831 (2026-09-06 20:58:43 UTC). This is project-authored evidence, not third-party evidence.</p></div>
+    <C1VerificationBlock item={verification} label="BURST RECORD" />
+    <C1VerificationBlock item={C1_RECORD_EVIDENCE.burstConflict} label="CONFLICT RECORD" />
     <div className="c1-guarantees"><div className="eyebrow">THREE GUARANTEES</div><div className="c1-guarantee-grid"><div><strong>Tamper-evident</strong><span>hash verified by every validator independently</span></div><div><strong>Backdating-resistant</strong><span>Archive.org + OpenTimestamps anchor the record's existence, independent of the project</span></div><div><strong>Load-bearing</strong><span>mismatch produces a different ruling and blocks payout — not just a message</span></div></div></div>
   </section>;
 }
