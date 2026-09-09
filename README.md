@@ -717,8 +717,9 @@ separate.
 unnoticed six days — authorization correct, behaviour wrong. Same failure class
 as the burst and drain vaults. We do not claim we would have stopped it.
 
-**The vault is a Python twin, not Solidity.** An EVM `AgentVault` calling
-`is_halted` across the ghost surface is untested.
+**AgentVault is currently a Python twin, not a live Solidity contract, and this is a platform boundary, not an unbuilt feature.** We deployed a real minimal Solidity vault on Bradbury (`0x674F94Dc94560c09184cBeAC9563281D211bB5A7`) with `require(!IGovernor(governor).is_halted(agent))`. The vault's own revert logic works correctly, but the nested call into the Governor fails — a direct `eth_call` to the Governor's `is_halted(address)` selector returns `execution reverted`. GenLayer's Ghost contracts relay EVM transactions into Intelligent Contracts one-directionally; they do not currently expose synchronous Solidity-callable views into Intelligent Contract state. This is confirmed against GenLayer's own EVM interoperability and Ghost/Messages documentation, not an implementation gap on our side.
+
+Evidence receipts: [Solidity deployment `0x6d310c117a075ab11e28be71b906f0699908a08cc07cee13459b51f38a044e10`](https://explorer-bradbury.genlayer.com/tx/0x6d310c117a075ab11e28be71b906f0699908a08cc07cee13459b51f38a044e10); [failed spend `0xa802fef14ef6b32681a4d6f5ba7a088a5c2252b31265673efa973bec00ff4852`](https://explorer-bradbury.genlayer.com/tx/0xa802fef14ef6b32681a4d6f5ba7a088a5c2252b31265673efa973bec00ff4852), an EVM receipt with status `0`.
 
 **Studio state is ephemeral.** We observed a reset mid-project: the Governor
 still held a vault address whose contract no longer existed. Bradbury is durable
