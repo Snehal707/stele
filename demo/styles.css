@@ -347,6 +347,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .enroll-demo-note { margin: 0; color: var(--ink); font: .74rem/1.45 var(--mono); }
 .enroll-live-status { margin: 0; padding: .55rem .65rem; border-left: 3px solid var(--red, #8f463d); color: var(--ink); background: rgba(143,70,61,.07); font: .74rem/1.45 var(--mono); }
 .integration-example { border-top: 1px solid var(--line, #d8d2c6); padding-top: .7rem; display: grid; gap: .35rem; }
+.standalone-integration-example { margin: 0 0 28px; }
 .integration-example strong { font-size: .78rem; }
 .integration-example pre { margin: 0; padding: .65rem; background: rgba(0,0,0,.04); overflow: auto; white-space: pre-wrap; font: .72rem/1.45 var(--mono); }
 .enrolled-agent-card { display: grid; gap: .35rem; border: 1px solid #4e7458; padding: .75rem; background: rgba(78,116,88,.08); }
