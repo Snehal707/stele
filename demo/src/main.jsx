@@ -124,7 +124,7 @@ const FIXTURES = {
   healthy: { label: "HEALTHY", className: "healthy", note: "example invoice pattern", agent: "0x6e1781e673afd1751f2f58ab8a4081fc1686554e" },
   burst: { label: "BURST", className: "burst", note: "48 payments · dozens in a short window", agent: "0x088a8fd5172047b8f7a8edf6825c2d06b69b560a" },
   drain: { label: "DRAIN", className: "drain-off", note: "drain fixture", agent: DEFAULT_V4_AGENT },
-  strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c", governor: "0xB31bc62001219E8A9eF4026820A06A6799984D26" },
+  strangers: { label: "STRANGERS", className: "burst", note: "undeclared destinations · allowlist check", agent: "0xfcad0b19bb29d4674531d6f115237e16afce377c", live: false },
 };
 
 const DEMO_FIXTURE_FALLBACKS = {
@@ -850,6 +850,7 @@ function ProductPage() {
       const client = createClient({ chain: testnetBradbury });
       const readFixture = async (fixture) => {
         try {
+          if (fixture.live === false) return { status: "error", error: "Historical fixture only" };
           const fixtureGovernor = fixture.governor || CONFIG.governor;
           const vault = await client.readContract({ address: fixtureGovernor, functionName: "get_vault", args: addressArgs([fixture.agent]) });
           const [state, verdict] = await Promise.all([
