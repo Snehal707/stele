@@ -358,8 +358,9 @@ function IntegrationGuard() {
 }
 
 function ProofAppendix({ live, lineage, retryLiveReads }) {
-  return <details className="proof-appendix">
-    <summary>More evidence · lineage, fixtures, receipts, chain record</summary>
+  return <div className="proof-appendix">
+    <details>
+      <summary>Optional live reads · current network state</summary>
     <section className="proof-appendix-section" aria-labelledby="proof-lineage-title">
       <div className="eyebrow">LINEAGE</div>
       <h3 id="proof-lineage-title">The mandate grows after a paid claim.</h3>
@@ -371,6 +372,9 @@ function ProofAppendix({ live, lineage, retryLiveReads }) {
       <p className="scope-note">Fixed examples; live reads are attempted and labeled when unavailable.</p>
       <div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div>
     </section>
+    </details>
+    <details>
+      <summary>Reference archive · historical receipts and chain record</summary>
     <section className="proof-appendix-section" aria-labelledby="proof-references-title">
       <div className="eyebrow">REFERENCE RECEIPTS</div>
       <h3 id="proof-references-title">Historic verification runs</h3>
@@ -381,7 +385,8 @@ function ProofAppendix({ live, lineage, retryLiveReads }) {
       <h3 id="proof-chain-title">Proof and interactive deployment</h3>
       <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Interactive / post-fix Governor</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div>
     </section>
-  </details>;
+    </details>
+  </div>;
 }
 
 function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConnected, retryLiveReads }) {
