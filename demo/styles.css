@@ -73,8 +73,9 @@ section { padding: 70px 0; border-top: 1px solid var(--line); }
 .verdict.on { color: var(--green); } .verdict.off { color: var(--red); }
 .reason { min-height: 64px; margin: 0 0 25px; color: #514d45; font: italic 1.05rem/1.45 var(--serif); }
 .fields { border-top: 1px solid var(--line); }
-.field { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; color: var(--muted); font: 12px var(--mono); border-bottom: 1px solid rgba(183,174,157,.5); }
-.field strong { color: var(--ink); font-weight: 600; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(4rem, auto) minmax(5.5rem, auto); align-items: center; gap: 12px; padding: 9px 0; color: var(--muted); font: 12px var(--mono); border-bottom: 1px solid rgba(183,174,157,.5); }
+.field strong { color: var(--ink); font-weight: 600; text-align: right; }
+.field .evidence-tag { margin-left: 0; text-align: right; }
 .field.diff { margin: 0 -8px; padding-inline: 8px; color: var(--accent); background: rgba(177,120,66,.12); }
 .field.diff strong { color: var(--accent); font-size: 1.08rem; }
 .pinned, pre { overflow-x: auto; margin: 20px 0 0; padding: 15px; color: #4d4940; background: rgba(231,224,209,.75); font: 11px/1.55 var(--mono); white-space: pre-wrap; }
