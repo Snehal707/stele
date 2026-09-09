@@ -611,6 +611,24 @@ balance or transaction capacity. Test the v2 fee-funded flow on GenLayer's
 Studio-dev environment (`https://studio-next.genlayer.com/contracts`) until
 Bradbury exposes the matching fee-manager interface.
 
+**Multi-clause review prompt failure and fix.** On pin-only evidence with a
+two-clause mandate (frequency limit plus single-payment-drain prohibition),
+`review` was observed twice to apply only the frequency heuristic and ignore
+the drain clause entirely, returning `ON_MANDATE` on a vault genuinely emptied
+to zero. The failures were `0xe6a28ea6…57c0d9` and
+`0x39007602…b7ea06`, and both reproduced with the exact canonical mandate
+text, ruling out a wording issue. The review prompt was restructured to require
+explicit, separate evaluation of each mandate clause before reaching a
+verdict. The Studio regression `tests/test_review_prompt_rules.py` then passed
+(`1 passed in 84.05s`; Studio's `gltest` output does not expose a public receipt
+hash), and the live Bradbury confirmation was `0xbab9a405…065c99`. Its reason
+explicitly names the violation: “Rule 2 (single-payment drain) is violated
+because a single payment of 1000 to declared provider … reduced the vault
+balance to zero.” This is a real general LLM failure mode—attention anchoring
+on the first or most salient condition in a multi-condition prompt—not a
+GenLayer or Bradbury issue. The fix is a prompt-engineering pattern: force
+per-clause reasoning for mandates with more than one independent rule.
+
 ---
 
 ## Limitations
