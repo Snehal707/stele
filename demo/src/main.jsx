@@ -20,14 +20,14 @@ const bradbury = {
 
 const CONFIG = {
   chainId: 4221,
-  governor: "0x48E80c11a13e50D7017E9A3104A866deFD965D70",
+  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   explorer: "https://explorer-bradbury.genlayer.com/tx/",
   addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
   rewriteAgent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
 const HALT_REVERT_RECEIPT_HASH = "0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896";
-const DEFAULT_V4_AGENT = "0x8b64f056f1c82ac7c45b0d22290082b9abdd70ce";
+const DEFAULT_V4_AGENT = "0xfcad0b19bb29d4674531d6f115237e16afce377c";
 const INTERACTIVE_V4_AGENT = DEFAULT_V4_AGENT;
 
 const CANONICAL_DEMO = {

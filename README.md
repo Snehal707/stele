@@ -629,6 +629,14 @@ on the first or most salient condition in a multi-condition prompt—not a
 GenLayer or Bradbury issue. The fix is a prompt-engineering pattern: force
 per-clause reasoning for mandates with more than one independent rule.
 
+**v4 halt confirmation.** The same Governor now has the complete live loop:
+enroll, genuine drain, correctly reasoned `OFF_MANDATE` naming Rule 2, and a
+halt that physically stopped money. On
+`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`, the drain review was
+`0xbab9a405…065c99`; `is_halted` then read `true`, and the spend attempt
+`0xd98033826d9737f6598e35cd23b862fe0207a3057f59b3ce163137d4e87ed557`
+finished with error and the trace reported `Vault is halted`.
+
 ---
 
 ## Limitations
@@ -715,7 +723,7 @@ deployments.**
 
 Studio runs are recorded in the ephemeral appendix.
 
-Governor v4 on Bradbury: `0x48E80c11a13e50D7017E9A3104A866deFD965D70` carries the enrollment guard, sticky halt semantics, safe evidence-conflict handling, trace-based promotion, and access-controlled upgrades; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
+Governor v4 on Bradbury: `0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9` carries the enrollment guard, sticky halt semantics, safe evidence-conflict handling, trace-based promotion, access-controlled upgrades, and the per-clause review prompt fix; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
 
 ---
 
