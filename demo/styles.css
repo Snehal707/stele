@@ -153,6 +153,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .halt-revert-proof-governor { margin: 14px 0 6px; color: var(--muted); font: .72rem/1.4 var(--mono); overflow-wrap: anywhere; }
 .halt-revert-proof-governor code { color: var(--ink); }
 .halt-revert-proof-hash { color: var(--red); font: .76rem/1.4 var(--mono); overflow-wrap: anywhere; text-decoration: underline; }
+.halt-revert-proof-key-note { margin: 12px 0 0; color: var(--ink); font: 700 .78rem/1.45 var(--mono); }
 .c1-evidence-card.record-agree { border-top: 5px solid var(--green); }
 .c1-evidence-card.record-conflict { border: 2px solid var(--red); background: rgba(143,70,61,.08); }
 .c1-evidence-card.claim-paid { border-top: 5px solid var(--accent); }

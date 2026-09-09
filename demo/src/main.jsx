@@ -351,6 +351,7 @@ function HaltRevertProofCard() {
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
     <p className="halt-revert-proof-governor">Governor <code>{HALT_REVERT_PROOF.governor}</code></p>
     <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
+    <p className="halt-revert-proof-key-note">Only the enrolled agent key can spend; this receipt is that key hitting the halt.</p>
   </article>;
 }
 
