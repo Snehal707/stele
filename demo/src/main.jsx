@@ -270,7 +270,7 @@ function EvidenceRecordSection() {
 
 function HealthyBurstComparison({ live }) {
   const fixture = {
-    healthy: { spend_total: "20", balance: "980", declared: "yes", payments: "1", ruling: "ON_MANDATE" },
+    healthy: { spend_total: "220", balance: "780", declared: "yes", payments: "1", ruling: "ON_MANDATE" },
     burst: { spend_total: "220", balance: "780", declared: "yes", payments: "48", ruling: "OFF_MANDATE" },
   };
   const value = (record, key, fallback) => {
@@ -823,7 +823,7 @@ function ActionPanel({ onResultChange }) {
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} aria-busy={activeAction === "Review" ? "true" : undefined} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> validators judging · typically 60–90s</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
     <p className="review-target-note">Interactive Governor <code>{CONFIG.governor}</code> · configured Review agent <code>{INTERACTIVE_V4_AGENT}</code>.</p>
-    {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
+    {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span><small>Only the enrolled agent key can spend; this receipt is that key hitting the halt.</small></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className="write-status" role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {writeFailure && <details className="write-diagnostic"><summary>Why {writeFailure.label} stopped · {writeFailure.category}</summary><p><strong>{writeFailure.guidance}</strong></p><p>Transaction hash returned: <strong>{writeFailure.hashReturned ? "yes" : "no"}</strong></p><pre>{writeFailure.details}</pre></details>}
@@ -949,7 +949,7 @@ function ProductPage() {
     ["evidence-record", "Evidence Record", "C1 hash-locked cases", "Evidence Record"],
     ["demo", "Demo Fixtures", "Healthy · burst · drain examples", "Demo Fixtures & Reference"],
   ];
-  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "proof";
+  const initialProductSection = productSections.some(([id]) => id === window.location.hash.slice(1)) ? window.location.hash.slice(1) : "actions";
   const [activeProductSection, setActiveProductSection] = useState(initialProductSection);
   useEffect(() => {
     const onHashChange = () => {

@@ -348,6 +348,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .halted-spend-demo { display: flex; justify-content: space-between; gap: 1rem; align-items: center; border: 1px solid var(--red, #8f463d); padding: .85rem; background: rgba(143,70,61,.07); }
 .halted-spend-demo div { display: grid; gap: .25rem; }
 .halted-spend-demo span { color: var(--muted, #756f64); font-size: .78rem; }
+.halted-spend-demo small { color: var(--muted, #756f64); font: .7rem/1.35 var(--mono); }
 .halted-spend-demo button { color: var(--red, #8f463d); }
 .action-sequence { margin: .75rem 0 .65rem; color: var(--muted, #756f64); font: .72rem var(--mono); letter-spacing: .02em; }
 .action-sequence.uncertain { color: var(--red, #8f463d); }
