@@ -352,8 +352,9 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
         <div><span>HALTED</span><strong>Yes</strong><small>after the final review</small></div>
         <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
       </div>
-      <p className="proof-status-context">Canonical lifecycle loop: OFF_MANDATE, halted, PAID 980. This is the recorded v2 proof state.</p>
-      <p className="proof-chain-note">Canonical Agent C archive: <a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">{shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>See interactive v4 evidence in #actions →</a></p>
+      <p className="proof-status-context">Canonical proof: Agent C archive · Interactive Governor: Your Run.</p>
+      <p className="proof-chain-note"><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Agent C archive {shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Open interactive Governor in Your Run →</a></p>
+      <details className="proof-details"><summary>Evidence notes</summary><p>Agent C is pin-only; C1 is hash-locked. The vault is a Python twin, and the evidence is project-authored rather than third-party.</p></details>
     </article>
     <HealthyBurstComparison live={live} />
     <PrimaryProofReceipts />
@@ -387,7 +388,7 @@ function LineageFallback({ onRetry }) {
 function HaltRevertProofCard() {
   return <article className="halt-revert-proof-card" aria-labelledby="halt-revert-proof-title">
     <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
-    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Interactive Governor receipt from the current v4 drain path; no wallet connection or new click required.</p></div><strong>REVERTED</strong></div>
+    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Recorded halted spend.</p></div><strong>REVERTED</strong></div>
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
     <p className="halt-revert-proof-governor">Governor <code>{shortAddress(HALT_REVERT_PROOF.governor)}</code></p>
     <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
@@ -837,7 +838,7 @@ function ActionPanel({ onResultChange }) {
     runWrite("Spend", "spend", [DECLARED_PROVIDER, 1n], 0n, haltedSpend.agent, haltedSpend.vault);
   };
 
-  if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>. The <code>genlayer</code> CLI has an address-encoding inconsistency across <code>enroll</code>'s parameters; the product page's writes already use <code>genlayer-js</code> directly and are unaffected.</p><ConnectButton /></div>;
+  if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
@@ -862,7 +863,7 @@ function ActionPanel({ onResultChange }) {
         <label>Record hash <span>(optional)</span><input value={enrollForm.recordHash} onChange={(event) => setEnrollForm((form) => ({ ...form, recordHash: event.target.value }))} placeholder="SHA-256 hex" autoComplete="off" /></label>
       </div>
       <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows.</p>
-      <p className="enroll-live-status">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>. The <code>genlayer</code> CLI has an address-encoding inconsistency across <code>enroll</code>'s parameters (see Engineering notes); the product page's writes already use <code>genlayer-js</code> directly and are unaffected.</p>
+       <p className="enroll-live-status">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>.</p>
       <p className="enroll-governor">Governor <code>{CONFIG.governor}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
       {enrolledAgent && <div className="enrolled-agent-card"><div><strong>Agent enrolled · not yet reviewed</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
