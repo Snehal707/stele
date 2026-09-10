@@ -646,6 +646,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     const mandate = enrollForm.mandate.trim();
     const recordUrl = enrollForm.recordUrl.trim();
     const recordHash = enrollForm.recordHash.trim();
+    const agent = connectedAddress;
     if (!/^0x[0-9a-fA-F]{40}$/.test(vault)) {
       setStatus("Enroll: enter a valid 20-byte vault address.");
       return;
@@ -658,7 +659,8 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       setStatus("Enroll: provide both the record URL and record hash, or leave both blank.");
       return;
     }
-    const agent = connectedAddress;
+    const vaultValidation = await validateVault(vault, agent);
+    if (!vaultValidation.ok) return;
     await runWrite(
       "Enroll",
       "enroll",
@@ -669,6 +671,38 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       { vault, mandate, recordUrl, recordHash },
       enrollArgs,
     );
+  };
+
+  const validateVault = async (vault, agent) => {
+    if (localTestWallet) return { ok: true };
+    try {
+      const provider = await connector.getProvider();
+      if (!provider) throw new Error("Wallet provider unavailable.");
+      const code = await provider.request({ method: "eth_getCode", params: [vault, "latest"] });
+      if (!code || code === "0x") {
+        setStatus("Enroll: this is a wallet address, not a deployed VaultTwin. Deploy a VaultTwin with the current Governor first.");
+        return { ok: false };
+      }
+      const readClient = createClient({ chain: testnetBradbury });
+      const [state, attachedGovernor] = await Promise.all([
+        readClient.readContract({ address: vault, functionName: "agent_state", args: [] }),
+        readClient.readContract({ address: vault, functionName: "get_governor", args: [] }),
+      ]);
+      const vaultAgent = String(state?.agent || "");
+      if (vaultAgent.toLowerCase() !== String(agent).toLowerCase()) {
+        setStatus(`Enroll: this VaultTwin's configured agent is ${vaultAgent}, not your connected wallet. Connect that wallet, or deploy a new VaultTwin with your current wallet as the agent.`);
+        return { ok: false };
+      }
+      if (String(attachedGovernor).toLowerCase() !== CONFIG.governor.toLowerCase()) {
+        setStatus("Enroll: this VaultTwin is attached to a different Governor and may not behave as expected on this page. Use a VaultTwin deployed for the current Governor.");
+        return { ok: false };
+      }
+      return { ok: true };
+    } catch (error) {
+      console.error("VaultTwin validation failed", error);
+      setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
+      return { ok: false };
+    }
   };
 
   const runWrite = async (label, functionName, args, value = 0n, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null, encodeArgs = addressArgs) => {
@@ -903,12 +937,14 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     runWrite("Spend", "spend", [DECLARED_PROVIDER, 1n], 0n, haltedSpend.agent, haltedSpend.vault);
   };
 
-  if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><p className="enroll-live-status enroll-live-status-static">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>.</p><ConnectButton /></div>;
+  if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
+  const reviewTargetAgent = enrolledAgent?.agent || INTERACTIVE_V4_AGENT;
+  const reviewTargetGovernor = enrolledAgent?.governor || CONFIG.governor;
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
     <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Signer"}</span><span>{connectedAddress}</span></div>
-    <div className="run-target"><strong>{INTERACTIVE_V4_AGENT ? "Review agent" : "No default v4 Review agent is enrolled"}</strong>{INTERACTIVE_V4_AGENT && <span>{INTERACTIVE_V4_AGENT}</span>}<small>Full address retained for verification.</small></div>
+    <div className="run-target"><strong>{enrolledAgent ? "Newly enrolled review agent" : INTERACTIVE_V4_AGENT ? "Prepared review agent" : "No review agent is enrolled"}</strong>{reviewTargetAgent && <span>{reviewTargetAgent}</span>}<small>Full address retained for verification.</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="your-run-proof-banner">Writes target current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
     <div className="review-presets" aria-labelledby="review-presets-title">
@@ -922,22 +958,21 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     <form className="enroll-panel" onSubmit={enrollNewAgent}>
       <div className="review-presets-heading"><strong>Enroll a new agent</strong><span>Connected wallet becomes the agent · interactive v4 Governor</span></div>
       <div className="enroll-form-grid">
-        <label>Vault address<input value={enrollForm.vault} onChange={(event) => setEnrollForm((form) => ({ ...form, vault: event.target.value }))} placeholder="0x…" autoComplete="off" /></label>
+        <label>Deployed VaultTwin contract address<input value={enrollForm.vault} onChange={(event) => setEnrollForm((form) => ({ ...form, vault: event.target.value }))} placeholder="0x…" autoComplete="off" /><span>This is not your wallet address. It must be a VaultTwin deployed for the current Governor.</span></label>
         <label>Mandate text<textarea value={enrollForm.mandate} onChange={(event) => setEnrollForm((form) => ({ ...form, mandate: event.target.value }))} placeholder="Plain-language rule for this agent" rows="3" /></label>
         <label>Record URL <span>(optional)</span><input value={enrollForm.recordUrl} onChange={(event) => setEnrollForm((form) => ({ ...form, recordUrl: event.target.value }))} placeholder="https://…" inputMode="url" /></label>
         <label>Record hash <span>(optional)</span><input value={enrollForm.recordHash} onChange={(event) => setEnrollForm((form) => ({ ...form, recordHash: event.target.value }))} placeholder="SHA-256 hex" autoComplete="off" /></label>
       </div>
       <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows.</p>
-       <p className="enroll-live-status">Enrollment verified live on Bradbury via <code>genlayer-js</code> — <code>0x1a4846a0…</code>.</p>
-      <p className="enroll-governor">Current v4 Governor <code>{shortAddress(CONFIG.governor)}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
+       <p className="enroll-governor">Current v4 Governor <code>{shortAddress(CONFIG.governor)}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
       {enrolledAgent && <div className="enrolled-agent-card"><div><strong>Agent enrolled · not yet reviewed</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
     </form>
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">
-      <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !INTERACTIVE_V4_AGENT ? "is-locked" : ""} aria-busy={activeAction === "Review" ? "true" : undefined} disabled={hasPendingTransaction || submitting || uncertainSubmission || !INTERACTIVE_V4_AGENT} onClick={() => INTERACTIVE_V4_AGENT && runWrite("Review", "review", [INTERACTIVE_V4_AGENT])}>{activeAction === "Review" ? <><span className="action-spinner" /> validators judging · typically 60–90s</> : !INTERACTIVE_V4_AGENT ? "1. Review · v4 agent not enrolled" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
+      <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !reviewTargetAgent ? "is-locked" : ""} aria-busy={activeAction === "Review" ? "true" : undefined} disabled={hasPendingTransaction || submitting || uncertainSubmission || !reviewTargetAgent} onClick={() => reviewTargetAgent && runWrite("Review", "review", [reviewTargetAgent], 0n, reviewTargetAgent, reviewTargetGovernor)}>{activeAction === "Review" ? <><span className="action-spinner" /> validators judging · typically 60–90s</> : !reviewTargetAgent ? "1. Review · no agent enrolled" : enrolledAgent ? "1. Review this enrolled agent" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
-    <p className="review-target-note">Review agent <code>{INTERACTIVE_V4_AGENT}</code> · current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>.</p>
+    <p className="review-target-note">Review agent <code>{reviewTargetAgent}</code> · current v4 Governor <code>{shortAddress(reviewTargetGovernor)}</code>.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span><small>Only the enrolled agent key can spend; this receipt is that key hitting the halt.</small></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className={`write-status${activeAction ? " is-waiting" : ""}`} role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
