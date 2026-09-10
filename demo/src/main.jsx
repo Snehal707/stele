@@ -1029,9 +1029,9 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         }
         if (payload.result) {
           const receipt = payload.result;
-          const created = Number(receipt.timestamps?.Created || 0);
-          const statusName = receipt.status_name || receipt.statusName;
           const numericStatus = Number(receipt.status);
+          const statusName = receipt.status_name || receipt.statusName || ({ 0: "UNINITIALIZED", 1: "PENDING", 2: "PROPOSING", 3: "COMMITTING", 4: "REVEALING", 5: "ACCEPTED", 6: "UNDETERMINED", 7: "FINALIZED", 8: "CANCELED", 9: "APPEAL_REVEALING", 10: "APPEAL_COMMITTING", 11: "READY_TO_FINALIZE", 12: "VALIDATORS_TIMEOUT", 13: "LEADER_TIMEOUT" }[numericStatus]);
+          const created = Number(receipt.timestamps?.Created || 0);
           const terminalStatus = ["ACCEPTED", "UNDETERMINED", "FINALIZED", "CANCELED", "LEADER_TIMEOUT", "VALIDATORS_TIMEOUT"].includes(statusName)
             || [4, 5, 6, 7, 8, 12, 13].includes(numericStatus);
           const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number.isFinite(numericStatus));
@@ -1043,6 +1043,14 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
             return;
           }
           const execution = receipt.txExecutionResultName || ({ 0: "NOT_VOTED", 1: "FINISHED_WITH_RETURN", 2: "FINISHED_WITH_ERROR" }[receipt.txExecutionResult] || "receipt received");
+          const deploymentFinalized = label !== "Deploy VaultTwin" || statusName === "FINALIZED" || numericStatus === 7;
+          if (label === "Deploy VaultTwin" && !deploymentFinalized) {
+            setStatus(execution === "FINISHED_WITH_ERROR"
+              ? "VaultTwin deployment reached a terminal execution error; waiting for final transaction status…"
+              : "VaultTwin accepted ✓ Waiting for the finalization window before reading the deployed address…");
+            window.setTimeout(poll, 10000);
+            return;
+          }
           setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution } : transaction));
           setActiveAction(null);
           if (label === "Review" && execution === "FINISHED_WITH_RETURN") {
