@@ -9,6 +9,7 @@ import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
 import steleHero from "../assets/stele-hero.png";
+import vaultTwinSource from "../../contracts/vault_twin.py?raw";
 
 const bradbury = {
   id: 4221,
@@ -125,6 +126,7 @@ const LOCAL_TEST_WALLET = {
     Claim: "0x0000000000000000000000000000000000000000000000000000000000000422",
     Propose: "0x0000000000000000000000000000000000000000000000000000000000000423",
     Deposit: "0x0000000000000000000000000000000000000000000000000000000000000424",
+    "Deploy VaultTwin": "0x0000000000000000000000000000000000000000000000000000000000000425",
   },
 };
 
@@ -598,6 +600,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const [haltedSpend, setHaltedSpend] = useState(null);
   const [enrollForm, setEnrollForm] = useState({ vault: "", mandate: "", recordUrl: "", recordHash: "" });
   const [enrolledAgent, setEnrolledAgent] = useState(null);
+  const [vaultDeployment, setVaultDeployment] = useState({ status: "idle", address: "", hash: "", error: "" });
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
 
@@ -702,6 +705,96 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       console.error("VaultTwin validation failed", error);
       setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
       return { ok: false };
+    }
+  };
+
+  const createBradburyWriteClient = async () => {
+    const provider = await connector.getProvider();
+    if (!provider) throw new Error("Connected wallet provider unavailable.");
+    const tracedProvider = {
+      request: async (request) => {
+        try {
+          const result = await provider.request(request);
+          console.debug("Stele wallet RPC response", { request, result });
+          return result;
+        } catch (error) {
+          console.error("Stele wallet RPC failed", { request, error, cause: error?.cause, data: error?.data, details: error?.details, shortMessage: error?.shortMessage });
+          throw error;
+        }
+      },
+    };
+    const walletChainId = await tracedProvider.request({ method: "eth_chainId" });
+    const expectedChainId = `0x${bradbury.id.toString(16)}`;
+    if (walletChainId !== expectedChainId) throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Bradbury (4221) and try again.`);
+    const walletPendingNonce = await tracedProvider.request({ method: "eth_getTransactionCount", params: [walletClient.account.address, "pending"] });
+    const client = createClient({ chain: testnetBradbury, account: walletClient.account.address, provider: tracedProvider });
+    client.getCurrentNonce = async () => BigInt(walletPendingNonce);
+    const balanceHex = await tracedProvider.request({ method: "eth_getBalance", params: [walletClient.account.address, "latest"] });
+    if (BigInt(balanceHex) === 0n) throw new Error("Connected wallet has 0 GEN; fund this account before deploying a Bradbury VaultTwin.");
+    return { client, provider: tracedProvider };
+  };
+
+  const finishVaultDeployment = async (hash, targetAgent) => {
+    try {
+      const readClient = createClient({ chain: testnetBradbury });
+      const transaction = await readClient.getTransaction({ hash });
+      const deployedAddress = transaction.txDataDecoded?.contractAddress || transaction.contractAddress || transaction.data?.contractAddress;
+      if (!deployedAddress || !/^0x[0-9a-fA-F]{40}$/.test(String(deployedAddress))) throw new Error("Bradbury accepted the deployment, but did not return a readable VaultTwin address.");
+      const vaultValidation = await validateVault(String(deployedAddress), targetAgent);
+      if (!vaultValidation.ok) throw new Error("The deployed VaultTwin did not match the connected wallet and current Governor.");
+      setVaultDeployment({ status: "ready", address: String(deployedAddress), hash, error: "" });
+      setEnrollForm((form) => ({ ...form, vault: String(deployedAddress) }));
+      setStatus("VaultTwin deployed and verified ✓ Add a mandate, then enroll it.");
+    } catch (error) {
+      console.error("VaultTwin deployment verification failed", error);
+      setVaultDeployment({ status: "error", address: "", hash, error: describeReadError(error) });
+      setStatus("VaultTwin deployment needs verification; no address was added to the enrollment form.");
+    }
+  };
+
+  const deployVaultTwin = async () => {
+    if (!requireWallet()) return;
+    if (submitting || transactions.some((transaction) => transaction.pending) || uncertainSubmission) {
+      setStatus("Finish the current transaction before deploying another VaultTwin.");
+      return;
+    }
+    setSubmitting(true);
+    setActiveAction("Deploy VaultTwin");
+    setWriteFailure(null);
+    setVaultDeployment({ status: "pending", address: "", hash: "", error: "" });
+    setStatus("Deploy VaultTwin: preparing the constructor with balance 1000, your wallet, and the current Governor…");
+    if (localTestWallet) {
+      const hash = LOCAL_TEST_WALLET.hashes["Deploy VaultTwin"];
+      const address = "0x0000000000000000000000000000000000000426";
+      setTransactions((previous) => [{ label: "Deploy VaultTwin", hash, startedAt: Date.now(), pending: true, localTest: true }, ...previous]);
+      setStatus("Deploy VaultTwin: local test simulation · waiting…");
+      window.setTimeout(() => {
+        setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, pending: false, execution: "FINISHED_WITH_RETURN" } : transaction));
+        setVaultDeployment({ status: "ready", address, hash, error: "" });
+        setEnrollForm((form) => ({ ...form, vault: address }));
+        setActiveAction(null);
+        setSubmitting(false);
+        setStatus("VaultTwin deployed and verified ✓ Add a mandate, then enroll it.");
+      }, 1200);
+      return;
+    }
+    try {
+      const { client } = await createBradburyWriteClient();
+      const args = [1000n, addressArg(connectedAddress), addressArg(CONFIG.governor)];
+      const hash = await client.deployContract({ code: vaultTwinSource, args });
+      const startedAt = Date.now();
+      setTransactions((previous) => [{ label: "Deploy VaultTwin", hash, startedAt, pending: true }, ...previous]);
+      onResultChange({ action: "Deploy VaultTwin", hash, targetAgent: connectedAddress, status: "pending", consensus: "Pending", execution: null });
+      setStatus("VaultTwin submitted ✓ Waiting for Bradbury consensus…");
+      pollReceipt(hash, "Deploy VaultTwin", startedAt, connectedAddress, CONFIG.governor);
+    } catch (error) {
+      console.error("VaultTwin deployment failed", error);
+      const message = describeWriteError(error);
+      setVaultDeployment({ status: "error", address: "", hash: "", error: message });
+      setActiveAction(null);
+      setStatus(`Deploy VaultTwin: ${message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -906,6 +999,16 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
           if (label === "Review" && execution === "FINISHED_WITH_RETURN") {
             setStatus("Review: consensus resolved ✓ Reading the verdict from the reviewed agent…");
             await loadReviewResult(hash, label, targetAgent, targetContract, execution);
+          } else if (label === "Deploy VaultTwin") {
+            if (execution === "FINISHED_WITH_RETURN") {
+              setStatus("VaultTwin: consensus resolved ✓ Reading the deployed address and constructor state…");
+              await finishVaultDeployment(hash, targetAgent);
+            } else {
+              const errorText = receipt.revertReason || receipt.error || receipt.executionError || receipt.txExecutionError || "Deployment reverted before a VaultTwin was created.";
+              setVaultDeployment({ status: "error", address: "", hash, error: errorText });
+              setStatus("VaultTwin deployment reverted; no address was added to the enrollment form.");
+              onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, outcomeTitle: "VaultTwin deployment failed", outcomeMessage: errorText });
+            }
           } else {
             const errorText = receipt.revertReason || receipt.error || receipt.executionError || receipt.txExecutionError || (label === "Spend" && execution === "FINISHED_WITH_ERROR" ? "Vault is halted" : null);
             if (label === "Enroll" && execution === "FINISHED_WITH_RETURN") {
@@ -955,6 +1058,14 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       </div>
       <p className="review-preset-note">Committee is voting — ~70s. This is normal, not stuck. Results appear in the Review result slot above.</p>
     </div>
+    <section className="vault-deploy-panel" aria-labelledby="vault-deploy-title">
+      <div className="review-presets-heading"><strong id="vault-deploy-title">Create a test VaultTwin</strong><span>Deploys for this wallet · current v4 Governor</span></div>
+      <p>Use this when you do not already have a deployed VaultTwin address. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>.</p>
+      <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending"} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> Deploying VaultTwin…</> : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
+      {vaultDeployment.status === "pending" && <span role="status">Deployment submitted; wait for Bradbury consensus before enrolling.</span>}
+      {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
+      {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
+    </section>
     <form className="enroll-panel" onSubmit={enrollNewAgent}>
       <div className="review-presets-heading"><strong>Enroll a new agent</strong><span>Connected wallet becomes the agent · interactive v4 Governor</span></div>
       <div className="enroll-form-grid">

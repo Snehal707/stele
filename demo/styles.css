@@ -18,6 +18,13 @@ body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opa
 .product-wedges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 12px; border: 1px solid var(--line); background: var(--line); }
 .product-wedges p { margin: 0; padding: 13px 15px; color: var(--ink); background: rgba(244,239,229,.72); font: 700 .78rem/1.45 var(--mono); }
 .product-layout { display: grid; grid-template-columns: 208px minmax(0, 1fr); gap: 42px; align-items: start; padding-top: 28px; }
+.product-status { margin-top: 20px; padding: 24px 28px; border: 1px solid #c9bda9; background: rgba(255,255,255,.18); }
+.verification-status h2 { margin: 8px 0 20px; }
+.verification-status h3 { margin: 0 0 8px; font-size: .9rem; }
+.verification-status ul { margin: 0; padding-left: 18px; }
+.verification-status li { margin: 4px 0; }
+.product-status-grid { display: grid; grid-template-columns: 1.15fr .9fr 1.35fr 1.1fr; gap: 24px; }
+.product-status-grid > div + div { border-left: 1px solid #c9bda9; padding-left: 24px; }
 .product-sidebar { position: sticky; top: 22px; align-self: start; }
 .sidebar-label { margin-bottom: 14px; color: var(--accent); font: 700 10px var(--mono); letter-spacing: .16em; }
 .product-sidebar nav { display: grid; gap: 4px; }
@@ -305,6 +312,8 @@ code, .chain-address, .method-list { font-family: var(--mono); }
   .panel-context { display: grid; gap: 4px; }
   .panel-context small { margin-left: 0; }
   .comparison-grid, .lineage-rail, .cover-grid, .pricing-grid { grid-template-columns: 1fr; }
+  .product-status-grid { grid-template-columns: 1fr; }
+  .product-status-grid > div + div { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0 0; }
   .proof-status-heading { display: grid; gap: 12px; }
   .proof-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .proof-status-grid > div:nth-child(2) { border-right: 0; }
@@ -372,6 +381,11 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .review-preset-grid button small { color: var(--muted, #756f64); font: .7rem/1.3 var(--mono); }
 .review-preset-note { margin: 0; }
 .enroll-panel { display: grid; gap: .7rem; border: 1px solid var(--accent, #b86d32); padding: 1rem; background: rgba(177,120,66,.06); }
+.vault-deploy-panel { display: grid; gap: .6rem; border: 1px solid var(--line, #d8d2c6); padding: 1rem; background: rgba(255,255,255,.18); }
+.vault-deploy-panel p, .vault-deploy-panel span { margin: 0; color: var(--muted, #756f64); font-size: .85rem; line-height: 1.45; }
+.vault-deploy-panel code, .vault-deploy-success code { overflow-wrap: anywhere; }
+.vault-deploy-success, .vault-deploy-error { display: grid; gap: .25rem; border-left: 3px solid #4e7458; padding: .65rem .75rem; background: rgba(78,116,88,.08); }
+.vault-deploy-error { border-left-color: #a14d43; background: rgba(161,77,67,.08); }
 .enroll-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
 .enroll-form-grid label { display: grid; gap: .3rem; color: var(--muted, #756f64); font: .72rem var(--mono); }
 .enroll-form-grid label span { font-size: .65rem; }
