@@ -1112,6 +1112,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const reviewTargetGovernor = enrolledAgent?.governor || CONFIG.governor;
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
+    {!localTestWallet && <div className="advanced-live-test-note" role="note"><strong>Advanced live test · optional</strong><span>Submit your own Bradbury transactions with a connected wallet. Consensus finalization may take several minutes; use the prepared receipts above for an immediate demo.</span></div>}
     <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Signer"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{enrolledAgent ? "Newly enrolled review agent" : INTERACTIVE_V4_AGENT ? "Prepared review agent" : "No review agent is enrolled"}</strong>{reviewTargetAgent && <span>{reviewTargetAgent}</span>}<small>Full address retained for verification.</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
@@ -1125,8 +1126,8 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       <p className="review-preset-note">Committee is voting — ~70s. This is normal, not stuck. Results appear in the Review result slot above.</p>
     </div>
     <section className="vault-deploy-panel" aria-labelledby="vault-deploy-title">
-      <div className="review-presets-heading"><strong id="vault-deploy-title">Create a test VaultTwin</strong><span>Deploys for this wallet · current v4 Governor</span></div>
-      <p>Use this when you do not already have a deployed VaultTwin address. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>.</p>
+      <div className="review-presets-heading"><strong id="vault-deploy-title">Deploy your own VaultTwin</strong><span>Optional live test · current v4 Governor</span></div>
+      <p>Use this when you want to submit a live test. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>. After Bradbury accepts the deployment, finalization may take several minutes before the address can be verified and enrolled.</p>
       <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending"} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> Deploying VaultTwin…</> : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
       {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
       {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>Use the existing agent for review, or connect a fresh wallet. Deploying another VaultTwin will not replace this enrollment.</span></div>}

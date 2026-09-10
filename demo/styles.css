@@ -374,6 +374,9 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .review-target-note { margin: 8px 0 0; }
 .review-presets { border: 1px solid var(--line, #d8d2c6); padding: .85rem; display: grid; gap: .65rem; background: rgba(177,120,66,.04); }
 .review-presets-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+.advanced-live-test-note { display: grid; gap: .25rem; margin-bottom: 1rem; padding: .8rem 1rem; border-left: 3px solid var(--accent, #b8783d); background: color-mix(in srgb, var(--paper, #eee7d8) 72%, transparent); }
+.advanced-live-test-note strong { font-size: .82rem; }
+.advanced-live-test-note span { color: var(--muted, #756f64); font-size: .82rem; }
 .review-presets-heading strong { font-size: .82rem; }
 .review-presets-heading span, .review-preset-note { color: var(--muted, #756f64); font-size: .78rem; }
 .review-preset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
