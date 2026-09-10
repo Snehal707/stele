@@ -650,7 +650,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
           setEnrolledAgent({ existing: true, vault: String(existingVault), agent: connectedAddress, governor: CONFIG.governor, mandate: "Existing Governor enrollment" });
           setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));
         } else {
-          setExistingEnrollment({ status: "invalid", vault: String(existingVault), error: "This wallet is enrolled, but its stored VaultTwin failed validation." });
+          setExistingEnrollment({ status: "invalid", vault: String(existingVault), error: validation.error || "The stored address is not a usable VaultTwin for this Governor." });
           setEnrolledAgent(null);
         }
       } catch (error) {
@@ -727,14 +727,14 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   };
 
   const validateVault = async (vault, agent, { quiet = false } = {}) => {
-    if (localTestWallet) return { ok: true };
+    if (localTestWallet) return { ok: true, error: "" };
     try {
       const provider = await connector.getProvider();
       if (!provider) throw new Error("Wallet provider unavailable.");
       const code = await provider.request({ method: "eth_getCode", params: [vault, "latest"] });
       if (!code || code === "0x") {
         if (!quiet) setStatus("Enroll: this is a wallet address, not a deployed VaultTwin. Deploy a VaultTwin with the current Governor first.");
-        return { ok: false };
+        return { ok: false, error: "No contract code was found at this address." };
       }
       const readClient = createClient({ chain: testnetBradbury });
       const [state, attachedGovernor] = await Promise.all([
@@ -744,17 +744,17 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       const vaultAgent = String(state?.agent || "");
       if (vaultAgent.toLowerCase() !== String(agent).toLowerCase()) {
         if (!quiet) setStatus(`Enroll: this VaultTwin's configured agent is ${vaultAgent}, not your connected wallet. Connect that wallet, or deploy a new VaultTwin with your current wallet as the agent.`);
-        return { ok: false };
+        return { ok: false, error: "The VaultTwin is configured for a different agent wallet." };
       }
       if (String(attachedGovernor).toLowerCase() !== CONFIG.governor.toLowerCase()) {
         if (!quiet) setStatus("Enroll: this VaultTwin is attached to a different Governor and may not behave as expected on this page. Use a VaultTwin deployed for the current Governor.");
-        return { ok: false };
+        return { ok: false, error: "The VaultTwin is attached to a different Governor." };
       }
-      return { ok: true };
+      return { ok: true, error: "" };
     } catch (error) {
       console.error("VaultTwin validation failed", error);
       if (!quiet) setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
-      return { ok: false };
+      return { ok: false, error: "The address could not be verified as a VaultTwin for this Governor." };
     }
   };
 
@@ -1136,7 +1136,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending" || enrollmentUnavailable} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> {finalizingDeployment ? "Finalizing VaultTwin…" : "Deploying VaultTwin…"}</> : existingEnrollment.status === "checking" ? "Checking existing enrollment…" : existingEnrollment.status === "valid" ? "Already enrolled — use existing agent" : existingEnrollment.status === "invalid" ? "Deployment unavailable for this wallet" : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
       {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
       {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>The existing agent is ready to review below. Deployment is disabled because another VaultTwin cannot replace this enrollment.</span></div>}
-      {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet is enrolled, but its stored VaultTwin is not usable</strong><span>This enrollment cannot be replaced by this Governor, so deployment is disabled for this wallet. Use the prepared review fixtures above, or connect a fresh wallet only if you need to create a new enrollment.</span></div>}
+      {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet is enrolled, but its stored VaultTwin is not usable</strong><span>Stored VaultTwin: <code>{existingEnrollment.vault}</code></span><span>Why it cannot be used: {existingEnrollment.error}</span><span>This enrollment cannot be replaced by this Governor, so deployment is disabled for this wallet. Use the prepared review fixtures above, or connect a fresh wallet only if you need to create a new enrollment.</span></div>}
       {vaultDeployment.status === "pending" && <span role="status">{finalizingDeployment ? "Deployment accepted; wait for Bradbury finalization before enrolling." : "Deployment submitted; wait for Bradbury consensus before enrolling."}</span>}
       {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
       {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
