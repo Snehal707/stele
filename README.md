@@ -179,6 +179,31 @@ Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C.
 This supersedes the original pin-only design. The earlier design remains useful
 as historical context, but it is not the active review path.
 
+### Provider-feed cross-contract pattern
+
+The optional `enroll_with_feed(...)` path keeps `review(agent)` to one argument.
+It stores a provider feed address per agent, reads the feed from the Governor,
+and compares its sealed `invoiceCount` with the sum of the pinned
+per-destination payment counts. An unavailable or unsealed feed fails closed
+with `REVIEW_FAILED`; a count mismatch writes `EVIDENCE_CONFLICT` and blocks
+payout. `contracts/ProviderInvoiceFeed.sol` is a minimal provider-controlled
+sealed-feed demo. It demonstrates the cross-contract retrieval pattern, but it
+is not independent third-party evidence while the feed is operated by this
+project.
+
+**Status: implemented, not yet runtime-confirmed.** Local test execution is
+currently blocked by an apparent GenLayer tooling issue unrelated to this
+contract; see Engineering notes.
+
+**Evidence precedence:** an agent enrolled with both a provider feed and a C1
+record is evaluated feed-first. An unavailable or unsealed feed produces
+`REVIEW_FAILED` and halts before the C1 record is checked at all. This is
+intentional — it is the more conservative ordering, since it fails fast on the
+newest and least-tested evidence path rather than potentially masking a feed
+problem behind a passing C1 check. Agents enrolled through the original
+`enroll`/`enroll_one`/`enroll_covered` methods are unaffected — they have no
+`feed_of` entry and go straight to the existing C1/pin-only path.
+
 ---
 
 The [live demo](https://stele-gold.vercel.app) reads live contract state without
@@ -585,6 +610,38 @@ public claims app did not return totals at pull time.
 ---
 
 ## Engineering notes
+
+**Provider-feed feature: implementation complete, runtime verification blocked.**
+Added `enroll_with_feed`, `feed_of: TreeMap[Address, Address]`, a sealed-feed
+EVM read via `@gl.evm.contract_interface`, exact-match payment-count comparison,
+and fail-closed handling (`REVIEW_FAILED` on unavailable or unsealed feed,
+`EVIDENCE_CONFLICT` on mismatch, both halting).
+
+Validation performed: GenVM lint (29 methods, passed), Python syntax check
+(passed), `git diff --check` (passed), and a manual line-by-line audit of
+`enroll_with_feed` and the feed branch in `review()` against the original
+enrollment paths; no shared-state regression was found. Premium accounting was
+also centralized in `_apply_premium` for `enroll_covered` and
+`enroll_with_feed`.
+
+Validation not performed: no automated test has run to completion. Local
+`genlayer up --headless` and `gltest --network studionet` fail before contract
+deployment with:
+
+```text
+Failed to start module
+module: web
+error: missing field `session_create_request`
+RuntimeError: Failed to start module
+```
+
+The issue was isolated through checks of npm/registry connectivity, GitHub rate
+limits, stale CLI locks, orphaned processes, Docker context, and WSL2. It is an
+apparent `genlayer-test 0.29.2` / `genlayer-py 0.16.3` schema mismatch with the
+local JSON-RPC `web` module. Direct/in-memory test mode is not available in this
+`genlayer-test` version. No Bradbury deployment was attempted for the
+provider-feed feature. The exact versions and error text are ready to report to
+GenLayer while awaiting a compatible localnet version.
 
 **Complete interactive-v4 Lifeform loop.** On Governor
 `0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`, agent
