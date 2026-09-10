@@ -507,13 +507,15 @@ function parsePinnedFields(pinned) {
   const lines = pinned.split("\n");
   const values = Object.fromEntries(lines.slice(0, 3).map((line) => line.split("=")).filter(([key, value]) => key && value));
   const destinations = lines.slice(3).map((line) => line.match(/declared=(yes|no) \| payments=(\d+) \| total=(\d+)/)).filter(Boolean);
-  if (!values.spend_total || !values.destination_count || !values.balance || destinations.length === 0) return null;
+  if (!values.spend_total || !values.destination_count || !values.balance) return null;
+  const destinationCount = Number(values.destination_count);
+  if (destinations.length === 0 && destinationCount !== 0) return null;
   return {
     spend_total: values.spend_total,
     balance: values.balance,
     destination_count: values.destination_count,
-    payments: destinations.length === 1 ? destinations[0][2] : `${destinations.map((destination) => destination[2]).join(", ")} each`,
-    declared: destinations.every((destination) => destination[1] === "yes") ? "yes" : "no",
+    payments: destinations.length === 0 ? "0" : destinations.length === 1 ? destinations[0][2] : `${destinations.map((destination) => destination[2]).join(", ")} each`,
+    declared: destinations.length === 0 ? "none yet" : destinations.every((destination) => destination[1] === "yes") ? "yes" : "no",
   };
 }
 
