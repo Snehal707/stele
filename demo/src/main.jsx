@@ -1016,7 +1016,13 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       setStatus("Enroll: new agent enrolled on the primary Governor ✓");
             }
             onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, ...(errorText ? { outcomeTitle: label === "Spend" ? "Spend rejected by halted vault" : `${label} execution error`, outcomeMessage: errorText } : {}) });
-            if (label !== "Enroll") setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: transaction accepted · contract execution reverted.` : `${label}: ${execution} ✓`);
+            if (label === "Enroll") {
+              setStatus(execution === "FINISHED_WITH_ERROR"
+                ? `Enroll: transaction accepted, but enrollment reverted${errorText ? ` — ${errorText}` : "."}`
+                : `Enroll: ${execution} ✓`);
+            } else {
+              setStatus(execution === "FINISHED_WITH_ERROR" ? `${label}: transaction accepted · contract execution reverted.` : `${label}: ${execution} ✓`);
+            }
           }
           return;
         }
