@@ -31,6 +31,29 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 
 **Track:** Autonomous Protocols — halt, contract-governs-contract, and Lifeform.
 
+### Verification status
+
+**Bradbury-proven**
+
+- OFF sets halt.
+- ON cannot clear halt.
+- Evidence conflict denies payout.
+- Promotion preserves the mandate prefix.
+- Full v4 Lifeform loop.
+- Halted spend reverts with `Vault is halted`.
+
+**Studio-verified; Bradbury pending**
+
+- `REVIEW_STALE` rejects stale large spends.
+
+**Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified**
+
+- Provider-feed `_payment_count`, `_record_feed_conflict`, and `_record_review_failure` helpers.
+
+**Implemented, lint-clean, manually audited; zero runtime verification**
+
+- Provider-feed cross-contract EVM read and agreement path.
+
 ---
 
 ## The claim
@@ -627,7 +650,14 @@ enrollment paths; no shared-state regression was found. Premium accounting was
 also centralized in `_apply_premium` for `enroll_covered` and
 `enroll_with_feed`.
 
-Validation not performed: no automated test has run to completion. Local
+Direct-mode logic test: `tests/test_provider_feed_logic_direct.py` passed
+(`1 passed in 0.21s`) on stable `genlayer-test 0.29.2` / `genlayer-py 0.16.3`.
+It verifies the payment-count helper and fail-closed recorders by calling those
+helpers directly, but does not exercise `review()`'s feed branching or a real
+cross-contract EVM read.
+
+Validation not performed: the integration test suite has not run to completion.
+Local
 `genlayer up --headless` and `gltest --network studionet` fail before contract
 deployment with:
 
@@ -641,10 +671,11 @@ RuntimeError: Failed to start module
 The issue was isolated through checks of npm/registry connectivity, GitHub rate
 limits, stale CLI locks, orphaned processes, Docker context, and WSL2. It is an
 apparent `genlayer-test 0.29.2` / `genlayer-py 0.16.3` schema mismatch with the
-local JSON-RPC `web` module. Direct/in-memory test mode is not available in this
-`genlayer-test` version. No Bradbury deployment was attempted for the
-provider-feed feature. The exact versions and error text are ready to report to
-GenLayer while awaiting a compatible localnet version.
+local JSON-RPC `web` module. Stable direct mode is available for local logic
+tests, but its cross-contract EVM hook is not a real deployed EVM interaction.
+No Bradbury deployment was attempted for the provider-feed feature. The exact
+versions and error text are ready to report to GenLayer while awaiting a
+compatible integration path.
 
 **Complete interactive-v4 Lifeform loop.** On Governor
 `0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`, agent
