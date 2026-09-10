@@ -600,6 +600,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const [haltedSpend, setHaltedSpend] = useState(null);
   const [enrollForm, setEnrollForm] = useState({ vault: "", mandate: "", recordUrl: "", recordHash: "" });
   const [enrolledAgent, setEnrolledAgent] = useState(null);
+  const [existingEnrollment, setExistingEnrollment] = useState({ status: "idle", vault: "", error: "" });
   const [vaultDeployment, setVaultDeployment] = useState({ status: "idle", address: "", hash: "", error: "" });
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
@@ -624,6 +625,41 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     return () => window.clearInterval(timer);
   }, [transactions]);
 
+  useEffect(() => {
+    let active = true;
+    if (!connected) {
+      setExistingEnrollment({ status: "idle", vault: "", error: "" });
+      setEnrolledAgent(null);
+      return () => { active = false; };
+    }
+    if (localTestWallet) {
+      setExistingEnrollment({ status: "clear", vault: "", error: "" });
+      return () => { active = false; };
+    }
+    setExistingEnrollment({ status: "checking", vault: "", error: "" });
+    (async () => {
+      try {
+        const readClient = createClient({ chain: testnetBradbury });
+        const existingVault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([connectedAddress]) });
+        const validation = await validateVault(String(existingVault), connectedAddress, { quiet: true });
+        if (!active) return;
+        if (validation.ok) {
+          setExistingEnrollment({ status: "valid", vault: String(existingVault), error: "" });
+          setEnrolledAgent({ existing: true, vault: String(existingVault), agent: connectedAddress, governor: CONFIG.governor, mandate: "Existing Governor enrollment" });
+          setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));
+        } else {
+          setExistingEnrollment({ status: "invalid", vault: String(existingVault), error: "This wallet is enrolled, but its stored VaultTwin failed validation." });
+          setEnrolledAgent(null);
+        }
+      } catch (error) {
+        if (!active) return;
+        console.info("No existing Governor enrollment returned for wallet", error);
+        setExistingEnrollment({ status: "clear", vault: "", error: "" });
+      }
+    })();
+    return () => { active = false; };
+  }, [connected, connectedAddress, localTestWallet]);
+
   const requireWallet = () => {
     if (localTestWallet) return true;
     if (!address || !connector) {
@@ -645,6 +681,18 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const enrollNewAgent = async (event) => {
     event.preventDefault();
     if (!requireWallet()) return;
+    if (existingEnrollment.status === "checking") {
+      setStatus("Enroll: checking whether this wallet is already enrolled…");
+      return;
+    }
+    if (existingEnrollment.status === "valid") {
+      setStatus(`Enroll: this wallet is already enrolled with VaultTwin ${existingEnrollment.vault}. Connect a fresh wallet to create another agent.`);
+      return;
+    }
+    if (existingEnrollment.status === "invalid") {
+      setStatus("Enroll: this wallet is already enrolled, but its stored VaultTwin is invalid. Connect a fresh wallet to test enrollment.");
+      return;
+    }
     const vault = enrollForm.vault.trim();
     const mandate = enrollForm.mandate.trim();
     const recordUrl = enrollForm.recordUrl.trim();
@@ -676,14 +724,14 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     );
   };
 
-  const validateVault = async (vault, agent) => {
+  const validateVault = async (vault, agent, { quiet = false } = {}) => {
     if (localTestWallet) return { ok: true };
     try {
       const provider = await connector.getProvider();
       if (!provider) throw new Error("Wallet provider unavailable.");
       const code = await provider.request({ method: "eth_getCode", params: [vault, "latest"] });
       if (!code || code === "0x") {
-        setStatus("Enroll: this is a wallet address, not a deployed VaultTwin. Deploy a VaultTwin with the current Governor first.");
+        if (!quiet) setStatus("Enroll: this is a wallet address, not a deployed VaultTwin. Deploy a VaultTwin with the current Governor first.");
         return { ok: false };
       }
       const readClient = createClient({ chain: testnetBradbury });
@@ -693,17 +741,17 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       ]);
       const vaultAgent = String(state?.agent || "");
       if (vaultAgent.toLowerCase() !== String(agent).toLowerCase()) {
-        setStatus(`Enroll: this VaultTwin's configured agent is ${vaultAgent}, not your connected wallet. Connect that wallet, or deploy a new VaultTwin with your current wallet as the agent.`);
+        if (!quiet) setStatus(`Enroll: this VaultTwin's configured agent is ${vaultAgent}, not your connected wallet. Connect that wallet, or deploy a new VaultTwin with your current wallet as the agent.`);
         return { ok: false };
       }
       if (String(attachedGovernor).toLowerCase() !== CONFIG.governor.toLowerCase()) {
-        setStatus("Enroll: this VaultTwin is attached to a different Governor and may not behave as expected on this page. Use a VaultTwin deployed for the current Governor.");
+        if (!quiet) setStatus("Enroll: this VaultTwin is attached to a different Governor and may not behave as expected on this page. Use a VaultTwin deployed for the current Governor.");
         return { ok: false };
       }
       return { ok: true };
     } catch (error) {
       console.error("VaultTwin validation failed", error);
-      setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
+      if (!quiet) setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
       return { ok: false };
     }
   };
@@ -841,6 +889,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         } else {
           if (label === "Enroll") {
             setEnrolledAgent({ ...(meta || {}), agent: targetAgent, governor: targetContract, hash });
+            setExistingEnrollment({ status: "valid", vault: meta?.vault || "", error: "" });
           }
           onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, localTest: true });
           setStatus(`${label}: local test resolved ✓`);
@@ -1017,6 +1066,9 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
             }
             onResultChange({ action: label, hash, targetAgent, status: "resolved", consensus: "Resolved", execution, ...(errorText ? { outcomeTitle: label === "Spend" ? "Spend rejected by halted vault" : `${label} execution error`, outcomeMessage: errorText } : {}) });
             if (label === "Enroll") {
+              if (execution === "FINISHED_WITH_ERROR" && errorText?.toLowerCase().includes("already enrolled")) {
+                setExistingEnrollment({ status: "valid", vault: "", error: "The wallet is already enrolled on this Governor." });
+              }
               setStatus(execution === "FINISHED_WITH_ERROR"
                 ? `Enroll: transaction accepted, but enrollment reverted${errorText ? ` — ${errorText}` : "."}`
                 : `Enroll: ${execution} ✓`);
@@ -1068,6 +1120,9 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       <div className="review-presets-heading"><strong id="vault-deploy-title">Create a test VaultTwin</strong><span>Deploys for this wallet · current v4 Governor</span></div>
       <p>Use this when you do not already have a deployed VaultTwin address. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>.</p>
       <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending"} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> Deploying VaultTwin…</> : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
+      {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
+      {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>Use the existing agent for review, or connect a fresh wallet. Deploying another VaultTwin will not replace this enrollment.</span></div>}
+      {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet is enrolled, but its stored VaultTwin is not usable</strong><span>Connect a fresh wallet to test a new enrollment. The existing record cannot be replaced.</span></div>}
       {vaultDeployment.status === "pending" && <span role="status">Deployment submitted; wait for Bradbury consensus before enrolling.</span>}
       {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
       {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
@@ -1083,7 +1138,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       <p className="enroll-demo-note">Demo defaults: fixed provider list and 1800s windows.</p>
        <p className="enroll-governor">Current v4 Governor <code>{shortAddress(CONFIG.governor)}</code> · declared provider <code>{DECLARED_PROVIDER}</code> · default halt/claim windows 1800s</p>
       <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : "Enroll and sign transaction"}</button>
-      {enrolledAgent && <div className="enrolled-agent-card"><div><strong>Agent enrolled · not yet reviewed</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
+      {enrolledAgent && <div className="enrolled-agent-card"><div><strong>{enrolledAgent.existing ? "Existing agent loaded" : "Agent enrolled · not yet reviewed"}</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.existing ? "This wallet is already enrolled on the current Governor." : enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
     </form>
     <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
     <div className="write-actions">

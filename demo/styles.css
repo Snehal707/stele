@@ -386,6 +386,7 @@ code, .chain-address, .method-list { font-family: var(--mono); }
 .vault-deploy-panel code, .vault-deploy-success code { overflow-wrap: anywhere; }
 .vault-deploy-success, .vault-deploy-error { display: grid; gap: .25rem; border-left: 3px solid #4e7458; padding: .65rem .75rem; background: rgba(78,116,88,.08); }
 .vault-deploy-error { border-left-color: #a14d43; background: rgba(161,77,67,.08); }
+.vault-deploy-warning { display: grid; gap: .25rem; border-left: 3px solid #b86d32; padding: .65rem .75rem; background: rgba(184,109,50,.08); }
 .enroll-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
 .enroll-form-grid label { display: grid; gap: .3rem; color: var(--muted, #756f64); font: .72rem var(--mono); }
 .enroll-form-grid label span { font-size: .65rem; }
