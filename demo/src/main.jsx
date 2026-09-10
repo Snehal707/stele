@@ -311,7 +311,7 @@ function HealthyBurstComparison({ live }) {
   const healthyValues = Object.fromEntries(Object.keys(fixture.healthy).map((key) => [key, value(healthy, key, fixture.healthy[key])]));
   const burstValues = Object.fromEntries(Object.keys(fixture.burst).map((key) => [key, value(burst, key, fixture.burst[key])]));
   const fixtureFallback = [...Object.values(healthyValues), ...Object.values(burstValues)].some((entry) => entry.fixture);
-  return <section className="proof-comparison" aria-labelledby="proof-comparison-title"><div className="eyebrow" id="proof-comparison-title">THE SHARPEST CONTRAST</div><p className="proof-comparison-lede"><strong>Same totals. Same allowlist. Different verdict.</strong></p>{fixtureFallback && <p className="proof-comparison-source">fixture (live read unavailable) — receipts below are still on-chain</p>}<div className="proof-comparison-grid"><div className="proof-comparison-head"><span>FIELD</span><strong>HEALTHY</strong><strong>BURST</strong></div><div><span>spend_total</span><strong>{healthyValues.spend_total.value}</strong><strong>{burstValues.spend_total.value}</strong></div><div><span>balance</span><strong>{healthyValues.balance.value}</strong><strong>{burstValues.balance.value}</strong></div><div><span>destination</span><strong>{healthyValues.declared.value === "yes" ? "declared" : healthyValues.declared.value}</strong><strong>{burstValues.declared.value === "yes" ? "declared" : burstValues.declared.value}</strong></div><div><span>payments</span><strong>{healthyValues.payments.value}</strong><strong className="proof-burst-value">{burstValues.payments.value}</strong></div><div><span>ruling</span><strong className="proof-on">{healthyValues.ruling.value}</strong><strong className="proof-off">{burstValues.ruling.value}</strong></div></div><p className="proof-comparison-note">Anyone can call <code>review</code> — this is a permissionless circuit breaker, not an admin panel.</p></section>;
+  return <section className="proof-comparison" aria-labelledby="proof-comparison-title"><div className="eyebrow" id="proof-comparison-title">THE SHARPEST CONTRAST</div><p className="proof-comparison-lede"><strong>Same totals. Same allowlist. Different verdict.</strong></p>{fixtureFallback && <p className="proof-comparison-source">Live read unavailable — showing last recorded receipt (on-chain)</p>}<div className="proof-comparison-grid"><div className="proof-comparison-head"><span>FIELD</span><strong>HEALTHY</strong><strong>BURST</strong></div><div><span>spend_total</span><strong>{healthyValues.spend_total.value}</strong><strong>{burstValues.spend_total.value}</strong></div><div><span>balance</span><strong>{healthyValues.balance.value}</strong><strong>{burstValues.balance.value}</strong></div><div><span>destination</span><strong>{healthyValues.declared.value === "yes" ? "declared" : healthyValues.declared.value}</strong><strong>{burstValues.declared.value === "yes" ? "declared" : burstValues.declared.value}</strong></div><div><span>payments</span><strong>{healthyValues.payments.value}</strong><strong className="proof-burst-value">{burstValues.payments.value}</strong></div><div><span>ruling</span><strong className="proof-on">{healthyValues.ruling.value}</strong><strong className="proof-off">{burstValues.ruling.value}</strong></div></div><p className="proof-comparison-note">Anyone can call <code>review</code> — this is a permissionless circuit breaker, not an admin panel.</p></section>;
 }
 
 function InteractiveV4Evidence() {
@@ -369,7 +369,7 @@ function ProofAppendix({ live, lineage, retryLiveReads }) {
     <section className="proof-appendix-section" aria-labelledby="proof-fixtures-title">
       <div className="eyebrow">DEMO FIXTURES</div>
       <h3 id="proof-fixtures-title">Healthy, Burst, Drain, and Strangers</h3>
-      <p className="scope-note">Fixed examples; Healthy, Burst, and Drain attempt a current read. Strangers is reference-only. Any unavailable read is labeled as a fixture.</p>
+      <p className="scope-note">Fixed examples; Healthy, Burst, and Drain attempt a current read. Strangers is reference-only. An unavailable live read shows the last recorded receipt.</p>
       <div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div>
     </section>
     </details>
@@ -425,14 +425,14 @@ function ReceiptLinks({ title, hashes }) {
 
 function LineageFallback({ onRetry }) {
   return <div className="lineage-fallback">
-    <p className="reason">Fixture (live read unavailable)</p>
+    <p className="reason">Live read unavailable — showing last recorded receipt (on-chain)</p>
     <div className="lineage-rail">
       <article className="version-card"><div className="version-label">v1 · promoted</div><p>Thin mandate — no empty-vault clause.</p><EvidenceTag>fixture</EvidenceTag></article>
       <div className="lineage-arrow" aria-hidden="true">→</div>
       <article className="version-card active-version"><div className="version-label">v2 · active</div><p>Clause appended after the paid claim.</p><EvidenceTag>fixture</EvidenceTag></article>
     </div>
     <div className="trigger"><span>CLAIM PAID</span><b>980 <EvidenceTag>fixture</EvidenceTag></b><span>CLAUSE APPENDED</span></div>
-    <ReadState message="Fixture (live read unavailable)" onRetry={onRetry} />
+    <ReadState message="Live read unavailable — showing last recorded receipt (on-chain)" onRetry={onRetry} />
   </div>;
 }
 
@@ -534,7 +534,7 @@ function ReadState({ message = "Loading live Bradbury read…", onRetry }) {
 
 function renderCase(item, record, onRetry, labelOverride = item.label) {
   const fallback = DEMO_FIXTURE_FALLBACKS[item.label];
-  const fixtureMessage = item.live === false ? "Reference fixture (no live read)" : "Fixture (live read unavailable)";
+  const fixtureMessage = item.live === false ? "Reference fixture · no live read attempted" : "Live read unavailable — showing last recorded receipt (on-chain)";
   if (!record || record.status === "loading" || record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><div className={`verdict ${fallback.ruling === "ON_MANDATE" ? "on" : "off"}`}>{fallback.ruling}</div><p className="reason">{fixtureMessage}</p><div className="fields">{fallback.fields.map(([key, fieldValue]) => <div className="field" key={key}><span>{key}</span><strong>{fieldValue}</strong><EvidenceTag>fixture</EvidenceTag></div>)}</div><ReadState message={fixtureMessage} onRetry={item.live === false ? undefined : onRetry} /></article>;
   const fields = record.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && String(fieldValue) !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{String(fieldValue)}</strong><EvidenceTag>live read</EvidenceTag></div>);
   return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}>
