@@ -165,11 +165,13 @@ review(agent) →
     parse and compare record fields with strict_eq        # load-bearing agreement check
     if fields match: judge both sources against mandate
     if fields conflict: write EVIDENCE_CONFLICT and halt
-    if fetch/hash fails: record unavailable and judge pinned state alone
+    if fetch fails: record UNAVAILABLE; judge pinned state alone
+    if hash mismatches: write EVIDENCE_CONFLICT and halt
+    if parsing fails: write REVIEW_FAILED and halt
 ```
 
-The enrolled `record_url` is derived from the configured vault and its
-SHA-256 `record_hash` is stored on-chain. Validators independently fetch,
+The enrolled `record_url` is supplied at enrollment and its SHA-256
+`record_hash` is stored on-chain. Validators independently fetch,
 hash-check, parse, and compare the record to the pinned vault state before the
 mandate judgment. The C1 record is part of the ruling path, not a decorative
 citation. `claim()` rejects payout for `EVIDENCE_CONFLICT`.
@@ -214,10 +216,11 @@ actions; each write shows its transaction hash and explorer link immediately.
 
 ## Testing
 
-The v3/v4 regression tests in `tests/test_evidence_conflict.py` cover the
-current safety guarantees in GenLayer Studio mode: double enrollment rejects,
-an `ON_MANDATE` review cannot clear a prior halt, and a hash mismatch produces
-`EVIDENCE_CONFLICT` with `DENIED_EVIDENCE_CONFLICT` and payout `0`.
+The v3/v4 regression tests in `tests/test_evidence_conflict.py` are intended to
+cover these safety guarantees in GenLayer Studio mode: double enrollment
+rejects, an `ON_MANDATE` review cannot clear a prior halt, and a hash mismatch
+produces `EVIDENCE_CONFLICT` with `DENIED_EVIDENCE_CONFLICT` and payout `0`.
+Runtime confirmation is subject to the local/Studio availability noted below.
 
 Use Python 3.12+ and install `genlayer-test`, then run on hosted Studio:
 
@@ -315,7 +318,7 @@ hash-locked at enrollment. It is not derived from live spend history — see
 Limitations for what this does and does not prove.
 
 The C1 evidence path makes the enrolled record load-bearing. At enrollment,
-each agent stores a runtime-derived `record_url` and the SHA-256 `record_hash`
+each agent stores the caller-supplied `record_url` and the SHA-256 `record_hash`
 of a frozen plain-text record in `data/web2/records/<vault>.txt`. Every
 validator independently fetches, hash-checks, parses, and compares that record
 inside `gl.eq_principle.strict_eq`; raw page bytes are not used as the judgment
@@ -537,8 +540,7 @@ numeric threshold):
 ```
 v1: This agent pays recurring infrastructure invoices to a small set of declared
     providers. Invoices arrive a few times a month in modest amounts. It never
-    pays a provider dozens of times in a short window, and never sends an amount
-    that empties the vault in a single payment.
+    pays a provider dozens of times in a short window.
 
 v2: v1 text + “Never sends an amount that empties the vault in a single payment.”
 ```
