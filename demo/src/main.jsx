@@ -1045,6 +1045,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
           const execution = receipt.txExecutionResultName || ({ 0: "NOT_VOTED", 1: "FINISHED_WITH_RETURN", 2: "FINISHED_WITH_ERROR" }[receipt.txExecutionResult] || "receipt received");
           const deploymentFinalized = label !== "Deploy VaultTwin" || statusName === "FINALIZED" || numericStatus === 7;
           if (label === "Deploy VaultTwin" && !deploymentFinalized) {
+            setTransactions((previous) => previous.map((transaction) => transaction.hash === hash ? { ...transaction, phase: "finalization", execution } : transaction));
             setStatus(execution === "FINISHED_WITH_ERROR"
               ? "VaultTwin deployment reached a terminal execution error; waiting for final transaction status…"
               : "VaultTwin accepted ✓ Waiting for the finalization window before reading the deployed address…");
@@ -1108,6 +1109,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
 
   if (!connected) return <div className="write-panel"><p>Connect a wallet to enroll an agent or submit a fixture review.</p><ConnectButton /></div>;
   const hasPendingTransaction = transactions.some((transaction) => transaction.pending);
+  const finalizingDeployment = transactions.some((transaction) => transaction.pending && transaction.label === "Deploy VaultTwin" && transaction.phase === "finalization");
   const reviewTargetAgent = enrolledAgent?.agent || INTERACTIVE_V4_AGENT;
   const reviewTargetGovernor = enrolledAgent?.governor || CONFIG.governor;
   return <div className="write-panel">
@@ -1128,11 +1130,11 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     <section className="vault-deploy-panel" aria-labelledby="vault-deploy-title">
       <div className="review-presets-heading"><strong id="vault-deploy-title">Deploy your own VaultTwin</strong><span>Optional live test · current v4 Governor</span></div>
       <p>Use this when you want to submit a live test. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>. After Bradbury accepts the deployment, finalization may take several minutes before the address can be verified and enrolled.</p>
-      <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending"} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> Deploying VaultTwin…</> : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
+      <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending"} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> {finalizingDeployment ? "Finalizing VaultTwin…" : "Deploying VaultTwin…"}</> : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
       {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
       {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>Use the existing agent for review, or connect a fresh wallet. Deploying another VaultTwin will not replace this enrollment.</span></div>}
       {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet is enrolled, but its stored VaultTwin is not usable</strong><span>Connect a fresh wallet to test a new enrollment. The existing record cannot be replaced.</span></div>}
-      {vaultDeployment.status === "pending" && <span role="status">Deployment submitted; wait for Bradbury consensus before enrolling.</span>}
+      {vaultDeployment.status === "pending" && <span role="status">{finalizingDeployment ? "Deployment accepted; wait for Bradbury finalization before enrolling." : "Deployment submitted; wait for Bradbury consensus before enrolling."}</span>}
       {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
       {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
     </section>
@@ -1158,10 +1160,10 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
     <p className={`write-status${activeAction ? " is-waiting" : ""}`} role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {writeFailure && <details className="write-diagnostic"><summary>Why {writeFailure.label} stopped · {writeFailure.category}</summary><p><strong>{writeFailure.guidance}</strong></p><p>Transaction hash returned: <strong>{writeFailure.hashReturned ? "yes" : "no"}</strong></p><pre>{writeFailure.details}</pre></details>}
-    {transactions.map(({ label, hash, startedAt, pending, execution, localTest }) => <div className="tx-hash" key={hash}>
+    {transactions.map(({ label, hash, startedAt, pending, execution, phase, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
       {localTest ? <strong>{hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>}
-      <small>{pending ? `Submitted ✓ · Waiting for Bradbury consensus… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ${execution === "FINISHED_WITH_ERROR" ? "✕" : "✓"}`}</small>
+      <small>{pending ? `${phase === "finalization" ? "Accepted ✓ · Waiting for Bradbury finalization" : "Submitted ✓ · Waiting for Bradbury consensus"}… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ${execution === "FINISHED_WITH_ERROR" ? "✕" : "✓"}`}</small>
     </div>)}
   </div>;
 }
