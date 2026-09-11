@@ -88,6 +88,19 @@ class _Recipient:
         pass
 
 
+@gl.evm.contract_interface
+class _ProviderInvoiceFeed:
+    class View:
+        def invoice_count(self) -> u256: ...
+
+        def initialized(self) -> bool: ...
+
+        def sealed(self) -> bool: ...
+
+    class Write:
+        pass
+
+
 class Governor(gl.Contract):
     vault_of: TreeMap[Address, Address]
     mandates: TreeMap[Address, str]
@@ -112,6 +125,11 @@ class Governor(gl.Contract):
     record_url_of: TreeMap[Address, str]
     record_hash_of: TreeMap[Address, str]
     supplementary_web_source: TreeMap[Address, str]
+    # Append-only timing state for the review freshness guard.
+    last_review_timestamp: TreeMap[Address, u256]
+    review_window: TreeMap[Address, u256]
+    # Append-only provider-feed address, used only by enroll_with_feed agents.
+    feed_of: TreeMap[Address, Address]
 
     def __init__(self):
         root = gl.storage.Root.get()
@@ -133,6 +151,32 @@ class Governor(gl.Contract):
 
     def _is_enrolled(self, agent: Address) -> bool:
         return bool(self.mandates.get_or_insert_default(agent).strip())
+
+    def _initialize_enrollment(
+        self,
+        agent: Address,
+        vault: Address,
+        mandate_text: str,
+        halt_window: u256,
+        claim_window: u256,
+        record_url: str,
+        record_hash: str,
+        review_window: u256,
+    ) -> None:
+        if self._is_enrolled(agent):
+            raise gl.vm.UserError("Agent already enrolled")
+        if not mandate_text.strip():
+            raise gl.vm.UserError("Mandate must not be empty")
+        self.vault_of[agent] = vault
+        self.mandates[agent] = mandate_text
+        self.halted[agent] = False
+        self.halt_expiry[agent] = u256(0)
+        self.halt_window[agent] = halt_window
+        self.claim_window[agent] = claim_window
+        self.review_window[agent] = review_window
+        self.record_url_of[agent] = record_url
+        self.record_hash_of[agent] = record_hash
+        self._register_mandate(agent, mandate_text)
 
     def _canonical_state(self, agent: Address, state: dict) -> str:
         payments = state["payments"]
@@ -212,22 +256,20 @@ class Governor(gl.Contract):
         claim_window: u256 = u256(DEFAULT_CLAIM_WINDOW_BRADBURY),
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         agent_address = Address(agent)
         vault_address = Address(vault)
-        if self._is_enrolled(agent_address):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
-        self.vault_of[agent_address] = vault_address
-        self.mandates[agent_address] = mandate_text
-        self.halted[agent_address] = False
-        self.halt_expiry[agent_address] = u256(0)
-        self.halt_window[agent_address] = halt_window
-        self.claim_window[agent_address] = claim_window
-        self.record_url_of[agent_address] = record_url
-        self.record_hash_of[agent_address] = record_hash
-        self._register_mandate(agent_address, mandate_text)
+        self._initialize_enrollment(
+            agent_address,
+            vault_address,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
         declared = self.providers.get_or_insert_default(agent_address)
         for provider_text in providers:
             declared.append(Address(provider_text))
@@ -243,21 +285,19 @@ class Governor(gl.Contract):
         claim_window: u256 = u256(DEFAULT_CLAIM_WINDOW_BRADBURY),
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         """CLI-compatible fixture entry point for one declared provider."""
-        if self._is_enrolled(agent):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
-        self.vault_of[agent] = vault
-        self.mandates[agent] = mandate_text
-        self.halted[agent] = False
-        self.halt_expiry[agent] = u256(0)
-        self.halt_window[agent] = halt_window
-        self.claim_window[agent] = claim_window
-        self.record_url_of[agent] = record_url
-        self.record_hash_of[agent] = record_hash
-        self._register_mandate(agent, mandate_text)
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
         declared = self.providers.get_or_insert_default(agent)
         declared.append(provider)
 
@@ -272,27 +312,58 @@ class Governor(gl.Contract):
         claim_window: u256,
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         premium = gl.message.value
-        if self._is_enrolled(agent):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
         if premium == u256(0):
             raise gl.vm.UserError("Premium and bond must be nonzero")
-        self.vault_of[agent] = vault
-        self.mandates[agent] = mandate_text
-        self.halted[agent] = False
-        self.halt_expiry[agent] = u256(0)
-        self.halt_window[agent] = halt_window
-        self.claim_window[agent] = claim_window
-        self.record_url_of[agent] = record_url
-        self.record_hash_of[agent] = record_hash
-        self._register_mandate(agent, mandate_text)
-        self.bond_of[agent] = premium
-        claims_share = premium * u256(CLAIMS_PREMIUM_BPS) // u256(10000)
-        self.pool += claims_share
-        self.lp_pool += premium - claims_share
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
+        self._apply_premium(agent, premium)
+        declared = self.providers.get_or_insert_default(agent)
+        for provider in providers:
+            declared.append(provider)
+
+    @gl.public.write.payable
+    def enroll_with_feed(
+        self,
+        agent: Address,
+        vault: Address,
+        mandate_text: str,
+        providers: DynArray[Address],
+        halt_window: u256,
+        claim_window: u256,
+        feed_address: Address,
+        record_url: str = "",
+        record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
+    ) -> None:
+        """Enroll an agent whose sealed provider feed is checked during review."""
+        premium = gl.message.value
+        if premium == u256(0):
+            raise gl.vm.UserError("Premium and bond must be nonzero")
+        if str(feed_address).lower() == "0x" + "0" * 40:
+            raise gl.vm.UserError("Provider feed address must be nonzero")
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
+        self.feed_of[agent] = feed_address
+        self._apply_premium(agent, premium)
         declared = self.providers.get_or_insert_default(agent)
         for provider in providers:
             declared.append(provider)
