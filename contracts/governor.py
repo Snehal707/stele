@@ -502,6 +502,7 @@ class Governor(gl.Contract):
                     web_evidence_status="CONFLICT",
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         if record_status == "PARSE_FAILED":
@@ -522,6 +523,7 @@ class Governor(gl.Contract):
                     web_evidence_status=record_status,
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         ordered_providers = sorted(str(provider) for provider in self.providers[agent])
@@ -621,6 +623,7 @@ class Governor(gl.Contract):
                     web_evidence_status=record_status,
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         self.governed[agent] = parsed["ruling"]
@@ -641,6 +644,7 @@ class Governor(gl.Contract):
                 web_evidence_status=record_status,
             )
         )
+        self.last_review_timestamp[agent] = self._now()
 
     @gl.public.write
     def claim(self, agent: Address) -> None:
@@ -903,6 +907,19 @@ class Governor(gl.Contract):
     @gl.public.view
     def get_halt_expiry(self, agent: Address) -> u256:
         return self.halt_expiry[agent]
+
+    @gl.public.view
+    def get_last_review_timestamp(self, agent: Address) -> u256:
+        return self.last_review_timestamp[agent]
+
+    @gl.public.view
+    def get_review_window(self, agent: Address) -> u256:
+        return self.review_window[agent]
+
+    @gl.public.view
+    def is_review_stale(self, agent: Address) -> bool:
+        timestamp = self.last_review_timestamp[agent]
+        return timestamp == u256(0) or self._now() > timestamp + self.review_window[agent]
 
     @gl.public.view
     def get_pool(self) -> u256:
