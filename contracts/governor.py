@@ -245,6 +245,93 @@ class Governor(gl.Contract):
             "destinations": destinations,
         }
 
+    def _feed_address_is_configured(self, agent: Address) -> bool:
+        feed_address = self.feed_of.get_or_insert_default(agent)
+        return str(feed_address).lower() != "0x" + "0" * 40
+
+    def _provider_feed_read(self, feed_address: Address) -> dict:
+        """Read the provider-owned feed; an absent/unsealed feed is unusable."""
+        try:
+            feed = _ProviderInvoiceFeed(feed_address).view()
+            initialized = feed.initialized()
+            sealed = feed.sealed()
+            invoice_count = feed.invoice_count()
+            if not initialized or not sealed:
+                return {"status": "UNAVAILABLE"}
+            return {"status": "READY", "invoice_count": u256(invoice_count)}
+        except Exception:
+            return {"status": "UNAVAILABLE"}
+
+    def _payment_count(self, state: dict) -> u256:
+        count = u256(0)
+        for destination in state["payments"]:
+            count += u256(state["payments"][destination])
+        return count
+
+    def _record_review_failure(
+        self,
+        agent: Address,
+        pinned: str,
+        state: dict,
+        reason: str,
+        evidence_status: str,
+    ) -> None:
+        self.governed[agent] = "REVIEW_FAILED"
+        self.halted[agent] = True
+        self.halt_expiry[agent] = self._now() + self.halt_window[agent]
+        self.verdicts.append(
+            Verdict(
+                agent=agent,
+                ruling="REVIEW_FAILED",
+                reason=reason,
+                pinned_state=pinned,
+                raw_output="",
+                last_spend=u256(state["spend_total"]),
+                last_balance=u256(state["balance"]),
+                ruling_time=self._now(),
+                web_source="provider_feed",
+                web_evidence_status=evidence_status,
+            )
+        )
+        self.last_review_timestamp[agent] = self._now()
+
+    def _record_feed_conflict(
+        self,
+        agent: Address,
+        pinned: str,
+        state: dict,
+        feed_count: u256,
+        pin_count: u256,
+    ) -> None:
+        reason = (
+            f"Evidence conflict: provider feed reports invoiceCount={feed_count}, "
+            f"but the pinned vault state contains payments={pin_count}; operator review is required."
+        )
+        self.governed[agent] = "EVIDENCE_CONFLICT"
+        self.halted[agent] = True
+        self.halt_expiry[agent] = self._now() + self.halt_window[agent]
+        self.verdicts.append(
+            Verdict(
+                agent=agent,
+                ruling="EVIDENCE_CONFLICT",
+                reason=reason,
+                pinned_state=pinned,
+                raw_output="",
+                last_spend=u256(state["spend_total"]),
+                last_balance=u256(state["balance"]),
+                ruling_time=self._now(),
+                web_source="provider_feed",
+                web_evidence_status="CONFLICT",
+            )
+        )
+        self.last_review_timestamp[agent] = self._now()
+
+    def _apply_premium(self, agent: Address, premium: u256) -> None:
+        self.bond_of[agent] = premium
+        claims_share = premium * u256(CLAIMS_PREMIUM_BPS) // u256(10000)
+        self.pool += claims_share
+        self.lp_pool += premium - claims_share
+
     @gl.public.write
     def enroll(
         self,
@@ -440,6 +527,31 @@ class Governor(gl.Contract):
         pinned = self._canonical_state(agent, state)
 
         vault_address = self.vault_of[agent]
+
+        # Feed-enabled agents add a governor-fetched, provider-owned state
+        # check. Legacy agents retain the original pin-only behavior.
+        if self._feed_address_is_configured(agent):
+            feed_address = self.feed_of[agent]
+            feed_result = self._provider_feed_read(feed_address)
+            if feed_result["status"] != "READY":
+                self._record_review_failure(
+                    agent,
+                    pinned,
+                    state,
+                    "The enrolled provider feed was unavailable or not sealed; review halted for safety.",
+                    "UNAVAILABLE",
+                )
+                return
+            pin_count = self._payment_count(state)
+            if feed_result["invoice_count"] != pin_count:
+                self._record_feed_conflict(
+                    agent,
+                    pinned,
+                    state,
+                    feed_result["invoice_count"],
+                    pin_count,
+                )
+                return
 
         record_url = self.record_url_of.get_or_insert_default(agent)
         record_hash = self.record_hash_of.get_or_insert_default(agent)
