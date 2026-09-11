@@ -53,9 +53,14 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 
 - Provider-feed `_payment_count`, `_record_feed_conflict`, and `_record_review_failure` helpers.
 
-**Implemented, lint-clean, manually audited; zero runtime verification**
+**Implemented locally, lint-clean, manually audited; zero runtime verification**
 
 - Provider-feed cross-contract EVM read and agreement path.
+
+The provider-feed Governor implementation is currently preserved on branch
+`codex/provider-feed-freshness-wip`; it is not yet merged into `master` or
+deployed on Bradbury. `master` currently contains the documentation, UI
+wiring, and direct helper coverage, but not the Governor implementation itself.
 
 ---
 
@@ -219,9 +224,10 @@ sealed-feed demo. It demonstrates the cross-contract retrieval pattern, but it
 is not independent third-party evidence while the feed is operated by this
 project.
 
-**Status: implemented, not yet runtime-confirmed.** Local test execution is
-currently blocked by an apparent GenLayer tooling issue unrelated to this
-contract; see Engineering notes.
+**Status: implementation preserved on `codex/provider-feed-freshness-wip`,
+not yet merged or runtime-confirmed.** Local test execution is currently
+blocked by an apparent GenLayer tooling issue unrelated to this contract; see
+Engineering notes.
 
 **Evidence precedence:** an agent enrolled with both a provider feed and a C1
 record is evaluated feed-first. An unavailable or unsealed feed produces
