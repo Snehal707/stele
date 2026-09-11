@@ -647,9 +647,9 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         const readClient = createClient({ chain: testnetBradbury });
         const existingVault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([connectedAddress]) });
         if (!active) return;
-        setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));
         const validation = await validateVault(String(existingVault), connectedAddress, { quiet: true });
         if (!active) return;
+        setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));
         if (validation.ok) {
           setExistingEnrollment({ status: "valid", vault: String(existingVault), error: "" });
           setEnrolledAgent({ existing: true, vault: String(existingVault), agent: connectedAddress, governor: CONFIG.governor, mandate: "Existing Governor enrollment" });
@@ -1123,7 +1123,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
     {!localTestWallet && <div className="advanced-live-test-note" role="note"><strong>Advanced live test · optional</strong><span>Submit your own Bradbury transactions with a connected wallet. Consensus finalization may take several minutes; use the prepared receipts above for an immediate demo.</span></div>}
-    <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Signer"}</span><span>{connectedAddress}</span></div>
+    <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{enrolledAgent ? (enrolledAgent.existing ? "Existing enrolled review agent" : "Newly enrolled review agent") : INTERACTIVE_V4_AGENT ? "Prepared review agent" : "No review agent is enrolled"}</strong>{reviewTargetAgent && <span>{reviewTargetAgent}</span>}<small>Full address retained for verification.</small></div>
     {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
     <div className="your-run-proof-banner">Writes target current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
