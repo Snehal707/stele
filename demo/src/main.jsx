@@ -637,13 +637,16 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     }
     if (localTestWallet) {
       setExistingEnrollment({ status: "clear", vault: "", error: "" });
+      setEnrollForm((form) => ({ ...form, vault: "" }));
       return () => { active = false; };
     }
     setExistingEnrollment({ status: "checking", vault: "", error: "" });
+    setEnrollForm((form) => ({ ...form, vault: "" }));
     (async () => {
       try {
         const readClient = createClient({ chain: testnetBradbury });
         const existingVault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([connectedAddress]) });
+        if (!active) return;
         setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));
         const validation = await validateVault(String(existingVault), connectedAddress, { quiet: true });
         if (!active) return;
