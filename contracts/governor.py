@@ -88,6 +88,19 @@ class _Recipient:
         pass
 
 
+@gl.evm.contract_interface
+class _ProviderInvoiceFeed:
+    class View:
+        def invoice_count(self) -> u256: ...
+
+        def initialized(self) -> bool: ...
+
+        def sealed(self) -> bool: ...
+
+    class Write:
+        pass
+
+
 class Governor(gl.Contract):
     vault_of: TreeMap[Address, Address]
     mandates: TreeMap[Address, str]
@@ -112,6 +125,11 @@ class Governor(gl.Contract):
     record_url_of: TreeMap[Address, str]
     record_hash_of: TreeMap[Address, str]
     supplementary_web_source: TreeMap[Address, str]
+    # Append-only timing state for the review freshness guard.
+    last_review_timestamp: TreeMap[Address, u256]
+    review_window: TreeMap[Address, u256]
+    # Append-only provider-feed address, used only by enroll_with_feed agents.
+    feed_of: TreeMap[Address, Address]
 
     def __init__(self):
         root = gl.storage.Root.get()
@@ -133,6 +151,32 @@ class Governor(gl.Contract):
 
     def _is_enrolled(self, agent: Address) -> bool:
         return bool(self.mandates.get_or_insert_default(agent).strip())
+
+    def _initialize_enrollment(
+        self,
+        agent: Address,
+        vault: Address,
+        mandate_text: str,
+        halt_window: u256,
+        claim_window: u256,
+        record_url: str,
+        record_hash: str,
+        review_window: u256,
+    ) -> None:
+        if self._is_enrolled(agent):
+            raise gl.vm.UserError("Agent already enrolled")
+        if not mandate_text.strip():
+            raise gl.vm.UserError("Mandate must not be empty")
+        self.vault_of[agent] = vault
+        self.mandates[agent] = mandate_text
+        self.halted[agent] = False
+        self.halt_expiry[agent] = u256(0)
+        self.halt_window[agent] = halt_window
+        self.claim_window[agent] = claim_window
+        self.review_window[agent] = review_window
+        self.record_url_of[agent] = record_url
+        self.record_hash_of[agent] = record_hash
+        self._register_mandate(agent, mandate_text)
 
     def _canonical_state(self, agent: Address, state: dict) -> str:
         payments = state["payments"]
@@ -201,6 +245,93 @@ class Governor(gl.Contract):
             "destinations": destinations,
         }
 
+    def _feed_address_is_configured(self, agent: Address) -> bool:
+        feed_address = self.feed_of.get_or_insert_default(agent)
+        return str(feed_address).lower() != "0x" + "0" * 40
+
+    def _provider_feed_read(self, feed_address: Address) -> dict:
+        """Read the provider-owned feed; an absent/unsealed feed is unusable."""
+        try:
+            feed = _ProviderInvoiceFeed(feed_address).view()
+            initialized = feed.initialized()
+            sealed = feed.sealed()
+            invoice_count = feed.invoice_count()
+            if not initialized or not sealed:
+                return {"status": "UNAVAILABLE"}
+            return {"status": "READY", "invoice_count": u256(invoice_count)}
+        except Exception:
+            return {"status": "UNAVAILABLE"}
+
+    def _payment_count(self, state: dict) -> u256:
+        count = u256(0)
+        for destination in state["payments"]:
+            count += u256(state["payments"][destination])
+        return count
+
+    def _record_review_failure(
+        self,
+        agent: Address,
+        pinned: str,
+        state: dict,
+        reason: str,
+        evidence_status: str,
+    ) -> None:
+        self.governed[agent] = "REVIEW_FAILED"
+        self.halted[agent] = True
+        self.halt_expiry[agent] = self._now() + self.halt_window[agent]
+        self.verdicts.append(
+            Verdict(
+                agent=agent,
+                ruling="REVIEW_FAILED",
+                reason=reason,
+                pinned_state=pinned,
+                raw_output="",
+                last_spend=u256(state["spend_total"]),
+                last_balance=u256(state["balance"]),
+                ruling_time=self._now(),
+                web_source="provider_feed",
+                web_evidence_status=evidence_status,
+            )
+        )
+        self.last_review_timestamp[agent] = self._now()
+
+    def _record_feed_conflict(
+        self,
+        agent: Address,
+        pinned: str,
+        state: dict,
+        feed_count: u256,
+        pin_count: u256,
+    ) -> None:
+        reason = (
+            f"Evidence conflict: provider feed reports invoiceCount={feed_count}, "
+            f"but the pinned vault state contains payments={pin_count}; operator review is required."
+        )
+        self.governed[agent] = "EVIDENCE_CONFLICT"
+        self.halted[agent] = True
+        self.halt_expiry[agent] = self._now() + self.halt_window[agent]
+        self.verdicts.append(
+            Verdict(
+                agent=agent,
+                ruling="EVIDENCE_CONFLICT",
+                reason=reason,
+                pinned_state=pinned,
+                raw_output="",
+                last_spend=u256(state["spend_total"]),
+                last_balance=u256(state["balance"]),
+                ruling_time=self._now(),
+                web_source="provider_feed",
+                web_evidence_status="CONFLICT",
+            )
+        )
+        self.last_review_timestamp[agent] = self._now()
+
+    def _apply_premium(self, agent: Address, premium: u256) -> None:
+        self.bond_of[agent] = premium
+        claims_share = premium * u256(CLAIMS_PREMIUM_BPS) // u256(10000)
+        self.pool += claims_share
+        self.lp_pool += premium - claims_share
+
     @gl.public.write
     def enroll(
         self,
@@ -212,22 +343,20 @@ class Governor(gl.Contract):
         claim_window: u256 = u256(DEFAULT_CLAIM_WINDOW_BRADBURY),
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         agent_address = Address(agent)
         vault_address = Address(vault)
-        if self._is_enrolled(agent_address):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
-        self.vault_of[agent_address] = vault_address
-        self.mandates[agent_address] = mandate_text
-        self.halted[agent_address] = False
-        self.halt_expiry[agent_address] = u256(0)
-        self.halt_window[agent_address] = halt_window
-        self.claim_window[agent_address] = claim_window
-        self.record_url_of[agent_address] = record_url
-        self.record_hash_of[agent_address] = record_hash
-        self._register_mandate(agent_address, mandate_text)
+        self._initialize_enrollment(
+            agent_address,
+            vault_address,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
         declared = self.providers.get_or_insert_default(agent_address)
         for provider_text in providers:
             declared.append(Address(provider_text))
@@ -243,21 +372,19 @@ class Governor(gl.Contract):
         claim_window: u256 = u256(DEFAULT_CLAIM_WINDOW_BRADBURY),
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         """CLI-compatible fixture entry point for one declared provider."""
-        if self._is_enrolled(agent):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
-        self.vault_of[agent] = vault
-        self.mandates[agent] = mandate_text
-        self.halted[agent] = False
-        self.halt_expiry[agent] = u256(0)
-        self.halt_window[agent] = halt_window
-        self.claim_window[agent] = claim_window
-        self.record_url_of[agent] = record_url
-        self.record_hash_of[agent] = record_hash
-        self._register_mandate(agent, mandate_text)
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
         declared = self.providers.get_or_insert_default(agent)
         declared.append(provider)
 
@@ -272,27 +399,58 @@ class Governor(gl.Contract):
         claim_window: u256,
         record_url: str = "",
         record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
     ) -> None:
         premium = gl.message.value
-        if self._is_enrolled(agent):
-            raise gl.vm.UserError("Agent already enrolled")
-        if not mandate_text.strip():
-            raise gl.vm.UserError("Mandate must not be empty")
         if premium == u256(0):
             raise gl.vm.UserError("Premium and bond must be nonzero")
-        self.vault_of[agent] = vault
-        self.mandates[agent] = mandate_text
-        self.halted[agent] = False
-        self.halt_expiry[agent] = u256(0)
-        self.halt_window[agent] = halt_window
-        self.claim_window[agent] = claim_window
-        self.record_url_of[agent] = record_url
-        self.record_hash_of[agent] = record_hash
-        self._register_mandate(agent, mandate_text)
-        self.bond_of[agent] = premium
-        claims_share = premium * u256(CLAIMS_PREMIUM_BPS) // u256(10000)
-        self.pool += claims_share
-        self.lp_pool += premium - claims_share
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
+        self._apply_premium(agent, premium)
+        declared = self.providers.get_or_insert_default(agent)
+        for provider in providers:
+            declared.append(provider)
+
+    @gl.public.write.payable
+    def enroll_with_feed(
+        self,
+        agent: Address,
+        vault: Address,
+        mandate_text: str,
+        providers: DynArray[Address],
+        halt_window: u256,
+        claim_window: u256,
+        feed_address: Address,
+        record_url: str = "",
+        record_hash: str = "",
+        review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
+    ) -> None:
+        """Enroll an agent whose sealed provider feed is checked during review."""
+        premium = gl.message.value
+        if premium == u256(0):
+            raise gl.vm.UserError("Premium and bond must be nonzero")
+        if str(feed_address).lower() == "0x" + "0" * 40:
+            raise gl.vm.UserError("Provider feed address must be nonzero")
+        self._initialize_enrollment(
+            agent,
+            vault,
+            mandate_text,
+            halt_window,
+            claim_window,
+            record_url,
+            record_hash,
+            review_window,
+        )
+        self.feed_of[agent] = feed_address
+        self._apply_premium(agent, premium)
         declared = self.providers.get_or_insert_default(agent)
         for provider in providers:
             declared.append(provider)
@@ -370,6 +528,31 @@ class Governor(gl.Contract):
 
         vault_address = self.vault_of[agent]
 
+        # Feed-enabled agents add a governor-fetched, provider-owned state
+        # check. Legacy agents retain the original pin-only behavior.
+        if self._feed_address_is_configured(agent):
+            feed_address = self.feed_of[agent]
+            feed_result = self._provider_feed_read(feed_address)
+            if feed_result["status"] != "READY":
+                self._record_review_failure(
+                    agent,
+                    pinned,
+                    state,
+                    "The enrolled provider feed was unavailable or not sealed; review halted for safety.",
+                    "UNAVAILABLE",
+                )
+                return
+            pin_count = self._payment_count(state)
+            if feed_result["invoice_count"] != pin_count:
+                self._record_feed_conflict(
+                    agent,
+                    pinned,
+                    state,
+                    feed_result["invoice_count"],
+                    pin_count,
+                )
+                return
+
         record_url = self.record_url_of.get_or_insert_default(agent)
         record_hash = self.record_hash_of.get_or_insert_default(agent)
 
@@ -431,6 +614,7 @@ class Governor(gl.Contract):
                     web_evidence_status="CONFLICT",
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         if record_status == "PARSE_FAILED":
@@ -451,6 +635,7 @@ class Governor(gl.Contract):
                     web_evidence_status=record_status,
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         ordered_providers = sorted(str(provider) for provider in self.providers[agent])
@@ -550,6 +735,7 @@ class Governor(gl.Contract):
                     web_evidence_status=record_status,
                 )
             )
+            self.last_review_timestamp[agent] = self._now()
             return
 
         self.governed[agent] = parsed["ruling"]
@@ -570,6 +756,7 @@ class Governor(gl.Contract):
                 web_evidence_status=record_status,
             )
         )
+        self.last_review_timestamp[agent] = self._now()
 
     @gl.public.write
     def claim(self, agent: Address) -> None:
@@ -832,6 +1019,19 @@ class Governor(gl.Contract):
     @gl.public.view
     def get_halt_expiry(self, agent: Address) -> u256:
         return self.halt_expiry[agent]
+
+    @gl.public.view
+    def get_last_review_timestamp(self, agent: Address) -> u256:
+        return self.last_review_timestamp.get_or_insert_default(agent)
+
+    @gl.public.view
+    def get_review_window(self, agent: Address) -> u256:
+        return self.review_window[agent]
+
+    @gl.public.view
+    def is_review_stale(self, agent: Address) -> bool:
+        timestamp = self.last_review_timestamp.get_or_insert_default(agent)
+        return timestamp == u256(0) or self._now() > timestamp + self.review_window[agent]
 
     @gl.public.view
     def get_pool(self) -> u256:

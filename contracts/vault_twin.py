@@ -82,6 +82,10 @@ class VaultTwin(gl.Contract):
         governor = gl.get_contract_at(self.governor)
         if governor.view().is_halted(self.agent):
             raise gl.vm.UserError("Vault is halted")
+        # A fresh judgment is required for every spend in this fixture. The
+        # Governor owns the timestamp/window policy; this is not an amount cap.
+        if governor.view().is_review_stale(self.agent):
+            raise gl.vm.UserError("REVIEW_STALE")
         if amount > self.balance:
             raise gl.vm.UserError("Insufficient balance")
 
