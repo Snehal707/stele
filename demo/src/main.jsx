@@ -690,11 +690,11 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       return;
     }
     if (existingEnrollment.status === "valid") {
-      setStatus(`Enroll: this wallet is already enrolled with VaultTwin ${existingEnrollment.vault}. Connect a fresh wallet to create another agent.`);
+      setStatus(`Enroll: this wallet is already enrolled with VaultTwin ${existingEnrollment.vault}. This Governor cannot repair or replace that enrollment.`);
       return;
     }
     if (existingEnrollment.status === "invalid") {
-      setStatus("Enroll: this wallet is already enrolled, but its stored VaultTwin is invalid. Connect a fresh wallet to test enrollment.");
+      setStatus("Enroll: this wallet already has an invalid VaultTwin enrollment. This Governor cannot repair or replace it.");
       return;
     }
     const vault = enrollForm.vault.trim();
@@ -1139,7 +1139,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
       {existingEnrollment.status === "unavailable" && <div className="vault-deploy-error" role="alert"><strong>Existing enrollment could not be verified</strong>{existingEnrollment.vault && <span>Stored VaultTwin: <code>{existingEnrollment.vault}</code></span>}<span>{existingEnrollment.error}</span><span>Nothing has been changed on-chain. Retry the check before deploying or enrolling.</span><button type="button" onClick={() => setEnrollmentCheckNonce((nonce) => nonce + 1)}>Retry enrollment check</button></div>}
       {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>The existing agent is ready to review below. Deployment is disabled because another VaultTwin cannot replace this enrollment.</span></div>}
-      {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet already has an enrollment, but its VaultTwin is unusable</strong><span>The stored VaultTwin address has been recovered in the form below: <code>{existingEnrollment.vault}</code></span><span>Why it cannot be used: {existingEnrollment.error}</span><span>This Governor cannot replace an existing enrollment. The address is shown for reference only; use the prepared review fixtures, or connect a fresh wallet to create a new enrollment.</span></div>}
+      {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet already has an enrollment, but its VaultTwin is unusable</strong><span>The stored VaultTwin address has been recovered in the form below: <code>{existingEnrollment.vault}</code></span><span>Why it cannot be used: {existingEnrollment.error}</span><span>This Governor cannot repair or replace existing enrollments. The address is shown for reference only. Use the prepared review fixtures, or connect a different wallet to create a separate enrollment; that will not repair this record.</span></div>}
       {vaultDeployment.status === "pending" && <span role="status">{finalizingDeployment ? "Deployment accepted; wait for Bradbury finalization before enrolling." : "Deployment submitted; wait for Bradbury consensus before enrolling."}</span>}
       {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
       {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
