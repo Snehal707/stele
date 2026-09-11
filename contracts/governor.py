@@ -1022,7 +1022,7 @@ class Governor(gl.Contract):
 
     @gl.public.view
     def get_last_review_timestamp(self, agent: Address) -> u256:
-        return self.last_review_timestamp[agent]
+        return self.last_review_timestamp.get_or_insert_default(agent)
 
     @gl.public.view
     def get_review_window(self, agent: Address) -> u256:
@@ -1030,7 +1030,7 @@ class Governor(gl.Contract):
 
     @gl.public.view
     def is_review_stale(self, agent: Address) -> bool:
-        timestamp = self.last_review_timestamp[agent]
+        timestamp = self.last_review_timestamp.get_or_insert_default(agent)
         return timestamp == u256(0) or self._now() > timestamp + self.review_window[agent]
 
     @gl.public.view
