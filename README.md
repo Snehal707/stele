@@ -47,11 +47,19 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 
 **Studio-verified; Bradbury pending**
 
-- `REVIEW_STALE` rejects stale large spends.
+- Historical Studio run: `REVIEW_STALE` rejected stale large spends (`1 passed
+  in 280.04s`). The current split-branch implementation is tracked under
+  direct-mode verification below; fresh localnet, Studio, and Bradbury runtime
+  confirmation remains pending.
 
 **Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified**
 
-- Provider-feed `_payment_count`, `_record_feed_conflict`, and `_record_review_failure` helpers.
+- Shared enrollment initialization and duplicate rejection
+  (`tests/test_enrollment_refactor_direct.py`).
+- `REVIEW_STALE` timestamp/window logic, including the never-reviewed default
+  (`tests/test_review_stale_direct.py`).
+- Provider-feed `_payment_count`, `_record_feed_conflict`, and
+  `_record_review_failure` helpers (`tests/test_provider_feed_logic_direct.py`).
 
 **Implemented locally, lint-clean, manually audited; zero runtime verification**
 
@@ -275,10 +283,11 @@ gltest --network studionet tests/test_review_prompt_rules.py -v -s
 Native Windows may still hit `genlayer-test`'s temp-file cleanup issue
 (`WinError 32`); run the Studio test via WSL or Linux/Mac for a clean pass.
 
-Known limitation: the installed `genlayer-test` 0.29.2 does not expose the
-direct/in-memory fixtures described by newer documentation. These tests
-therefore require the Studio/integration runner; the Bradbury C1 conflict
-receipt is recorded as
+The stable `genlayer-test` 0.29.2 / `genlayer-py` 0.16.3 pair supports the
+project's direct-mode tests. Those tests exercise local contract state and
+helper paths, but do not provide consensus, full review-path, or deployed
+cross-contract EVM verification. The Bradbury C1 conflict receipt is recorded
+as
 `0xe42d919806f930e60b1276f579b0ba6d846b865ba1ccac5d57400c366d743ea3`.
 
 ---
@@ -665,6 +674,15 @@ It verifies the payment-count helper and fail-closed recorders by calling those
 helpers directly, but does not exercise `review()`'s feed branching or a real
 cross-contract EVM read.
 
+The rc2 retest was a separate tooling path. With a fresh bundle cache,
+`genlayer-test 0.30.0rc2` / `genlayer-py 0.19.0rc2` failed while importing a
+minimal contract whose constructor accepted two `Address` arguments, before
+the constructor ran, with `DecodingError: unexpected end of memory`. The same
+failure reproduced in the real Governor import and was narrowed away from
+contract size, `DynArray`, and method count. This Address-argument regression
+is reported to GenLayer in testing-suite issue #113; it is not evidence against
+the Stele contract logic.
+
 Validation not performed: the integration test suite has not run to completion.
 Local
 `genlayer up --headless` and `gltest --network studionet` fail before contract
@@ -739,12 +757,13 @@ built on top of it.
 hash and had in fact run to completion — the runner treated a missing FINALIZED
 receipt as a failed send.
 
-**`REVIEW_STALE` Bradbury deployment note.** `REVIEW_STALE` is implemented and
-Studio-verified (`1 passed in 280.04s`). The Bradbury deployment session was
-compromised partway through by an unrelated placeholder `Tiny` contract being
-deployed during nonce/gas debugging instead of the current `governor.py`; the
-resulting missing `review` method was not a defect in `REVIEW_STALE`. A clean
-Bradbury deployment attempt is queued for the next session.
+**Historical `REVIEW_STALE` deployment note.** An earlier Studio run passed
+(`1 passed in 280.04s`). The Bradbury deployment session was compromised
+partway through by an unrelated placeholder `Tiny` contract being deployed
+during nonce/gas debugging instead of the current `governor.py`; the resulting
+missing `review` method was not a defect in `REVIEW_STALE`. The current split
+branch has direct-mode coverage, but no fresh localnet, Studio, or Bradbury
+runtime confirmation is claimed.
 
 Also: `gl.vm.UserError` for the halt revert; `NOT_VOTED` receipts are distinct
 from `DETERMINISTIC_VIOLATION` and from timeout patterns — a receipt can show
