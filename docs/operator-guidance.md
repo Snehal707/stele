@@ -59,6 +59,25 @@ preserve.
 | Claims require the right ruling and loss | Payout is not automatic merely because a review exists | Check latest verdict, balance delta, and claim window |
 | Upgrade preserves state | A repair upgrade must not alter unrelated enrolled-agent data | Snapshot every relevant field before and after in Studio before any live attempt |
 
+## Core lifecycle
+
+The enforcement loop is:
+
+```mermaid
+flowchart LR
+    A[Agent / VaultTwin] -->|spend behavior| G[Governor review]
+    G --> C[Validator consensus]
+    C -->|ON_MANDATE| O[Continue operating]
+    C -->|OFF_MANDATE or conflict| H[Set halt]
+    H --> R[Spend gate rejects payment]
+    H --> L[Valid loss can claim pool payout]
+    G -.-> E[Pin state and evaluate evidence]
+    E -.-> C
+```
+
+The agent action is permissionless, while the verdict and halt come from the
+Governor's validator consensus rather than an administrator or multisig.
+
 ## Operator runbook
 
 ### 1. Before connecting a wallet

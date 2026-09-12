@@ -19,7 +19,8 @@ A governor cuts an agent's vault when behaviour leaves a written mandate. If tha
 # Stele
 
 Operational guidance, invariants, threat model, and the judge walkthrough are
-documented in [docs/operator-guidance.md](docs/operator-guidance.md).
+documented in [docs/operator-guidance.md](docs/operator-guidance.md), including
+the core lifecycle diagram.
 
 An upright inscribed stone where laws were published in public and added to over time.
 
