@@ -149,6 +149,18 @@ Known platform limitation: a large Governor upgrade was estimated at roughly
 the repair upgrade is intentionally on hold until the supported Bradbury
 procedure is clarified.
 
+## External GenLayer follow-ups
+
+Blockers on our end tied to reports filed against GenLayer's own tooling.
+Not Stele features; not claimed as fixed.
+
+| Report | Blocks | Status |
+|---|---|---|
+| [genlayer-studio #1761](https://github.com/genlayerlabs/genlayer-studio/issues/1761) | Local Studio/`gltest` runtime testing | Open, no reply |
+| [genlayer-cli #418](https://github.com/genlayerlabs/genlayer-cli/issues/418) | Local `genlayer up` startup | Open, no reply |
+| [genlayer-testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113) | `0.30.0rc2` direct-mode deploy — see README, Engineering notes | Open — maintainer could not reproduce; [narrowed two-`Address` reproducer, traceback, and environment posted as follow-up](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113#issuecomment-5647494534) |
+| [genlayer-cli #402](https://github.com/genlayerlabs/genlayer-cli/issues/402) (follow-up comment) | Bradbury gas estimate / nonce-replacement blocking the Governor repair upgrade — see this runbook | Open — maintainer's simple-transfer test did not reproduce the stuck-nonce case; the 41KB Governor-upgrade scenario remains untested by them |
+
 ## Judge walkthrough checklist
 
 - [ ] Identify the Governor and the agent target.
