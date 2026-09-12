@@ -870,8 +870,9 @@ stateless per action. This is semantic and reads behaviour across a window.
 **Not Internet Court.** That is post-dispute adjudication between two parties.
 This runs before and during, on one party's own agent, with no counterparty.
 
-**Not spend-cap tooling** (AgentScope and similar). Caps cannot express burst or
-drain — same totals, same allowlist, different shape.
+**Not fixed spend-cap tooling.** Spend caps limit amounts, allowlists, or expiry;
+they cannot express burst or drain behaviour — same totals, same allowlist,
+different shape.
 
 **Not source-mutating Lifeform demos.** Those mutate contract source on a loop.
 This appends policy text under an envelope and attaches a pool, so a rewrite is
