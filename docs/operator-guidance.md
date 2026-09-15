@@ -179,6 +179,8 @@ Not Stele features; not claimed as fixed.
 | [genlayer-cli #418](https://github.com/genlayerlabs/genlayer-cli/issues/418) | Local `genlayer up` startup | Open, no reply |
 | [genlayer-testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113) | `0.30.0rc2` direct-mode deploy — see README, Engineering notes | Open — maintainer could not reproduce; [narrowed two-`Address` reproducer, traceback, and environment posted as follow-up](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113#issuecomment-5647494534) |
 | [genlayer-cli #402](https://github.com/genlayerlabs/genlayer-cli/issues/402) (follow-up comment) | Bradbury gas estimate / nonce-replacement blocking the Governor repair upgrade — see this runbook | Open — maintainer's simple-transfer test did not reproduce the stuck-nonce case; the 41KB Governor-upgrade scenario remains untested by them |
+| [genlayer-cli #419](https://github.com/genlayerlabs/genlayer-cli/issues/419) | Bradbury Governor-sized deployment path | Open — manual submissions at 16,777,216 and 16,000,000 gas were rejected as `gas limit too high`; this confirms the tested Governor-sized paths are blocked, not a universal network ceiling |
+| [genlayer-cli #420](https://github.com/genlayerlabs/genlayer-cli/issues/420) | StudioNet IC-to-IC `get_contract_at(...).view()` prototype | Open — target method was correctly decorated and schema-visible, but dynamic and static cross-contract calls reached `execution_result=ERROR` with undefined-method fallback dispatch |
 
 ## Judge walkthrough checklist
 
