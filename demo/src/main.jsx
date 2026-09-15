@@ -611,6 +611,13 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const [vaultDeployment, setVaultDeployment] = useState({ status: "idle", address: "", hash: "", error: "" });
   const [now, setNow] = useState(Date.now());
   const autoSwitchAttempted = useRef(false);
+  const runStatusRef = useRef(null);
+
+  useEffect(() => {
+    if (!activeAction || !runStatusRef.current) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    runStatusRef.current.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+  }, [activeAction]);
 
   useEffect(() => {
     if (!connected) {
@@ -1178,7 +1185,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     <p className="review-target-note">Review agent <code>{reviewTargetAgent}</code> · current v4 Governor <code>{shortAddress(reviewTargetGovernor)}</code>.</p>
     {haltedSpend && <div className="halted-spend-demo"><div><strong>Vault halted by the OFF_MANDATE review.</strong><span>Attempt the same declared-provider spend; VaultTwin should reject it before money moves.</span><small>Only the enrolled agent key can spend; this receipt is that key hitting the halt.</small></div><button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission} onClick={spendWhileHalted}>Attempt spend on halted vault</button></div>}
     {uncertainSubmission && <button className="retry-after-check" onClick={() => { setUncertainSubmission(null); setStatus(`${uncertainSubmission.label}: retry enabled after wallet/explorer verification.`); }}>I verified no transaction — enable retry</button>}
-    <p className={`write-status${activeAction ? " is-waiting" : ""}`} role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
+    <p ref={runStatusRef} className={`write-status${activeAction ? " is-waiting" : ""}`} role="status">{status || "Writes use genlayer-js; reviews typically take 18–114 seconds (median 73)."}</p>
     {writeFailure && <details className="write-diagnostic"><summary>Why {writeFailure.label} stopped · {writeFailure.category}</summary><p><strong>{writeFailure.guidance}</strong></p><p>Transaction hash returned: <strong>{writeFailure.hashReturned ? "yes" : "no"}</strong></p><pre>{writeFailure.details}</pre></details>}
     {transactions.map(({ label, hash, startedAt, pending, execution, phase, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
