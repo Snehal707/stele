@@ -656,6 +656,40 @@ public claims app did not return totals at pull time.
 
 ## Engineering notes
 
+**Fresh-wallet enrollment: root cause confirmed, live fix blocked.**
+
+`get_vault()` on the currently deployed Governor
+(`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`) throws `KeyError` for a
+never-enrolled address because the live contract performs a raw `TreeMap`
+lookup with no default. The frontend catches the failure and shows
+`Enrollment check unavailable`; no on-chain state is changed by that read.
+
+The source fix is committed as `ad8fd2d`: `get_vault()` now returns a zero
+address for a missing enrollment. The fixed source is 46,535 bytes with
+SHA-256 `87c21436acbd4079a30ee3b7bf9ad5c12ef8c69b180750983dd2aba8ebfa6c02`.
+It has not been deployed to the live Governor.
+
+Deployment was tested against Bradbury through the manual transaction path
+and the standard SDK path. Manual submissions were rejected with `gas limit
+too high`, including explicit limits of 16,777,216 and 16,000,000. The
+standard SDK deployment used automatic gas handling, a separately funded raw-
+key wallet with a clean nonce (`latest=0`, `pending=0`), and the same current
+source; Bradbury rejected it identically. The RPC returned identifier
+`0xe4d645bf55acb1c661b1704428436a2330c1d56c6b06ce800185f610328b2703c`, but
+both transaction and receipt lookups returned `null`, and the nonce remained
+zero. The deployment payload was approximately 41 KB. No contract was
+created and no Governor state changed.
+
+This confirms a Bradbury ceiling below 16 million for the tested Governor-
+sized deployment paths; it does not claim that every possible Intelligent
+Contract has the same requirement. This is separate from
+[genlayer-cli#402](https://github.com/genlayerlabs/genlayer-cli/issues/402),
+which documents gas underestimation and nonce/RPC symptoms. The ceiling
+finding is being filed separately with GenLayer. Until the platform provides
+a supported route, fresh-wallet self-service enrollment on this deployed
+Governor remains unavailable; the canonical Proof and prepared review
+fixtures are unaffected.
+
 **Provider-feed feature: implementation complete, runtime verification blocked.**
 Added `enroll_with_feed`, `feed_of: TreeMap[Address, Address]`, a sealed-feed
 EVM read via `@gl.evm.contract_interface`, exact-match payment-count comparison,
