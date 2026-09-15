@@ -40,3 +40,11 @@ def test_initialize_enrollment_sets_shared_state_and_rejects_duplicates(direct_d
         assert "Agent already enrolled" in str(error)
     else:
         raise AssertionError("duplicate enrollment was not rejected")
+
+
+def test_get_vault_returns_zero_address_for_never_enrolled_agent(direct_deploy):
+    governor = direct_deploy("contracts/governor.py")
+    address_type = __import__(governor._instance.__class__.__module__).Address
+    agent = address_type("0x4444444444444444444444444444444444444444")
+
+    assert str(governor.get_vault(agent)) == "0x0000000000000000000000000000000000000000"

@@ -36,6 +36,10 @@ function shortAddress(address) {
   return `${address.slice(0, 6)}…${address.slice(-6)}`;
 }
 
+function isZeroAddress(address) {
+  return typeof address === "string" && /^0x0{40}$/i.test(address);
+}
+
 const CANONICAL_DEMO = {
   governor: "0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172",
   vault: "0xdc27E76344356C7AE42DB20A889b42895BaD2784",
@@ -647,6 +651,12 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         const readClient = createClient({ chain: testnetBradbury });
         const existingVault = await readClient.readContract({ address: CONFIG.governor, functionName: "get_vault", args: addressArgs([connectedAddress]) });
         if (!active) return;
+        if (isZeroAddress(String(existingVault))) {
+          setExistingEnrollment({ status: "clear", vault: "", error: "" });
+          setEnrollForm((form) => ({ ...form, vault: "" }));
+          setEnrolledAgent(null);
+          return;
+        }
         const validation = await validateVault(String(existingVault), connectedAddress, { quiet: true });
         if (!active) return;
         setEnrollForm((form) => ({ ...form, vault: String(existingVault) }));

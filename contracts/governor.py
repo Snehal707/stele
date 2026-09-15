@@ -1010,7 +1010,7 @@ class Governor(gl.Contract):
 
     @gl.public.view
     def get_vault(self, agent: Address) -> Address:
-        return self.vault_of[agent]
+        return self.vault_of.get(agent, Address("0x0000000000000000000000000000000000000000"))
 
     @gl.public.view
     def get_governed(self, agent: Address) -> str:
