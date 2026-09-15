@@ -62,7 +62,7 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 - Provider-feed `_payment_count`, `_record_feed_conflict`, and
   `_record_review_failure` helpers (`tests/test_provider_feed_logic_direct.py`).
 
-**Implemented locally, lint-clean, manually audited; zero runtime verification**
+**Implemented, lint-clean, manually audited; cross-contract runtime verification pending**
 
 - Provider-feed cross-contract EVM read and agreement path.
 
