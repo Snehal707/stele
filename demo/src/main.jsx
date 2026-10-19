@@ -19,6 +19,10 @@ const studioNext = {
 };
 const bradbury = studioNext;
 const testnetBradbury = studioNext;
+const HISTORICAL_BRADBURY_EXPLORER = {
+  transaction: "https://explorer-bradbury.genlayer.com/tx/",
+  address: "https://explorer-bradbury.genlayer.com/address/",
+};
 
 const CONFIG = {
   chainId: 61997,
@@ -101,7 +105,7 @@ const PROOF_RECEIPTS = [
 const ARCHIVE_PROOF_RECEIPTS = PROOF_RECEIPTS.slice(0, 4);
 
 const INTERACTIVE_V4_EVIDENCE = {
-  governor: CONFIG.governor,
+  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   agent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
   enroll: "0x4bd547cff84c5da9900840ee3e015b8282fffbfc77fa8bbb339eff80af2d2a88",
   reviewOn: "0x2c1d5010ff39c0c8be047d08c206ea4393621754778018b263fdbebbef2e86dc",
@@ -115,7 +119,7 @@ const INTERACTIVE_V4_EVIDENCE = {
 };
 
 const HALT_REVERT_PROOF = {
-  governor: CONFIG.governor,
+  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   agent: DEFAULT_V4_AGENT,
   vault: "0x66a7e61239ce7cc0B1E85ba62575e9026CC54f9b",
   hash: HALT_REVERT_RECEIPT_HASH,
@@ -264,7 +268,7 @@ function C1EvidenceCard({ item }) {
     <div className="c1-card-heading"><strong className={item.ruling === "ON_MANDATE" ? "on" : item.ruling === "OFF_MANDATE" ? "off" : "conflict"}>{item.ruling}</strong><EvidenceTag>receipt-backed</EvidenceTag></div>
     <p className="c1-reason">“{item.reason}”</p>
     {item.claim && <div className="c1-claim-outcome">{item.claim}</div>}
-    <a className="c1-tx" href={`${CONFIG.explorer}${item.hash}`} target="_blank" rel="noreferrer">{item.hash} ↗</a>
+    <a className="c1-tx" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${item.hash}`} target="_blank" rel="noreferrer">{item.hash} ↗</a>
     <div className="c1-record-meta"><span>Record status</span><strong>{item.recordStatus}</strong></div>
     <a className="c1-record-link" href={item.recordUrl} target="_blank" rel="noreferrer">Open raw record ↗</a>
   </article>;
@@ -296,7 +300,7 @@ function EvidenceRecordSection() {
   return <section id="evidence-record" className="evidence-record evidence-panel" aria-labelledby="evidence-record-title">
     <div className="section-intro compact"><div className="eyebrow">06 / EVIDENCE RECORD</div><h2 id="evidence-record-title">A second source can change the ruling.</h2><p className="scope-note">Receipt-backed C1 cases — fixed historical examples, not your wallet.</p></div>
     <p className="evidence-record-explainer">The full lifecycle is provable on one address: Agent C's primary Governor <code>{CANONICAL_DEMO.governor}</code> covers enrollment, ON review, drain, paid claim, proposal, promotion, v2 activation, and the final genuine drain that ruled OFF. Agent C has no enrolled C1 record, so <code>RECORD_STATUS=UNAVAILABLE</code> and pin-only evidence are correct here. Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C. C1's separate evidence-conflict path remains proven by the burst and drain Governors below.</p>
-    <div className="canonical-demo-record"><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3><p><span>Vault</span> <code>{CANONICAL_DEMO.vault}</code> · <span>Agent</span> <code>{CANONICAL_DEMO.agent}</code></p><div className="canonical-demo-sequence">{CANONICAL_DEMO.sequence.map(([label, hash]) => <div key={hash}><span>{label}</span><a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash} ↗</a></div>)}</div><p className="canonical-demo-note">The first v2 regression used only one modest payment and correctly stayed ON. The final corrected fixture emptied the vault with one payment and produced OFF_MANDATE. This proof is pin-only by design; the EVIDENCE_CONFLICT branch is shown separately in the C1 records.</p></div>
+    <div className="canonical-demo-record"><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3><p><span>Vault</span> <code>{CANONICAL_DEMO.vault}</code> · <span>Agent</span> <code>{CANONICAL_DEMO.agent}</code></p><div className="canonical-demo-sequence">{CANONICAL_DEMO.sequence.map(([label, hash]) => <div key={hash}><span>{label}</span><a href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer">{hash} ↗</a></div>)}</div><p className="canonical-demo-note">The first v2 regression used only one modest payment and correctly stayed ON. The final corrected fixture emptied the vault with one payment and produced OFF_MANDATE. This proof is pin-only by design; the EVIDENCE_CONFLICT branch is shown separately in the C1 records.</p></div>
     <div className="c1-evidence-grid"><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstConflict} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainClaim} /></div>
     <C1VerificationBlock item={verification} label="BURST RECORD" />
     <C1VerificationBlock item={C1_RECORD_EVIDENCE.burstConflict} label="CONFLICT RECORD" />
@@ -322,12 +326,12 @@ function HealthyBurstComparison({ live }) {
 }
 
 function InteractiveV4Evidence() {
-  const receipt = (label, hash, meaning) => <a className="proof-receipt" href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{hash}</code><b aria-hidden="true">↗</b></a>;
+  const receipt = (label, hash, meaning) => <a className="proof-receipt" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{hash}</code><b aria-hidden="true">↗</b></a>;
   return <section className="interactive-v4-evidence" aria-labelledby="interactive-v4-evidence-title">
-    <div className="eyebrow">INTERACTIVE GOVERNOR · NO WALLET NEEDED</div>
-    <div className="section-intro compact"><h3 id="interactive-v4-evidence-title">The v4 loop, recorded on {INTERACTIVE_V4_EVIDENCE.governor}</h3><p className="scope-note">A static evidence trail for the current interactive Governor. These receipts are separate from the frozen Agent C archive.</p></div>
+    <div className="eyebrow">HISTORICAL BRADBURY GOVERNOR · NO WALLET NEEDED</div>
+    <div className="section-intro compact"><h3 id="interactive-v4-evidence-title">Historical v4 loop on Bradbury · {INTERACTIVE_V4_EVIDENCE.governor}</h3><p className="scope-note">A static evidence trail for the former Bradbury Governor. These receipts are separate from the frozen Agent C archive and the current Studio Next deployment.</p></div>
     <div className="proof-receipts interactive-v4-receipts">
-      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, `agent ${INTERACTIVE_V4_EVIDENCE.agent} enrolled on the current v4 Governor.`)}
+      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, `agent ${INTERACTIVE_V4_EVIDENCE.agent} enrolled on the historical v4 Governor.`)}
       {receipt("Review ON_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOn, "healthy pre-drain snapshot; the mandate was still satisfied.")}
       {receipt("Drain", INTERACTIVE_V4_EVIDENCE.drainSeed, "single-payment drain seeded; the later claim paid the 980 loss.")}
       {receipt("Claim PAID · 980", INTERACTIVE_V4_EVIDENCE.claim, "wrongly paid claim; payout 980 against a 980 loss.")}
@@ -335,7 +339,7 @@ function InteractiveV4Evidence() {
       {receipt("Promote · PASSED", INTERACTIVE_V4_EVIDENCE.promote, "v2 promoted; the appended clause is now active.")}
       {receipt("v2 genuine drain", INTERACTIVE_V4_EVIDENCE.v2DrainSeed, "same vault reseeded to balance=0 with one payment after promotion.")}
       {receipt("Review OFF_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOff, INTERACTIVE_V4_EVIDENCE.reviewOffReason)}
-      <div className="proof-receipt proof-receipt-static"><div><strong>Full loop complete</strong><span>All eight receipts are on the same interactive Governor; the final v2 ruling names Rule 2.</span></div><b aria-hidden="true">✓</b></div>
+      <div className="proof-receipt proof-receipt-static"><div><strong>Historical loop complete</strong><span>These eight receipts are on the former Bradbury v4 Governor; the final v2 ruling names Rule 2.</span></div><b aria-hidden="true">✓</b></div>
     </div>
   </section>;
 }
@@ -346,9 +350,9 @@ function PrimaryProofReceipts() {
     ["V2 ruling", INTERACTIVE_V4_EVIDENCE.reviewOff, "OFF_MANDATE — the appended Rule 2 catches a genuine drain."],
     ["Halt-revert", HALT_REVERT_PROOF.hash, "REVERTED — Vault is halted; money cannot move."],
   ];
-  return <div className="primary-proof-receipts" aria-label="Primary interactive receipts">
-    <div className="eyebrow">CANONICAL RECEIPTS · INTERACTIVE GOVERNOR</div>
-    {receipts.map(([label, hash, meaning]) => <a className="proof-receipt" key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{shortAddress(hash)}</code><b aria-hidden="true">↗</b></a>)}
+  return <div className="primary-proof-receipts" aria-label="Historical Bradbury v4 receipts">
+    <div className="eyebrow">HISTORICAL RECEIPTS · BRADBURY V4 GOVERNOR</div>
+    {receipts.map(([label, hash, meaning]) => <a className="proof-receipt" key={hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{shortAddress(hash)}</code><b aria-hidden="true">↗</b></a>)}
   </div>;
 }
 
@@ -390,7 +394,7 @@ function ProofAppendix({ live, lineage, retryLiveReads }) {
     <section className="proof-appendix-section" aria-labelledby="proof-chain-title">
       <div className="eyebrow">CHAIN RECORD</div>
       <h3 id="proof-chain-title">Proof and interactive deployment</h3>
-      <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Interactive / post-fix Governor</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div>
+      <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen Bradbury lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury explorer ↗</a></article><article className="chain-record"><div><strong>Current post-deployment Governor · Studio Next</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">Studio Next explorer ↗</a></article></div>
     </section>
     </details>
   </div>;
@@ -402,7 +406,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <HealthyBurstComparison live={live} />
     <PrimaryProofReceipts />
     <article className="proof-status-card">
-      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Governor {shortAddress(CANONICAL_DEMO.governor)} ↗</a></div>
+      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Bradbury Governor {shortAddress(CANONICAL_DEMO.governor)} ↗</a></div>
       <code className="proof-governor">{shortAddress(CANONICAL_DEMO.governor)}</code>
       <div className="proof-status-grid" aria-label="Canonical proof status">
         <div><span>MANDATE</span><strong>v2 · active</strong><small>promoted on-chain</small></div>
@@ -411,7 +415,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
         <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
       </div>
       <p className="proof-status-context">Canonical proof: Agent C archive · Interactive Governor: Your Run.</p>
-      <p className="proof-chain-note"><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Agent C archive {shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Open interactive Governor in Your Run →</a></p>
+      <p className="proof-chain-note"><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury Agent C archive {shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Open current Studio Next Governor in Your Run →</a></p>
       <details className="proof-details"><summary>Evidence notes</summary><p>Agent C is pin-only; C1 is hash-locked. The vault is a Python twin, and the evidence is project-authored rather than third-party.</p></details>
     </article>
     <C1ProofAccessSection />
@@ -419,7 +423,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <ProofAppendix live={live} lineage={lineage} retryLiveReads={retryLiveReads} />
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">CANONICAL RECEIPTS · FROZEN ARCHIVE</div>
-      {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
+      {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
       <p className="scope-note">Frozen Agent C archive only. See <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>#actions</a> for the interactive v4 evidence path.</p>
     </div>
     <VerificationStatus />
@@ -432,7 +436,7 @@ function VerificationStatus() {
 
 function ReceiptLinks({ title, hashes }) {
   const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
-  return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
+  return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
 }
 
 function LineageFallback({ onRetry }) {
@@ -450,11 +454,11 @@ function LineageFallback({ onRetry }) {
 
 function HaltRevertProofCard() {
   return <article className="halt-revert-proof-card" aria-labelledby="halt-revert-proof-title">
-    <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
-    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Recorded halted spend.</p></div><strong>REVERTED</strong></div>
+    <div className="eyebrow">HISTORICAL BRADBURY HALT PROOF · ALWAYS VISIBLE</div>
+    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Recorded halted spend on the former Bradbury Governor.</p></div><strong>REVERTED</strong></div>
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
     <p className="halt-revert-proof-governor">Governor <code>{shortAddress(HALT_REVERT_PROOF.governor)}</code></p>
-    <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
+    <a className="halt-revert-proof-hash" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
     <p className="halt-revert-proof-key-note">Only the enrolled agent key can spend; this receipt is that key hitting the halt.</p>
   </article>;
 }
@@ -1342,7 +1346,7 @@ function ProductPage() {
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
-        {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Historical proof plus the current post-deployment Governor.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Historical proof Governor</strong><small>Agent C · full halt / govern / lifeform loop</small></div><div><small>GenLayer Bradbury · historical chain 4221</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Current post-deployment Governor · Studio Next</strong><small>Enrollment guard, sticky halt, evidence-conflict safety, promotion, and zero-address enrollment default</small></div><div><small>GenLayer Studio Next · chain 61997</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
+        {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Historical proof plus the current post-deployment Governor.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Historical proof Governor</strong><small>Agent C · full halt / govern / lifeform loop</small></div><div><small>GenLayer Bradbury · historical chain 4221</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury explorer ↗</a></article><article className="chain-record"><div><strong>Current post-deployment Governor · Studio Next</strong><small>Enrollment guard, sticky halt, evidence-conflict safety, promotion, and zero-address enrollment default</small></div><div><small>GenLayer Studio Next · chain 61997</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">Studio Next explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
         {activeProductSection === "evidence-record" && <EvidenceRecordSection />}
         {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">07 / SECONDARY EVIDENCE · ALLOWLIST</div><p className="scope-note">Fixed example evidence — not your wallet.</p></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></div>}
         {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">08 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, Drain, and Strangers are fixed examples.</strong><span>These cards attempt a live read; if Studio Next doesn&apos;t respond, known fixture values are shown instead, labeled as such.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></section>}
