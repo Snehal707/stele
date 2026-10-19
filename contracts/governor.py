@@ -18,6 +18,12 @@ def _contract_base():
     except AttributeError:
         return gl.contract.Contract
 
+def _get_contract_at(address):
+    try:
+        return gl.get_contract_at(address)
+    except AttributeError:
+        return gl.contract.get_at(address)
+
 # Bradbury uses 1800 seconds (30 minutes) so queue and consensus latency cannot
 # consume the safety window. Studio fixtures may pass 60 seconds explicitly.
 DEFAULT_HALT_WINDOW_BRADBURY = 1800
@@ -533,7 +539,7 @@ class Governor(_contract_base()):
 
     @gl.public.write
     def review(self, agent: Address) -> None:
-        vault = gl.get_contract_at(self.vault_of[agent])
+        vault = _get_contract_at(self.vault_of[agent])
         state = vault.view().agent_state()
         pinned = self._canonical_state(agent, state)
 
@@ -791,7 +797,7 @@ class Governor(_contract_base()):
             )
             return
 
-        vault = gl.get_contract_at(self.vault_of[agent])
+        vault = _get_contract_at(self.vault_of[agent])
         try:
             attached_governor = vault.view().get_governor()
         except Exception:

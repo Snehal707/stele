@@ -13,6 +13,12 @@ def _contract_base():
     except AttributeError:
         return gl.contract.Contract
 
+def _get_contract_at(address):
+    try:
+        return gl.get_contract_at(address)
+    except AttributeError:
+        return gl.contract.get_at(address)
+
 
 class VaultTwin(_contract_base()):
     balance: u256
@@ -90,7 +96,7 @@ class VaultTwin(_contract_base()):
     def spend(self, destination: Address, amount: u256) -> None:
         if gl.message.sender_address != self.agent:
             raise gl.vm.UserError("Only the agent can spend")
-        governor = gl.get_contract_at(self.governor)
+        governor = _get_contract_at(self.governor)
         if governor.view().is_halted(self.agent):
             raise gl.vm.UserError("Vault is halted")
         # A fresh judgment is required for every spend in this fixture. The
