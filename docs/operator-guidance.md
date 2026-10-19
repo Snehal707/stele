@@ -6,14 +6,22 @@ safe to do, what must be verified, and what remains platform-dependent.
 
 ## Current deployment boundary
 
-The primary Bradbury Governor used by the canonical evidence is:
+The current post-deployment Governor is on Studio Next (chain 61997):
 
-`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`
+`0x63C1c91358fA4e778550C663465e105590F6f567`
 
-The current deployed Governor has no enrollment-repair method. Enrollment is
-write-once for an agent: a second enrollment reverts. The repair-only fork has
-been storage-diff tested in Studio, but it has not been upgraded onto Bradbury.
-Do not describe the repair path as live functionality.
+Explorer: https://explorer-studio-dev.genlayer.com/address/0x63C1c91358fA4e778550C663465e105590F6f567
+
+The deployed source includes the enrollment guard, sticky halt semantics,
+evidence-conflict handling, trace-based promotion, access-controlled
+upgrades, and the zero-address default for `get_vault()`. The post-deployment
+smoke test completed VaultTwin deployment, enrollment, state seeding, an
+ON review and normal spend, an OFF review, and halted-spend rejection.
+
+The Bradbury Governors and receipts elsewhere in this document are historical
+evidence and platform-investigation records. They are not the active demo
+deployment. Enrollment remains write-once for an agent: a second enrollment
+reverts.
 
 Bradbury deployment and upgrade transactions can take several minutes to reach
 finality. A wallet receipt or explorer `ACCEPTED` status is not the same as
@@ -32,7 +40,7 @@ submit a follow-up action until the prior action has reached a terminal result.
 | Review evidence is unavailable, malformed, or conflicting | Fail closed with `REVIEW_FAILED` or `EVIDENCE_CONFLICT` | Do not claim a valid verdict; investigate the evidence path |
 | An off-mandate ruling is disputed | Bond, halt, and claim path | Inspect the ruling, pinned state, and claim window before claiming |
 | A halted vault attempts to spend | Vault checks Governor halt state | Expect the spend to revert; do not interpret it as a deployment failure |
-| Bradbury RPC or consensus stalls | One action at a time and explicit terminal-state checks | Preserve the transaction hash, stop retries, and check the network/tooling issue |
+| Studio Next or Bradbury RPC/consensus stalls | One action at a time and explicit terminal-state checks | Preserve the transaction hash, stop retries, and check the network/tooling issue |
 | A live Governor upgrade changes storage behavior | Full field-by-field pre/post state diff | No live upgrade without an isolated test pass and explicit go-ahead |
 
 The threat model assumes an honest operator can still make mistakes and that
@@ -82,7 +90,9 @@ Governor's validator consensus rather than an administrator or multisig.
 
 ### 1. Before connecting a wallet
 
-1. Confirm the network is Bradbury and record the active Governor address.
+1. Confirm the network is Studio Next (chain 61997) and record the active
+   Governor address. Treat Bradbury addresses as historical unless the run is
+   explicitly reproducing a Bradbury receipt.
 2. Confirm the wallet is the intended agent; never paste the wallet address into
    the VaultTwin field by mistake.
 3. If the wallet is already enrolled, read the stored vault first. An existing
@@ -120,7 +130,7 @@ that produces the judgment shown in the review result.
 ### 4. Review and interpret the result
 
 1. Confirm the Review button’s label identifies the intended target.
-2. Submit one review and wait; Bradbury latency is variable.
+2. Submit one review and wait; Studio Next consensus latency is variable.
 3. Separate these states:
    - transaction accepted: the network accepted the request;
    - execution successful: the contract method completed;
@@ -179,7 +189,7 @@ Not Stele features; not claimed as fixed.
 | [genlayer-cli #418](https://github.com/genlayerlabs/genlayer-cli/issues/418) | Local `genlayer up` startup | Open, no reply |
 | [genlayer-testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113) | `0.30.0rc2` direct-mode deploy — see README, Engineering notes | Open — maintainer could not reproduce; [narrowed two-`Address` reproducer, traceback, and environment posted as follow-up](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113#issuecomment-5647494534) |
 | [genlayer-cli #402](https://github.com/genlayerlabs/genlayer-cli/issues/402) (follow-up comment) | Bradbury gas estimate / nonce-replacement blocking the Governor repair upgrade — see this runbook | Open — maintainer's simple-transfer test did not reproduce the stuck-nonce case; the 41KB Governor-upgrade scenario remains untested by them |
-| [genlayer-cli #419](https://github.com/genlayerlabs/genlayer-cli/issues/419) | Bradbury Governor-sized deployment path | Open — manual submissions at 16,777,216 and 16,000,000 gas were rejected as `gas limit too high`; this confirms the tested Governor-sized paths are blocked, not a universal network ceiling |
+| [genlayer-cli #419](https://github.com/genlayerlabs/genlayer-cli/issues/419) | Bradbury Governor-sized deployment path | Historical platform finding — manual submissions at 16,777,216 and 16,000,000 gas were rejected as `gas limit too high`; this does not describe the current Studio Next deployment |
 | [genlayer-cli #420](https://github.com/genlayerlabs/genlayer-cli/issues/420) | StudioNet IC-to-IC `get_contract_at(...).view()` prototype | Open — target method was correctly decorated and schema-visible, but dynamic and static cross-contract calls reached `execution_result=ERROR` with undefined-method fallback dispatch |
 
 ## Judge walkthrough checklist
@@ -192,5 +202,7 @@ Not Stele features; not claimed as fixed.
 - [ ] Run Review against the explicitly displayed target.
 - [ ] Explain that enrollment produces no verdict; Review does.
 - [ ] Interpret the verdict, halt state, and evidence status separately.
-- [ ] State clearly which results are Bradbury-proven and which are Studio-only.
-- [ ] Do not present the unshipped repair fork or a pending upgrade as live.
+- [ ] State clearly which results are historical Bradbury evidence and which
+      are verified on the current Studio Next deployment.
+- [ ] Do not present the old Bradbury deployment or a pending upgrade as the
+      active deployment.

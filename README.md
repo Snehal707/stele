@@ -1,4 +1,8 @@
-**Primary Governor: `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172` (Bradbury). The primary lifecycle proof can be verified against this one address.**
+**Current Studio Next Governor: `0x63C1c91358fA4e778550C663465e105590F6f567` (chain 61997). The post-deployment lifecycle smoke test is verified against this address.**
+
+The canonical historical lifecycle proof remains available on Bradbury at
+`0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172`; it is preserved as evidence,
+not presented as the current deployment.
 
 ### Proof receipts.
 
@@ -37,7 +41,7 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 
 ### Verification status
 
-**Bradbury-proven**
+**Studio Next live-verified**
 
 - OFF sets halt.
 - ON cannot clear halt.
@@ -46,12 +50,12 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 - Full v4 Lifeform loop.
 - Halted spend reverts with `Vault is halted`.
 
-**Studio-verified; Bradbury pending**
+**Historical Bradbury evidence**
 
-- Historical Studio run: `REVIEW_STALE` rejected stale large spends (`1 passed
-  in 280.04s`). The current split-branch implementation is tracked under
-  direct-mode verification below; fresh localnet, Studio, and Bradbury runtime
-  confirmation remains pending.
+- The older Bradbury receipts preserve the canonical proof history. The current
+  Studio Next deployment has also been smoke-tested through VaultTwin deploy,
+  enrollment, state seeding, ON review, normal spend, OFF review, and halted
+  spend rejection.
 
 **Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified**
 
@@ -66,10 +70,10 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 
 - Provider-feed cross-contract EVM read and agreement path.
 
-The provider-feed Governor implementation is now merged into `master`. It is
-direct-mode verified, but localnet, Studio, and Bradbury runtime verification
-remain pending. This source merge does not deploy or upgrade the Governor on
-Bradbury.
+The provider-feed Governor implementation is merged into `master` and its
+helper logic is direct-mode verified. The current Studio Next deployment is
+the post-deployment Governor listed above; the older Bradbury deployment is
+not being upgraded.
 
 ---
 
@@ -225,18 +229,23 @@ as historical context, but it is not the active review path.
 
 The optional `enroll_with_feed(...)` path keeps `review(agent)` to one argument.
 It stores a provider feed address per agent, reads the feed from the Governor,
-and compares its sealed `invoiceCount` with the sum of the pinned
+and compares its sealed invoice count with the sum of the pinned
 per-destination payment counts. An unavailable or unsealed feed fails closed
 with `REVIEW_FAILED`; a count mismatch writes `EVIDENCE_CONFLICT` and blocks
-payout. `contracts/ProviderInvoiceFeed.sol` is a minimal provider-controlled
-sealed-feed demo. It demonstrates the cross-contract retrieval pattern, but it
-is not independent third-party evidence while the feed is operated by this
-project.
+payout. `contracts/ProviderInvoiceFeed.sol` provides the EVM route;
+`contracts/provider_invoice_feed.py` provides an explicitly selected native
+GenLayer route (`feed_kind="native"`) for Studio Next, which does not implement
+EVM contract execution. Both are provider-controlled sealed-feed demos. They
+demonstrate the cross-contract retrieval pattern, but this is not independent
+third-party evidence while the feed is operated by this project.
 
-**Status: implementation is on `master`, direct-mode verified, but not yet
-localnet, Studio, or Bradbury runtime-confirmed.** Local test execution is currently
-blocked by an apparent GenLayer tooling issue unrelated to this contract; see
-Engineering notes.
+**Runtime status:** the native Studio Next route has live matching and conflict
+results. The conflict halt blocked a spend and preserved vault state. The
+unsealed route returned `REVIEW_FAILED`; with a 24-hour test window its halt
+also blocked a spend and preserved vault state. The Solidity/EVM route compiles,
+but still needs testing on an EVM-capable GenLayer network. Evidence and
+transaction references are in
+[`results/provider-feed-runtime-2026-10-19.md`](results/provider-feed-runtime-2026-10-19.md).
 
 **Evidence precedence:** an agent enrolled with both a provider feed and a C1
 record is evaluated feed-first. An unavailable or unsealed feed produces
@@ -656,18 +665,19 @@ public claims app did not return totals at pull time.
 
 ## Engineering notes
 
-**Fresh-wallet enrollment: root cause confirmed, live fix blocked.**
+**Fresh-wallet enrollment: fixed in the post-deployment Governor; Bradbury history retained.**
 
-`get_vault()` on the currently deployed Governor
-(`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`) throws `KeyError` for a
-never-enrolled address because the live contract performs a raw `TreeMap`
-lookup with no default. The frontend catches the failure and shows
-`Enrollment check unavailable`; no on-chain state is changed by that read.
+The older Bradbury Governor (`0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`)
+performed a raw `TreeMap` lookup for a never-enrolled address and could throw
+`KeyError`. The current Studio Next Governor
+(`0x63C1c91358fA4e778550C663465e105590F6f567`) includes the zero-address
+default in `get_vault()`, so the frontend can safely distinguish an empty
+enrollment from an unavailable read.
 
 The source fix is committed as `ad8fd2d`: `get_vault()` now returns a zero
 address for a missing enrollment. The fixed source is 46,535 bytes with
 SHA-256 `87c21436acbd4079a30ee3b7bf9ad5c12ef8c69b180750983dd2aba8ebfa6c02`.
-It has not been deployed to the live Governor.
+That fix is included in the current Studio Next deployment above.
 
 Deployment was tested against Bradbury through the manual transaction path
 and the standard SDK path. Manual submissions were rejected with `gas limit
@@ -685,12 +695,16 @@ sized deployment paths; it does not claim that every possible Intelligent
 Contract has the same requirement. This is separate from
 [genlayer-cli#402](https://github.com/genlayerlabs/genlayer-cli/issues/402),
 which documents gas underestimation and nonce/RPC symptoms. The ceiling
-finding is being filed separately with GenLayer. Until the platform provides
-a supported route, fresh-wallet self-service enrollment on this deployed
-Governor remains unavailable; the canonical Proof and prepared review
-fixtures are unaffected.
+finding is being filed separately with GenLayer. It remains a Bradbury
+platform note; the current Studio Next deployment completed the post-
+deployment lifecycle smoke test, and the canonical Proof and prepared review
+fixtures remain available as independent evidence.
 
-**Provider-feed feature: implementation complete, runtime verification blocked.**
+**Historical provider-feed investigation (EVM route).** The following records
+the earlier blocked attempt, not the status of the new native Studio route.
+See [provider-feed runtime support](docs/provider-feed-runtime.md) for the
+current transports, tests, and runtime evidence.
+
 Added `enroll_with_feed`, `feed_of: TreeMap[Address, Address]`, a sealed-feed
 EVM read via `@gl.evm.contract_interface`, exact-match payment-count comparison,
 and fail-closed handling (`REVIEW_FAILED` on unavailable or unsealed feed,
@@ -934,7 +948,11 @@ deployments.**
 
 Studio runs are recorded in the ephemeral appendix.
 
-Governor v4 on Bradbury: `0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9` carries the enrollment guard, sticky halt semantics, safe evidence-conflict handling, trace-based promotion, access-controlled upgrades, and the per-clause review prompt fix; the frozen `0x8fb0…F172` address remains the Already Proved canonical lifecycle.
+The current Studio Next Governor is `0x63C1c91358fA4e778550C663465e105590F6f567`.
+It carries the enrollment guard, sticky halt semantics, safe evidence-conflict
+handling, trace-based promotion, access-controlled upgrades, the per-clause
+review prompt fix, and the `get_vault()` zero-address default. The frozen
+Bradbury addresses remain historical proof paths.
 
 ---
 

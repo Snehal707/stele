@@ -5,25 +5,30 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { createClient } from "genlayer-js";
 import { CalldataAddress } from "genlayer-js/types";
-import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
 import steleHero from "../assets/stele-hero.png";
 import vaultTwinSource from "../../contracts/vault_twin.py?raw";
 
-const bradbury = {
-  id: 4221,
-  name: "GenLayer Bradbury",
+const studioNext = {
+  id: 61997,
+  name: "GenLayer Studio Next",
   nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc-bradbury.genlayer.com"] } },
-  blockExplorers: { default: { name: "Bradbury Explorer", url: "https://explorer-bradbury.genlayer.com" } },
+  rpcUrls: { default: { http: ["https://studio-dev.genlayer.com/api"] } },
+  blockExplorers: { default: { name: "Studio Next Explorer", url: "https://explorer-studio-dev.genlayer.com" } },
+};
+const bradbury = studioNext;
+const testnetBradbury = studioNext;
+const HISTORICAL_BRADBURY_EXPLORER = {
+  transaction: "https://explorer-bradbury.genlayer.com/tx/",
+  address: "https://explorer-bradbury.genlayer.com/address/",
 };
 
 const CONFIG = {
-  chainId: 4221,
-  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
-  explorer: "https://explorer-bradbury.genlayer.com/tx/",
-  addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
+  chainId: 61997,
+  governor: "0x63C1c91358fA4e778550C663465e105590F6f567",
+  explorer: "https://explorer-studio-dev.genlayer.com/tx/",
+  addressExplorer: "https://explorer-studio-dev.genlayer.com/address/",
   rewriteAgent: "0xfcad0b19bb29d4674531d6f115237e16afce377c",
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
@@ -100,7 +105,7 @@ const PROOF_RECEIPTS = [
 const ARCHIVE_PROOF_RECEIPTS = PROOF_RECEIPTS.slice(0, 4);
 
 const INTERACTIVE_V4_EVIDENCE = {
-  governor: CONFIG.governor,
+  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   agent: "0x434f6b35ccde8c02f07d9693958f4890d2954f41",
   enroll: "0x4bd547cff84c5da9900840ee3e015b8282fffbfc77fa8bbb339eff80af2d2a88",
   reviewOn: "0x2c1d5010ff39c0c8be047d08c206ea4393621754778018b263fdbebbef2e86dc",
@@ -114,7 +119,7 @@ const INTERACTIVE_V4_EVIDENCE = {
 };
 
 const HALT_REVERT_PROOF = {
-  governor: CONFIG.governor,
+  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
   agent: DEFAULT_V4_AGENT,
   vault: "0x66a7e61239ce7cc0B1E85ba62575e9026CC54f9b",
   hash: HALT_REVERT_RECEIPT_HASH,
@@ -263,7 +268,7 @@ function C1EvidenceCard({ item }) {
     <div className="c1-card-heading"><strong className={item.ruling === "ON_MANDATE" ? "on" : item.ruling === "OFF_MANDATE" ? "off" : "conflict"}>{item.ruling}</strong><EvidenceTag>receipt-backed</EvidenceTag></div>
     <p className="c1-reason">“{item.reason}”</p>
     {item.claim && <div className="c1-claim-outcome">{item.claim}</div>}
-    <a className="c1-tx" href={`${CONFIG.explorer}${item.hash}`} target="_blank" rel="noreferrer">{item.hash} ↗</a>
+    <a className="c1-tx" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${item.hash}`} target="_blank" rel="noreferrer">{item.hash} ↗</a>
     <div className="c1-record-meta"><span>Record status</span><strong>{item.recordStatus}</strong></div>
     <a className="c1-record-link" href={item.recordUrl} target="_blank" rel="noreferrer">Open raw record ↗</a>
   </article>;
@@ -295,7 +300,7 @@ function EvidenceRecordSection() {
   return <section id="evidence-record" className="evidence-record evidence-panel" aria-labelledby="evidence-record-title">
     <div className="section-intro compact"><div className="eyebrow">06 / EVIDENCE RECORD</div><h2 id="evidence-record-title">A second source can change the ruling.</h2><p className="scope-note">Receipt-backed C1 cases — fixed historical examples, not your wallet.</p></div>
     <p className="evidence-record-explainer">The full lifecycle is provable on one address: Agent C's primary Governor <code>{CANONICAL_DEMO.governor}</code> covers enrollment, ON review, drain, paid claim, proposal, promotion, v2 activation, and the final genuine drain that ruled OFF. Agent C has no enrolled C1 record, so <code>RECORD_STATUS=UNAVAILABLE</code> and pin-only evidence are correct here. Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C. C1's separate evidence-conflict path remains proven by the burst and drain Governors below.</p>
-    <div className="canonical-demo-record"><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3><p><span>Vault</span> <code>{CANONICAL_DEMO.vault}</code> · <span>Agent</span> <code>{CANONICAL_DEMO.agent}</code></p><div className="canonical-demo-sequence">{CANONICAL_DEMO.sequence.map(([label, hash]) => <div key={hash}><span>{label}</span><a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash} ↗</a></div>)}</div><p className="canonical-demo-note">The first v2 regression used only one modest payment and correctly stayed ON. The final corrected fixture emptied the vault with one payment and produced OFF_MANDATE. This proof is pin-only by design; the EVIDENCE_CONFLICT branch is shown separately in the C1 records.</p></div>
+    <div className="canonical-demo-record"><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3><p><span>Vault</span> <code>{CANONICAL_DEMO.vault}</code> · <span>Agent</span> <code>{CANONICAL_DEMO.agent}</code></p><div className="canonical-demo-sequence">{CANONICAL_DEMO.sequence.map(([label, hash]) => <div key={hash}><span>{label}</span><a href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer">{hash} ↗</a></div>)}</div><p className="canonical-demo-note">The first v2 regression used only one modest payment and correctly stayed ON. The final corrected fixture emptied the vault with one payment and produced OFF_MANDATE. This proof is pin-only by design; the EVIDENCE_CONFLICT branch is shown separately in the C1 records.</p></div>
     <div className="c1-evidence-grid"><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.burstConflict} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainAgreement} /><C1EvidenceCard item={C1_RECORD_EVIDENCE.drainClaim} /></div>
     <C1VerificationBlock item={verification} label="BURST RECORD" />
     <C1VerificationBlock item={C1_RECORD_EVIDENCE.burstConflict} label="CONFLICT RECORD" />
@@ -321,12 +326,12 @@ function HealthyBurstComparison({ live }) {
 }
 
 function InteractiveV4Evidence() {
-  const receipt = (label, hash, meaning) => <a className="proof-receipt" href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{hash}</code><b aria-hidden="true">↗</b></a>;
+  const receipt = (label, hash, meaning) => <a className="proof-receipt" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{hash}</code><b aria-hidden="true">↗</b></a>;
   return <section className="interactive-v4-evidence" aria-labelledby="interactive-v4-evidence-title">
-    <div className="eyebrow">INTERACTIVE GOVERNOR · NO WALLET NEEDED</div>
-    <div className="section-intro compact"><h3 id="interactive-v4-evidence-title">The v4 loop, recorded on {INTERACTIVE_V4_EVIDENCE.governor}</h3><p className="scope-note">A static evidence trail for the current interactive Governor. These receipts are separate from the frozen Agent C archive.</p></div>
+    <div className="eyebrow">HISTORICAL BRADBURY GOVERNOR · NO WALLET NEEDED</div>
+    <div className="section-intro compact"><h3 id="interactive-v4-evidence-title">Historical v4 loop on Bradbury · {INTERACTIVE_V4_EVIDENCE.governor}</h3><p className="scope-note">A static evidence trail for the former Bradbury Governor. These receipts are separate from the frozen Agent C archive and the current Studio Next deployment.</p></div>
     <div className="proof-receipts interactive-v4-receipts">
-      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, `agent ${INTERACTIVE_V4_EVIDENCE.agent} enrolled on the current v4 Governor.`)}
+      {receipt("Enroll", INTERACTIVE_V4_EVIDENCE.enroll, `agent ${INTERACTIVE_V4_EVIDENCE.agent} enrolled on the historical v4 Governor.`)}
       {receipt("Review ON_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOn, "healthy pre-drain snapshot; the mandate was still satisfied.")}
       {receipt("Drain", INTERACTIVE_V4_EVIDENCE.drainSeed, "single-payment drain seeded; the later claim paid the 980 loss.")}
       {receipt("Claim PAID · 980", INTERACTIVE_V4_EVIDENCE.claim, "wrongly paid claim; payout 980 against a 980 loss.")}
@@ -334,7 +339,7 @@ function InteractiveV4Evidence() {
       {receipt("Promote · PASSED", INTERACTIVE_V4_EVIDENCE.promote, "v2 promoted; the appended clause is now active.")}
       {receipt("v2 genuine drain", INTERACTIVE_V4_EVIDENCE.v2DrainSeed, "same vault reseeded to balance=0 with one payment after promotion.")}
       {receipt("Review OFF_MANDATE", INTERACTIVE_V4_EVIDENCE.reviewOff, INTERACTIVE_V4_EVIDENCE.reviewOffReason)}
-      <div className="proof-receipt proof-receipt-static"><div><strong>Full loop complete</strong><span>All eight receipts are on the same interactive Governor; the final v2 ruling names Rule 2.</span></div><b aria-hidden="true">✓</b></div>
+      <div className="proof-receipt proof-receipt-static"><div><strong>Historical loop complete</strong><span>These eight receipts are on the former Bradbury v4 Governor; the final v2 ruling names Rule 2.</span></div><b aria-hidden="true">✓</b></div>
     </div>
   </section>;
 }
@@ -345,9 +350,9 @@ function PrimaryProofReceipts() {
     ["V2 ruling", INTERACTIVE_V4_EVIDENCE.reviewOff, "OFF_MANDATE — the appended Rule 2 catches a genuine drain."],
     ["Halt-revert", HALT_REVERT_PROOF.hash, "REVERTED — Vault is halted; money cannot move."],
   ];
-  return <div className="primary-proof-receipts" aria-label="Primary interactive receipts">
-    <div className="eyebrow">CANONICAL RECEIPTS · INTERACTIVE GOVERNOR</div>
-    {receipts.map(([label, hash, meaning]) => <a className="proof-receipt" key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{shortAddress(hash)}</code><b aria-hidden="true">↗</b></a>)}
+  return <div className="primary-proof-receipts" aria-label="Historical Bradbury v4 receipts">
+    <div className="eyebrow">HISTORICAL RECEIPTS · BRADBURY V4 GOVERNOR</div>
+    {receipts.map(([label, hash, meaning]) => <a className="proof-receipt" key={hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer"><div><strong>{label}</strong><span>{meaning}</span></div><code>{shortAddress(hash)}</code><b aria-hidden="true">↗</b></a>)}
   </div>;
 }
 
@@ -389,7 +394,7 @@ function ProofAppendix({ live, lineage, retryLiveReads }) {
     <section className="proof-appendix-section" aria-labelledby="proof-chain-title">
       <div className="eyebrow">CHAIN RECORD</div>
       <h3 id="proof-chain-title">Proof and interactive deployment</h3>
-      <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Interactive / post-fix Governor</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div>
+      <div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · frozen Bradbury lifecycle</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury explorer ↗</a></article><article className="chain-record"><div><strong>Current post-deployment Governor · Studio Next</strong><small>v4 actions and live writes</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">Studio Next explorer ↗</a></article></div>
     </section>
     </details>
   </div>;
@@ -401,7 +406,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <HealthyBurstComparison live={live} />
     <PrimaryProofReceipts />
     <article className="proof-status-card">
-      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Governor {shortAddress(CANONICAL_DEMO.governor)} ↗</a></div>
+      <div className="proof-status-heading"><div><div className="eyebrow">PRIMARY · CONSOLIDATED GOVERNOR</div><h3>Agent C · full halt / govern / lifeform loop</h3></div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Open Bradbury Governor {shortAddress(CANONICAL_DEMO.governor)} ↗</a></div>
       <code className="proof-governor">{shortAddress(CANONICAL_DEMO.governor)}</code>
       <div className="proof-status-grid" aria-label="Canonical proof status">
         <div><span>MANDATE</span><strong>v2 · active</strong><small>promoted on-chain</small></div>
@@ -410,7 +415,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
         <div><span>LAST RECORDED CLAIM</span><strong className="proof-paid">PAID · 980</strong><small>covered drain path</small></div>
       </div>
       <p className="proof-status-context">Canonical proof: Agent C archive · Interactive Governor: Your Run.</p>
-      <p className="proof-chain-note"><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Agent C archive {shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Open interactive Governor in Your Run →</a></p>
+      <p className="proof-chain-note"><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury Agent C archive {shortAddress(CANONICAL_DEMO.governor)}</a> · <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>Open current Studio Next Governor in Your Run →</a></p>
       <details className="proof-details"><summary>Evidence notes</summary><p>Agent C is pin-only; C1 is hash-locked. The vault is a Python twin, and the evidence is project-authored rather than third-party.</p></details>
     </article>
     <C1ProofAccessSection />
@@ -418,7 +423,7 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
     <ProofAppendix live={live} lineage={lineage} retryLiveReads={retryLiveReads} />
     <div className="proof-receipts" aria-labelledby="proof-receipts-title">
       <div className="eyebrow" id="proof-receipts-title">CANONICAL RECEIPTS · FROZEN ARCHIVE</div>
-      {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${CONFIG.explorer}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
+      {ARCHIVE_PROOF_RECEIPTS.map((receipt) => <a className="proof-receipt" key={receipt.hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${receipt.hash}`} target="_blank" rel="noreferrer"><div><strong>{receipt.label}</strong><span>{receipt.meaning}</span></div><code>{receipt.hash}</code><b aria-hidden="true">↗</b></a>)}
       <p className="scope-note">Frozen Agent C archive only. See <a href="#actions" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, "", "#actions"); window.dispatchEvent(new HashChangeEvent("hashchange")); }}>#actions</a> for the interactive v4 evidence path.</p>
     </div>
     <VerificationStatus />
@@ -426,12 +431,12 @@ function AlreadyProvedSection({ live, lineage, capital, capitalValue, walletConn
 }
 
 function VerificationStatus() {
-  return <section className="verification-status product-status" aria-labelledby="product-status-title"><div className="eyebrow">VERIFICATION STATUS</div><h2 id="product-status-title">What is proven, pending, and untested.</h2><div className="product-status-grid"><div><h3>Bradbury-proven</h3><ul><li>OFF sets halt.</li><li>ON cannot clear halt.</li><li>Evidence conflict denies payout.</li><li>Promotion preserves the mandate prefix.</li><li>Full v4 Lifeform loop.</li><li>Halted spend reverts with <code>Vault is halted</code>.</li></ul></div><div><h3>Studio-verified; Bradbury pending</h3><ul><li>Historical Studio run: <code>REVIEW_STALE</code> rejected stale large spends; current runtime confirmation remains pending.</li></ul></div><div><h3>Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified</h3><ul><li>Shared enrollment initialization and duplicate rejection.</li><li><code>REVIEW_STALE</code> timestamp/window logic, including never-reviewed defaults.</li><li>Provider-feed <code>_payment_count</code>, <code>_record_feed_conflict</code>, and <code>_record_review_failure</code> helpers.</li></ul></div><div><h3>Implemented, lint-clean, manually audited; cross-contract runtime verification pending</h3><ul><li>Provider-feed cross-contract EVM read and agreement path.</li></ul></div></div></section>;
+  return <section className="verification-status product-status" aria-labelledby="product-status-title"><div className="eyebrow">VERIFICATION STATUS</div><h2 id="product-status-title">What is proven, pending, and historical.</h2><div className="product-status-grid"><div><h3>Studio Next live-verified</h3><ul><li>VaultTwin deployment and enrollment.</li><li>ON review, normal spend, OFF review, and halted-spend rejection.</li><li>OFF sets halt and ON cannot clear it during the protection window.</li></ul></div><div><h3>Historical Bradbury evidence</h3><ul><li>Canonical lifecycle, paid claim, promotion, and evidence-conflict receipts remain archived as proof.</li><li>The Bradbury Governor-sized gas finding is historical platform evidence, not a Studio Next status.</li></ul></div><div><h3>Direct-mode helper-logic verified</h3><ul><li>Shared enrollment initialization and duplicate rejection.</li><li><code>REVIEW_STALE</code> timestamp/window logic, including never-reviewed defaults.</li><li>Provider-feed <code>_payment_count</code>, <code>_record_feed_conflict</code>, and <code>_record_review_failure</code> helpers.</li></ul></div></div></section>;
 }
 
 function ReceiptLinks({ title, hashes }) {
   const list = (Array.isArray(hashes) ? hashes : [hashes]).filter(Boolean);
-  return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
+  return <div className="receipt-trail"><span>{title}</span><div>{list.map((hash) => <a key={hash} href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${hash}`} target="_blank" rel="noreferrer">{hash}</a>)}</div></div>;
 }
 
 function LineageFallback({ onRetry }) {
@@ -449,11 +454,11 @@ function LineageFallback({ onRetry }) {
 
 function HaltRevertProofCard() {
   return <article className="halt-revert-proof-card" aria-labelledby="halt-revert-proof-title">
-    <div className="eyebrow">HALT PROOF · ALWAYS VISIBLE</div>
-    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Recorded halted spend.</p></div><strong>REVERTED</strong></div>
+    <div className="eyebrow">HISTORICAL BRADBURY HALT PROOF · ALWAYS VISIBLE</div>
+    <div className="halt-revert-proof-heading"><div><h3 id="halt-revert-proof-title">V4 halt-revert proof</h3><p>Recorded halted spend on the former Bradbury Governor.</p></div><strong>REVERTED</strong></div>
     <div className="halt-revert-proof-grid"><div><span>EXECUTION</span><b>{HALT_REVERT_PROOF.execution}</b></div><div><span>REVERT REASON</span><b>{HALT_REVERT_PROOF.reason}</b></div><div><span>AGENT</span><code>{HALT_REVERT_PROOF.agent}</code></div><div><span>VAULT</span><code>{HALT_REVERT_PROOF.vault}</code></div></div>
     <p className="halt-revert-proof-governor">Governor <code>{shortAddress(HALT_REVERT_PROOF.governor)}</code></p>
-    <a className="halt-revert-proof-hash" href={`${CONFIG.explorer}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
+    <a className="halt-revert-proof-hash" href={`${HISTORICAL_BRADBURY_EXPLORER.transaction}${HALT_REVERT_PROOF.hash}`} target="_blank" rel="noreferrer">{HALT_REVERT_PROOF.hash} ↗</a>
     <p className="halt-revert-proof-key-note">Only the enrolled agent key can spend; this receipt is that key hitting the halt.</p>
   </article>;
 }
@@ -489,20 +494,20 @@ function describeWriteError(error) {
 function classifyWriteFailure(error, message) {
   const lower = message.toLowerCase();
   if (error?.code === 4001 || lower.includes("user rejected") || lower.includes("rejected the request")) return { category: "Wallet rejected the request", guidance: "The wallet declined this action. No transaction hash was returned." };
-  if (lower.includes("insufficient funds") || lower.includes("insufficient balance") || lower.includes("0 gen") || lower.includes("balance")) return { category: "Insufficient Bradbury GEN", guidance: "The connected account did not have enough native GEN for this action and its fee." };
-  if (lower.includes("wrong network") || lower.includes("chain") || lower.includes("network")) return { category: "Wrong network or chain", guidance: "The wallet/provider rejected the request because it was not using GenLayer Bradbury (4221)." };
-  if (message.includes("-32005") || lower.includes("capacity")) return { category: "Bradbury is busy", guidance: "Bradbury is busy — retry later. This is a known network capacity limit, not an app error. No transaction hash was returned." };
+  if (lower.includes("insufficient funds") || lower.includes("insufficient balance") || lower.includes("0 gen") || lower.includes("balance")) return { category: "Insufficient Studio Next GEN", guidance: "The connected account did not have enough native GEN for this action and its fee." };
+  if (lower.includes("wrong network") || lower.includes("chain") || lower.includes("network")) return { category: "Wrong network or chain", guidance: "The wallet/provider rejected the request because it was not using GenLayer Studio Next (61997)." };
+  if (message.includes("-32005") || lower.includes("capacity")) return { category: "Studio Next is busy", guidance: "Studio Next is busy — retry later. No transaction hash was returned." };
   if (lower.includes("nonce")) return { category: "Nonce or pending-transaction conflict", guidance: "The wallet and public RPC disagreed about the next transaction nonce." };
-  if (message.includes("-32603") || lower.includes("transaction failed") || lower.includes("originalerror")) return { category: "Wallet/RPC internal error", guidance: "The request failed without a transaction hash. The raw details below are needed to identify whether the wallet or Bradbury RPC rejected it." };
+  if (message.includes("-32603") || lower.includes("transaction failed") || lower.includes("originalerror")) return { category: "Wallet/RPC internal error", guidance: "The request failed without a transaction hash. The raw details below are needed to identify whether the wallet or Studio Next RPC rejected it." };
   return { category: "Wallet/RPC error", guidance: "The request failed before a transaction hash was returned." };
 }
 
 function describeReadError(error) {
-  const raw = error?.shortMessage || error?.message || String(error || "Unknown Bradbury read error");
+  const raw = error?.shortMessage || error?.message || String(error || "Unknown Studio Next read error");
   const message = String(raw).replace(/\s+/g, " ").trim();
-  if (/missing or invalid parameters/i.test(message)) return "Bradbury did not return this live read. No wallet action was submitted.";
-  if (/timeout|timed out|deadline/i.test(message)) return "Bradbury did not answer before the read timed out.";
-  if (/network|fetch|transport|connect/i.test(message)) return "The Bradbury RPC could not be reached.";
+  if (/missing or invalid parameters/i.test(message)) return "Studio Next did not return this live read. No wallet action was submitted.";
+  if (/timeout|timed out|deadline/i.test(message)) return "Studio Next did not answer before the read timed out.";
+  if (/network|fetch|transport|connect/i.test(message)) return "The Studio Next RPC could not be reached.";
   return message.length > 180 ? `${message.slice(0, 177)}…` : message;
 }
 
@@ -541,17 +546,17 @@ function liveFixtureRecord(state, verdict) {
   };
 }
 
-function ReadState({ message = "Loading live Bradbury read…", onRetry }) {
+function ReadState({ message = "Loading live Studio Next read…", onRetry }) {
   return <div className="read-status" role="status"><strong>{message}</strong>{onRetry && <button type="button" className="button button-outline" onClick={onRetry}>Retry live reads</button>}</div>;
 }
 
 function renderCase(item, record, onRetry, labelOverride = item.label) {
   const fallback = DEMO_FIXTURE_FALLBACKS[item.label];
   const fixtureMessage = item.live === false ? "Reference fixture · no live read attempted" : "Live read unavailable — showing last recorded receipt (on-chain)";
-  if (!record || record.status === "loading" || record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div><h3>{item.note}</h3><div className={`verdict ${fallback.ruling === "ON_MANDATE" ? "on" : "off"}`}>{fallback.ruling}</div><p className="reason">{fixtureMessage}</p><div className="fields">{fallback.fields.map(([key, fieldValue]) => <div className="field" key={key}><span>{key}</span><strong>{fieldValue}</strong><EvidenceTag>fixture</EvidenceTag></div>)}</div><ReadState message={fixtureMessage} onRetry={item.live === false ? undefined : onRetry} /></article>;
+  if (!record || record.status === "loading" || record.status === "error") return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}><div className="vault-kicker"><span>{labelOverride}</span><span>STUDIO NEXT · 61997</span></div><h3>{item.note}</h3><div className={`verdict ${fallback.ruling === "ON_MANDATE" ? "on" : "off"}`}>{fallback.ruling}</div><p className="reason">{fixtureMessage}</p><div className="fields">{fallback.fields.map(([key, fieldValue]) => <div className="field" key={key}><span>{key}</span><strong>{fieldValue}</strong><EvidenceTag>fixture</EvidenceTag></div>)}</div><ReadState message={fixtureMessage} onRetry={item.live === false ? undefined : onRetry} /></article>;
   const fields = record.fields.map(([key, fieldValue]) => <div className={`field ${key === "payments" && String(fieldValue) !== "1" ? "diff" : ""}`} key={key}><span>{key}</span><strong>{String(fieldValue)}</strong><EvidenceTag>live read</EvidenceTag></div>);
   return <article className={`vault-card ${item.className}`} data-case={labelOverride} key={labelOverride}>
-    <div className="vault-kicker"><span>{labelOverride}</span><span>BRADBURY · 4221</span></div>
+    <div className="vault-kicker"><span>{labelOverride}</span><span>STUDIO NEXT · 61997</span></div>
     <h3>{item.note}</h3>
     <div className={`verdict ${record.ruling === "ON_MANDATE" ? "on" : "off"}`}>{record.ruling} <EvidenceTag>live · latest_verdict</EvidenceTag></div>
     <p className="reason">“{record.reason}” <EvidenceTag>live read</EvidenceTag></p>
@@ -586,7 +591,7 @@ function YourRunResult({ action, result, onRetryReview }) {
     <div className="section-intro compact"><div className="eyebrow" id={resultTitleId}>{title}</div></div>
     <div className="result-meta"><div><span>Target agent</span><strong>{result.targetAgent}</strong></div><div><span>{result.hash ? "Transaction" : "Result"}</span>{result.hash ? (result.localTest ? <strong>{result.hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${result.hash}`} target="_blank" rel="noreferrer">{result.hash}</a>) : <strong>NO TRANSACTION SUBMITTED</strong>}</div></div>
     <div className="result-status-grid"><div><span>Consensus</span><strong>{result.consensus}</strong></div><div><span>Execution</span><strong>{result.execution || "WAITING"}</strong></div></div>
-    {result.outcomeMessage ? <div className={`read-status action-outcome ${result.action === "Spend" && result.execution === "FINISHED_WITH_ERROR" ? "halt-reverted" : ""}`} role="status"><strong>{result.outcomeTitle || `${result.action} response`}</strong><span>{result.outcomeMessage}</span></div> : result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result result-reveal"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Bradbury is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : `${result.action} completed. This action does not produce a verdict.`}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span>{result.verdictError && onRetryReview ? <button type="button" onClick={onRetryReview}>Retry verdict read</button> : null}</div>}
+    {result.outcomeMessage ? <div className={`read-status action-outcome ${result.action === "Spend" && result.execution === "FINISHED_WITH_ERROR" ? "halt-reverted" : ""}`} role="status"><strong>{result.outcomeTitle || `${result.action} response`}</strong><span>{result.outcomeMessage}</span></div> : result.action === "Review" && result.status === "resolved" && result.verdict ? <div className="judgment-result result-reveal"><div className={`verdict ${result.ruling === "ON_MANDATE" ? "on" : "off"}`}>{result.ruling} <EvidenceTag>resolved from this Review</EvidenceTag></div><p className="reason">“{result.reason}”</p><div className="fields">{result.fields.map(([key, value]) => <div className="field" key={key}><span>{key}</span><strong>{String(value)}</strong><EvidenceTag>state after Review</EvidenceTag></div>)}</div><pre className="pinned">{result.pinned_state}</pre></div> : <div className="read-status" role="status"><strong>{result.status === "pending" ? "Studio Next is reaching consensus…" : result.verdictError ? "Review resolved; verdict read needs a retry." : `${result.action} completed. This action does not produce a verdict.`}</strong><span>{result.status === "pending" ? "Keep this panel open. The hash above is the source of truth while the receipt is pending." : result.verdictError || "Only a completed Review produces the judgment shown here."}</span>{result.verdictError && onRetryReview ? <button type="button" onClick={onRetryReview}>Retry verdict read</button> : null}</div>}
   </section>;
 }
 
@@ -626,10 +631,10 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     }
     if (!chain || chain.id === bradbury.id || autoSwitchAttempted.current) return;
     autoSwitchAttempted.current = true;
-    setStatus("Wallet connected · requesting GenLayer Bradbury (4221)…");
+      setStatus("Wallet connected · requesting GenLayer Studio Next (61997)…");
     switchChain({ chainId: bradbury.id }).catch((error) => {
-      console.info("Stele automatic Bradbury switch was not approved", error);
-      setStatus("Wallet connected · approve the switch to GenLayer Bradbury (4221) before submitting.");
+      console.info("Stele automatic Studio Next switch was not approved", error);
+      setStatus("Wallet connected · approve the switch to GenLayer Studio Next (61997) before submitting.");
     });
   }, [connected, chain?.id, switchChain]);
 
@@ -678,7 +683,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       } catch (error) {
         if (!active) return;
         console.info("Existing Governor enrollment could not be checked", error);
-        setExistingEnrollment({ status: "unavailable", vault: "", error: "This wallet's enrollment could not be checked — new enrollments are currently blocked by a confirmed Bradbury gas limit, not a connectivity issue. Nothing has been changed on-chain. See Proof for verified evidence, or retry later." });
+        setExistingEnrollment({ status: "unavailable", vault: "", error: "This wallet's enrollment could not be checked right now. Nothing has been changed on-chain. See Proof for verified evidence, or retry later." });
       }
     })();
     return () => { active = false; };
@@ -691,12 +696,12 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       return false;
     }
     if (chain?.id !== bradbury.id) {
-      setStatus("Switch your wallet to GenLayer Bradbury (4221) before submitting.");
+      setStatus("Switch your wallet to GenLayer Studio Next (61997) before submitting.");
       switchChain({ chainId: bradbury.id });
       return false;
     }
     if (!walletClient) {
-      setStatus("The Bradbury wallet client is unavailable; reconnect and try again.");
+      setStatus("The Studio Next wallet client is unavailable; reconnect and try again.");
       return false;
     }
     return true;
@@ -776,7 +781,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     } catch (error) {
       console.error("VaultTwin validation failed", error);
       if (!quiet) setStatus("Enroll: this address could not be verified as a VaultTwin for the current Governor.");
-      return { ok: false, unavailable: true, error: "Bradbury could not verify this address right now. This may be a temporary RPC or finalization delay." };
+      return { ok: false, unavailable: true, error: "Studio Next could not verify this address right now. This may be a temporary RPC or finalization delay." };
     }
   };
 
@@ -797,12 +802,12 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     };
     const walletChainId = await tracedProvider.request({ method: "eth_chainId" });
     const expectedChainId = `0x${bradbury.id.toString(16)}`;
-    if (walletChainId !== expectedChainId) throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Bradbury (4221) and try again.`);
+    if (walletChainId !== expectedChainId) throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Studio Next (61997) and try again.`);
     const walletPendingNonce = await tracedProvider.request({ method: "eth_getTransactionCount", params: [walletClient.account.address, "pending"] });
     const client = createClient({ chain: testnetBradbury, account: walletClient.account.address, provider: tracedProvider });
     client.getCurrentNonce = async () => BigInt(walletPendingNonce);
     const balanceHex = await tracedProvider.request({ method: "eth_getBalance", params: [walletClient.account.address, "latest"] });
-    if (BigInt(balanceHex) === 0n) throw new Error("Connected wallet has 0 GEN; fund this account before deploying a Bradbury VaultTwin.");
+    if (BigInt(balanceHex) === 0n) throw new Error("Connected wallet has 0 GEN; fund this account before deploying a Studio Next VaultTwin.");
     return { client, provider: tracedProvider };
   };
 
@@ -811,7 +816,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       const readClient = createClient({ chain: testnetBradbury });
       const transaction = await readClient.getTransaction({ hash });
       const deployedAddress = transaction.txDataDecoded?.contractAddress || transaction.contractAddress || transaction.data?.contractAddress;
-      if (!deployedAddress || !/^0x[0-9a-fA-F]{40}$/.test(String(deployedAddress))) throw new Error("Bradbury accepted the deployment, but did not return a readable VaultTwin address.");
+      if (!deployedAddress || !/^0x[0-9a-fA-F]{40}$/.test(String(deployedAddress))) throw new Error("Studio Next accepted the deployment, but did not return a readable VaultTwin address.");
       const vaultValidation = await validateVault(String(deployedAddress), targetAgent);
       if (!vaultValidation.ok) throw new Error("The deployed VaultTwin did not match the connected wallet and current Governor.");
       setVaultDeployment({ status: "ready", address: String(deployedAddress), hash, error: "" });
@@ -853,11 +858,12 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     try {
       const { client } = await createBradburyWriteClient();
       const args = [1000n, addressArg(connectedAddress), addressArg(CONFIG.governor)];
-      const hash = await client.deployContract({ code: vaultTwinSource, args });
+      const estimate = await client.estimateTransactionFees({});
+      const hash = await client.deployContract({ code: vaultTwinSource, args, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } });
       const startedAt = Date.now();
       setTransactions((previous) => [{ label: "Deploy VaultTwin", hash, startedAt, pending: true }, ...previous]);
       onResultChange({ action: "Deploy VaultTwin", hash, targetAgent: connectedAddress, status: "pending", consensus: "Pending", execution: null });
-      setStatus("VaultTwin submitted ✓ Waiting for Bradbury consensus…");
+      setStatus("VaultTwin submitted ✓ Waiting for Studio Next consensus…");
       pollReceipt(hash, "Deploy VaultTwin", startedAt, connectedAddress, CONFIG.governor);
     } catch (error) {
       console.error("VaultTwin deployment failed", error);
@@ -877,7 +883,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       return;
     }
     if (submitting || transactions.some((transaction) => transaction.pending)) {
-      setStatus("A transaction is already being submitted or waiting for Bradbury consensus.");
+      setStatus("A transaction is already being submitted or waiting for Studio Next consensus.");
       return;
     }
     setSubmitting(true);
@@ -940,7 +946,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       const walletChainId = await tracedProvider.request({ method: "eth_chainId" });
       const expectedChainId = `0x${bradbury.id.toString(16)}`;
       if (walletChainId !== expectedChainId) {
-        throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Bradbury (4221) and try again.`);
+        throw new Error(`Wallet is on chain ${Number.parseInt(walletChainId, 16)}; switch to GenLayer Studio Next (61997) and try again.`);
       }
       const walletPendingNonce = await tracedProvider.request({
         method: "eth_getTransactionCount",
@@ -966,12 +972,13 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         balanceWei: balance.toString(),
       });
       if (balance === 0n) {
-        throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Bradbury transaction.");
+        throw new Error("Connected wallet has 0 GEN; fund this account before submitting a Studio Next transaction.");
       }
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: targetContract, functionName, args: encodeArgs(args), value });
+          const estimate = await client.estimateTransactionFees({});
+          hash = await client.writeContract({ address: targetContract, functionName, args: encodeArgs(args), value, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } });
           break;
         } catch (error) {
           const message = describeWriteError(error);
@@ -979,8 +986,8 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
           if (!capacity || attempt === 3) throw error;
           const retryAfter = Number(error?.cause?.data?.retryAfterMs || error?.data?.retryAfterMs || 0);
           const delay = Math.max(500, Math.min(8000, retryAfter || 2 ** attempt * 1000));
-          console.warn(`Stele ${label} retrying after Bradbury capacity response`, { attempt: attempt + 1, delay, error });
-          setStatus(`${label}: Bradbury is busy; retrying in ${Math.ceil(delay / 1000)}s…`);
+          console.warn(`Stele ${label} retrying after Studio Next capacity response`, { attempt: attempt + 1, delay, error });
+          setStatus(`${label}: Studio Next is busy; retrying in ${Math.ceil(delay / 1000)}s…`);
           await new Promise((resolve) => window.setTimeout(resolve, delay));
         }
       }
@@ -988,7 +995,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       setUncertainSubmission(null);
       setTransactions((previous) => [{ label, hash, startedAt, pending: true }, ...previous]);
       onResultChange({ action: label, hash, targetAgent, status: "pending", consensus: "Pending", execution: null });
-      setStatus(`${label}: submitted ✓ Waiting for Bradbury consensus…`);
+      setStatus(`${label}: submitted ✓ Waiting for Studio Next consensus…`);
       pollReceipt(hash, label, startedAt, targetAgent, targetContract, meta);
     } catch (error) {
       console.error("Stele write failed", error, {
@@ -1013,7 +1020,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         setActiveAction(null);
         setWriteFailure({ label, ...failure, details: message, hashReturned: false });
         setStatus(capacity
-          ? `${label}: Bradbury is busy — retry later.`
+          ? `${label}: Studio Next is busy — retry later.`
           : `${label}: ${message}`);
       }
     } finally {
@@ -1046,7 +1053,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null) => {
     const poll = async () => {
       try {
-        const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
+              const response = await fetch(studioNext.rpcUrls.default.http[0], { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
         const payload = await response.json();
         if (payload.error) {
           console.error("Stele receipt RPC failed", payload.error);
@@ -1061,7 +1068,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
           const hasReceipt = receipt.id && !/^0x0+$/.test(receipt.id) && (created > 0 || Number.isFinite(numericStatus));
           if (!hasReceipt || !terminalStatus) {
             if (Date.now() - startedAt >= 120000) {
-              setStatus(`${label}: Bradbury is still processing (${statusName || `status ${receipt.status}`})… keep this tab open.`);
+              setStatus(`${label}: Studio Next is still processing (${statusName || `status ${receipt.status}`})… keep this tab open.`);
             }
             window.setTimeout(poll, 5000);
             return;
@@ -1113,7 +1120,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
         }
       } catch { /* keep background polling quiet */ }
       if (Date.now() - startedAt >= 120000) {
-        setStatus(`${label}: still waiting for Bradbury consensus… keep this tab open; the explorer hash remains the source of truth.`);
+        setStatus(`${label}: still waiting for Studio Next consensus… keep this tab open; the explorer hash remains the source of truth.`);
       }
       window.setTimeout(poll, 5000);
     };
@@ -1122,7 +1129,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
 
   const runPresetReview = (presetLabel, targetAgent, targetGovernor) => {
     if (!requireWallet()) return;
-    setStatus(`${presetLabel}: submitting… Bradbury consensus typically takes ~70s; this is normal, not stuck.`);
+    setStatus(`${presetLabel}: submitting… Studio Next consensus may take a minute; this is normal, not stuck.`);
     runWrite("Review", "review", [targetAgent], 0n, targetAgent, targetGovernor);
   };
 
@@ -1139,10 +1146,10 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const reviewTargetGovernor = enrolledAgent?.governor || CONFIG.governor;
   return <div className="write-panel">
     {localTestWallet && <div className="local-test-banner">LOCAL TEST MODE · no wallet connection or blockchain transaction</div>}
-    {!localTestWallet && <div className="advanced-live-test-note" role="note"><strong>Advanced live test · optional</strong><span>Submit your own Bradbury transactions with a connected wallet. Consensus finalization may take several minutes; use the prepared receipts above for an immediate demo.</span></div>}
+    {!localTestWallet && <div className="advanced-live-test-note" role="note"><strong>Advanced live test · optional</strong><span>Submit your own Studio Next transactions with a connected wallet. Consensus finalization may take several minutes; use the prepared receipts above for an immediate demo.</span></div>}
     <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{enrolledAgent ? (enrolledAgent.existing ? "Existing enrolled review agent" : "Newly enrolled review agent") : INTERACTIVE_V4_AGENT ? "Prepared review agent" : "No review agent is enrolled"}</strong>{reviewTargetAgent && <span>{reviewTargetAgent}</span>}<small>Full address retained for verification.</small></div>
-    {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Studio Next</button>}
     <div className="your-run-proof-banner">Writes target current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
     <div className="review-presets" aria-labelledby="review-presets-title">
       <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
@@ -1153,15 +1160,15 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       <p className="review-preset-note">Committee is voting — ~70s. This is normal, not stuck. Results appear in the Review result slot above.</p>
     </div>
     <section className="vault-deploy-panel" aria-labelledby="vault-deploy-title">
-      <div className="vault-deploy-error vault-enrollment-blocked" role="note"><strong>This wallet's enrollment status could not be verified right now.</strong><span>New enrollments on this Governor are temporarily limited by a confirmed Bradbury network constraint (filed with GenLayer as issue #419) — not a bug in this contract. <a href="#proof">See Proof for verified evidence that requires no live enrollment.</a></span></div>
+      <div className="vault-deploy-error vault-enrollment-blocked" role="note"><strong>This wallet's enrollment status could not be verified right now.</strong><span>Nothing has been changed on-chain. <a href="#proof">See Proof for verified evidence that requires no live enrollment</a>, or retry later.</span></div>
       <div className="review-presets-heading"><strong id="vault-deploy-title">Deploy your own VaultTwin</strong><span>Optional live test · current v4 Governor</span></div>
-      <p>Use this when you want to submit a live test. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>. After Bradbury accepts the deployment, finalization may take several minutes before the address can be verified and enrolled.</p>
+      <p>Use this when you want to submit a live test on Studio Next. The constructor is filled automatically with balance <code>1000</code>, your connected wallet as agent, and Governor <code>{shortAddress(CONFIG.governor)}</code>. After Studio Next accepts the deployment, finalization may take several minutes before the address can be verified and enrolled.</p>
        <button type="button" disabled={hasPendingTransaction || submitting || uncertainSubmission || vaultDeployment.status === "pending" || enrollmentUnavailable} onClick={deployVaultTwin}>{activeAction === "Deploy VaultTwin" ? <><span className="action-spinner" /> {finalizingDeployment ? "Finalizing VaultTwin…" : "Deploying VaultTwin…"}</> : existingEnrollment.status === "checking" ? "Checking existing enrollment…" : existingEnrollment.status === "valid" ? "Already enrolled — use existing agent" : existingEnrollment.status === "invalid" ? "Deployment unavailable for this wallet" : existingEnrollment.status === "unavailable" ? "Enrollment check unavailable" : vaultDeployment.status === "ready" ? "Deploy another test VaultTwin" : "Deploy test VaultTwin"}</button>
       {existingEnrollment.status === "checking" && <span role="status">Checking whether this wallet is already enrolled on the current Governor…</span>}
        {existingEnrollment.status === "unavailable" && <div className="vault-deploy-error" role="alert"><strong>Enrollment check unavailable</strong><span>{existingEnrollment.error}</span><button type="button" onClick={() => setEnrollmentCheckNonce((nonce) => nonce + 1)}>Retry enrollment check</button></div>}
       {existingEnrollment.status === "valid" && <div className="vault-deploy-warning" role="status"><strong>This wallet is already enrolled</strong><span>Existing VaultTwin: <code>{existingEnrollment.vault}</code></span><span>The existing agent is ready to review below. Deployment is disabled because another VaultTwin cannot replace this enrollment.</span></div>}
       {existingEnrollment.status === "invalid" && <div className="vault-deploy-error" role="alert"><strong>This wallet already has an enrollment, but its VaultTwin is unusable</strong><span>The stored VaultTwin address has been recovered in the form below: <code>{existingEnrollment.vault}</code></span><span>Why it cannot be used: {existingEnrollment.error}</span><span>This Governor cannot repair or replace existing enrollments. The address is shown for reference only. Use the prepared review fixtures, or connect a different wallet to create a separate enrollment; that will not repair this record.</span></div>}
-      {vaultDeployment.status === "pending" && <span role="status">{finalizingDeployment ? "Deployment accepted; wait for Bradbury finalization before enrolling." : "Deployment submitted; wait for Bradbury consensus before enrolling."}</span>}
+       {vaultDeployment.status === "pending" && <span role="status">{finalizingDeployment ? "Deployment accepted; wait for Studio Next finalization before enrolling." : "Deployment submitted; wait for Studio Next consensus before enrolling."}</span>}
       {vaultDeployment.status === "ready" && <div className="vault-deploy-success" role="status"><strong>VaultTwin ready</strong><code>{vaultDeployment.address}</code><span>Agent and Governor were read back and match this page.</span></div>}
       {vaultDeployment.status === "error" && <div className="vault-deploy-error" role="alert"><strong>VaultTwin was not verified</strong><span>{vaultDeployment.error}</span></div>}
     </section>
@@ -1178,7 +1185,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
        <button type="submit" disabled={hasPendingTransaction || submitting || uncertainSubmission || enrollmentUnavailable}>{activeAction === "Enroll" ? <><span className="action-spinner" /> Enroll · waiting…</> : existingEnrollment.status === "valid" ? "Already enrolled — review below" : existingEnrollment.status === "invalid" ? "Enrollment unavailable for this wallet" : existingEnrollment.status === "unavailable" ? "Enrollment check unavailable" : "Enroll and sign transaction"}</button>
       {enrolledAgent && <div className="enrolled-agent-card"><div><strong>{enrolledAgent.existing ? "Existing agent loaded" : "Agent enrolled · not yet reviewed"}</strong><span>{enrolledAgent.agent}</span></div><p>{enrolledAgent.existing ? "This wallet is already enrolled on the current Governor." : enrolledAgent.mandate}</p><small>Governor {enrolledAgent.governor} · Vault {enrolledAgent.vault}</small>{enrolledAgent.recordUrl && <small>Record {enrolledAgent.recordUrl} · hash {enrolledAgent.recordHash}</small>}</div>}
     </form>
-    <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Bradbury consensus before the next action."}</p>
+    <p className={`action-sequence${uncertainSubmission ? " uncertain" : ""}`}><span className="sequence-dot" /> {uncertainSubmission ? `${uncertainSubmission.label}: submission status is uncertain · verify wallet activity before retrying.` : "One action at a time · waiting for Studio Next consensus before the next action."}</p>
     <div className="write-actions">
       <button className={activeAction === "Review" ? "is-active" : activeAction || uncertainSubmission || !reviewTargetAgent ? "is-locked" : ""} aria-busy={activeAction === "Review" ? "true" : undefined} disabled={hasPendingTransaction || submitting || uncertainSubmission || !reviewTargetAgent} onClick={() => reviewTargetAgent && runWrite("Review", "review", [reviewTargetAgent], 0n, reviewTargetAgent, reviewTargetGovernor)}>{activeAction === "Review" ? <><span className="action-spinner" /> validators judging · typically 60–90s</> : !reviewTargetAgent ? "1. Review · no agent enrolled" : enrolledAgent ? "1. Review this enrolled agent" : activeAction || uncertainSubmission ? "1. Review · locked" : "1. Run review"}</button>
     </div>
@@ -1190,7 +1197,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     {transactions.map(({ label, hash, startedAt, pending, execution, phase, localTest }) => <div className="tx-hash" key={hash}>
       <span>{label}</span>
       {localTest ? <strong>{hash} <EvidenceTag>local test only</EvidenceTag></strong> : <a href={`${CONFIG.explorer}${hash}`} target="_blank" rel="noreferrer">{hash}</a>}
-      <small>{pending ? `${phase === "finalization" ? "Accepted ✓ · Waiting for Bradbury finalization" : "Submitted ✓ · Waiting for Bradbury consensus"}… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ${execution === "FINISHED_WITH_ERROR" ? "✕" : "✓"}`}</small>
+      <small>{pending ? `${phase === "finalization" ? "Accepted ✓ · Waiting for Studio Next finalization" : "Submitted ✓ · Waiting for Studio Next consensus"}… ${Math.floor((now - startedAt) / 1000)}s` : `${execution} ${execution === "FINISHED_WITH_ERROR" ? "✕" : "✓"}`}</small>
     </div>)}
   </div>;
 }
@@ -1199,7 +1206,7 @@ function ProductPage() {
   const [live, setLive] = useState({ status: "loading", fixtures: {} });
   const [lineage, setLineage] = useState({ status: "loading" });
   const [capital, setCapital] = useState({ status: "loading" });
-  const [readStatus, setReadStatus] = useState("Loading live Bradbury reads…");
+  const [readStatus, setReadStatus] = useState("Loading live Studio Next reads…");
   const [readNonce, setReadNonce] = useState(0);
   const [yourRun, setYourRun] = useState({});
   const [reviewReadRetry, setReviewReadRetry] = useState(null);
@@ -1282,14 +1289,14 @@ function ProductPage() {
         }
         if (active) {
           setCapital({ status: "ready", values: { pool, lpPool, totalShares, bond, lastClaim, yourShares, yourSharesError } });
-          setReadStatus(yourSharesError ? "Global Bradbury reads succeeded; your wallet LP-share read is unavailable." : "Live Bradbury reads succeeded from the primary Governor.");
+          setReadStatus(yourSharesError ? "Global Studio Next reads succeeded; your wallet LP-share read is unavailable." : "Live Studio Next reads succeeded from the current Governor.");
         }
       } catch (error) {
         if (active) {
           console.error("Stele live capital read failed", error);
           const message = describeReadError(error);
           setCapital({ status: "error", error: message });
-          setReadStatus(`Live Bradbury reads unavailable — ${message} Retry live reads.`);
+          setReadStatus(`Live Studio Next reads unavailable — ${message} Retry live reads.`);
         }
       }
     })();
@@ -1326,8 +1333,8 @@ function ProductPage() {
   };
 
   return <main className="product-page">
-    <header className="product-label wrap"><span>STELE / LIVE EVIDENCE · GENLAYER BRADBURY · CHAIN 4221</span><a href="/docs">Read the docs ↗</a></header>
-    <div className="product-cta wrap"><span>Proof is live on Bradbury · no wallet needed to inspect it.</span><a href="#actions" onClick={(event) => { event.preventDefault(); selectProductSection("actions"); }}>Run an action →</a></div>
+    <header className="product-label wrap"><span>STELE / LIVE EVIDENCE · GENLAYER STUDIO NEXT · CHAIN 61997</span><a href="/docs">Read the docs ↗</a></header>
+    <div className="product-cta wrap"><span>Current Governor is live on Studio Next · no wallet needed to inspect the proof.</span><a href="#actions" onClick={(event) => { event.preventDefault(); selectProductSection("actions"); }}>Run an action →</a></div>
     <div className="product-wedges wrap" data-copy-version="stele-only" aria-label="Stele mechanism"><p>A governor cuts an agent&apos;s vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.</p></div>
     <div className="product-layout wrap">
       <aside className="product-sidebar" aria-label="Evidence sections">
@@ -1339,10 +1346,10 @@ function ProductPage() {
         {activeProductSection === "lineage" && <section className="lineage evidence-panel" aria-labelledby="lineage-title"><div className="section-intro compact"><div className="eyebrow">02 / LINEAGE</div><p className="scope-note">Configured demo agent mandate history — not your wallet.</p></div>{lineage.status === "ready" ? <><div className="lineage-rail"><article className="version-card"><div className="version-label">v1 · {lineage.versionOne.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{lineage.versionOne.text}</p></article><div className="lineage-arrow" aria-hidden="true">→</div><article className="version-card active-version"><div className="version-label">v2 · {lineage.versionTwo.status} <EvidenceTag>live · get_mandate_version</EvidenceTag></div><p>{renderMandateText(lineage.versionOne.text, lineage.versionTwo.text)}</p></article></div><div className="trigger"><span>CLAIM {lineage.claim.status}</span><b>{String(lineage.claim.payout)} against {String(lineage.claim.loss)} loss <EvidenceTag>live · get_last_claim</EvidenceTag></b><span>CLAUSE APPENDED</span></div></> : <ReadState message={lineage.status === "loading" ? "Loading live mandate and claim reads…" : `Live lineage read failed — ${lineage.error}`} onRetry={retryLiveReads} />}</section>}
         {activeProductSection === "cover" && <section className="cover evidence-panel" aria-labelledby="cover-title"><div className="section-intro compact"><div className="eyebrow">03 / COVER</div><p className="scope-note">Global protocol state for the configured demo agent.</p></div><div className="cover-grid"><div><span>POOL</span><strong>{capitalValue("pool")}</strong><small>claims pool · live read</small></div><div><span>BOND</span><strong>{capitalValue("bond")}</strong><small>loss cover before payout</small></div><div><span>LAST CLAIM</span><strong>{claimValue ? `${String(claimValue.payout)} / ${String(claimValue.loss)}` : capital.status === "ready" ? "No claim record" : capitalValue("lastClaim")}</strong><small>payout / loss · live read</small></div></div></section>}
         {activeProductSection === "capital" && <section className="capital evidence-panel" aria-labelledby="capital-title"><div className="section-intro compact"><div className="eyebrow">04 / CAPITAL AND YIELD</div><p className="scope-note">Global protocol totals plus the connected wallet’s own LP shares.</p></div><div className="pricing-grid capital-grid"><div><span>LP POOL · GLOBAL</span><strong>{capitalValue("lpPool")}</strong></div><div><span>TOTAL LP SHARES · GLOBAL</span><strong>{capitalValue("totalShares")}</strong></div><div><span>YOUR SHARES · WALLET</span><strong>{walletConnected ? capitalValue("yourShares") : "Connect wallet"}</strong></div></div></section>}
-        {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Primary frozen proof plus the latest interactive / post-fix v4 deployment.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Primary proof Governor</strong><small>Agent C · full halt / govern / lifeform loop</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${CONFIG.addressExplorer}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article><article className="chain-record"><div><strong>Interactive / post-fix Governor · v4</strong><small>v3 sticky halt plus access-controlled upgrades, enrollment guard, evidence-conflict safety, trace-based promotion</small></div><div><small>GenLayer Bradbury · chain 4221</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
+        {activeProductSection === "chain" && <section className="chain evidence-panel" aria-labelledby="chain-title"><div className="section-intro compact"><div className="eyebrow">05 / CHAIN RECORD</div><p className="scope-note">Historical proof plus the current post-deployment Governor.</p></div><div className="chain-list"><article className="chain-record"><div><strong>Historical proof Governor</strong><small>Agent C · full halt / govern / lifeform loop</small></div><div><small>GenLayer Bradbury · historical chain 4221</small></div><div className="chain-address">{CANONICAL_DEMO.governor}</div><a href={`${HISTORICAL_BRADBURY_EXPLORER.address}${CANONICAL_DEMO.governor}`} target="_blank" rel="noreferrer">Bradbury explorer ↗</a></article><article className="chain-record"><div><strong>Current post-deployment Governor · Studio Next</strong><small>Enrollment guard, sticky halt, evidence-conflict safety, promotion, and zero-address enrollment default</small></div><div><small>GenLayer Studio Next · chain 61997</small></div><div className="chain-address">{CONFIG.governor}</div><a href={`${CONFIG.addressExplorer}${CONFIG.governor}`} target="_blank" rel="noreferrer">Studio Next explorer ↗</a></article></div><div className="read-status" role="status"><strong>{readStatus}</strong></div></section>}
         {activeProductSection === "evidence-record" && <EvidenceRecordSection />}
         {activeProductSection === "secondary" && <div className="evidence-panel"><section className="context" aria-labelledby="context-title"><div className="section-intro compact"><div className="eyebrow">07 / SECONDARY EVIDENCE · ALLOWLIST</div><p className="scope-note">Fixed example evidence — not your wallet.</p></div><div className="context-card">{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></div>}
-        {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">08 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, Drain, and Strangers are fixed examples.</strong><span>These cards attempt a live read; if Bradbury doesn&apos;t respond, known fixture values are shown instead, labeled as such.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></section>}
+        {activeProductSection === "demo" && <section className="demo-fixtures evidence-panel" aria-labelledby="demo-title"><div className="section-intro compact"><div className="eyebrow">08 / DEMO FIXTURES</div><p className="scope-note">Fixed example agents — not your wallet.</p></div><div className="read-status" role="note"><strong>Healthy, Burst, Drain, and Strangers are fixed examples.</strong><span>These cards attempt a live read; if Studio Next doesn&apos;t respond, known fixture values are shown instead, labeled as such.</span></div><section className="contrast" aria-labelledby="contrast-title"><div className="comparison-grid">{renderCase(FIXTURES.healthy, live.fixtures.healthy, retryLiveReads)}{renderCase(FIXTURES.burst, live.fixtures.burst, retryLiveReads)}{renderCase({ ...FIXTURES.drain, className: "healthy" }, live.fixtures.drain, retryLiveReads, "DRAIN FIXTURE")}{renderCase(FIXTURES.strangers, live.fixtures.strangers, retryLiveReads, "STRANGERS VAULT")}</div></section></section>}
         {activeProductSection === "history" && <section className="history evidence-panel" aria-labelledby="history-title"><div className="section-intro compact"><div className="eyebrow">09 / REFERENCE RECEIPTS</div><p className="scope-note">Historical reference — not current wallet data.</p></div><details className="receipt-appendix"><summary>Show historic receipts and their purpose</summary><div className="read-status" role="note"><strong>These receipts document earlier global demo runs.</strong><span>They do not change when a new wallet connects and do not represent the current Review result.</span></div><div className="history-list"><ReceiptLinks title="Judgment · healthy fixture · reference run" hashes={RECEIPTS.judgmentHealthy} /><ReceiptLinks title="Judgment · burst fixture · reference run" hashes={RECEIPTS.judgmentBurst} /><ReceiptLinks title="Judgment · drain v1 · reference run" hashes={RECEIPTS.drainV1} /><ReceiptLinks title="Judgment · drain v2 · reference run" hashes={RECEIPTS.drainV2} /><ReceiptLinks title="Judgment · consolidated drain suite · reference run" hashes={RECEIPTS.drainSuite} /><ReceiptLinks title="Halt sequence · reference run" hashes={[RECEIPTS.haltSeed, RECEIPTS.haltReview, RECEIPTS.haltSpendRejected, RECEIPTS.haltAdvance, RECEIPTS.haltSpendSuccess]} /><ReceiptLinks title="Lineage · claim, proposal, promotion · reference run" hashes={[RECEIPTS.claim, RECEIPTS.propose, RECEIPTS.promote]} /></div></details></section>}
       </div>
     </div>
@@ -1357,19 +1364,19 @@ function DocsPage() {
       <div className="docs-topbar-links"><a href="/product">Product</a><a className="active" href="/docs">Docs</a></div>
     </nav>
     <header className="docs-header wrap">
-      <div><div className="eyebrow">STELE / DOCUMENTATION</div><h1>How the record becomes a response.</h1><p className="primary-governor"><strong>Primary Governor · Bradbury</strong> · <code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code><br /><span>Other Governors appear only as secondary C1 or historical verification paths.</span></p></div>
+      <div><div className="eyebrow">STELE / DOCUMENTATION</div><h1>How the record becomes a response.</h1><p className="primary-governor"><strong>Current Governor · Studio Next</strong> · <code>0x63C1c91358fA4e778550C663465e105590F6f567</code><br /><span>Historical Bradbury Governors remain available as archived verification paths.</span></p></div>
     </header>
     <div className="docs-layout wrap">
        <aside className="docs-nav"><a href="#status">Status</a><a href="#judgment">Judgment</a><a href="#provider-feed">Provider feed</a><a href="#halt">Halt</a><a href="#lineage">Lineage</a><a href="#engineering">Engineering notes</a></aside>
       <article className="docs-content">
-         <section id="status" className="verification-status"><div className="eyebrow">VERIFICATION STATUS</div><h2>What is proven, pending, and untested.</h2><h3>Bradbury-proven</h3><ul><li>OFF sets halt.</li><li>ON cannot clear halt.</li><li>Evidence conflict denies payout.</li><li>Promotion preserves the mandate prefix.</li><li>Full v4 Lifeform loop.</li><li>Halted spend reverts with <code>Vault is halted</code>.</li></ul><h3>Studio-verified; Bradbury pending</h3><ul><li>Historical Studio run: <code>REVIEW_STALE</code> rejected stale large spends; current runtime confirmation remains pending.</li></ul><h3>Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified</h3><ul><li>Shared enrollment initialization and duplicate rejection.</li><li><code>REVIEW_STALE</code> timestamp/window logic, including never-reviewed defaults.</li><li>Provider-feed <code>_payment_count</code>, <code>_record_feed_conflict</code>, and <code>_record_review_failure</code> helpers.</li></ul><h3>Implemented, lint-clean, manually audited; cross-contract runtime verification pending</h3><ul><li>Provider-feed cross-contract EVM read and agreement path.</li></ul></section>
+        <section id="status" className="verification-status"><div className="eyebrow">VERIFICATION STATUS</div><h2>What is proven, pending, and historical.</h2><h3>Studio Next live-verified</h3><ul><li>Current Governor deployment at <code>0x63C1…F567</code>.</li><li>VaultTwin deployment and enrollment.</li><li>ON review, normal spend, OFF review, and halted-spend rejection.</li><li>OFF sets halt and ON cannot clear it during the protection window.</li></ul><h3>Provider-feed native Studio route</h3><ul><li>Matching sealed count continues to mandate review and returns <code>ON_MANDATE</code>.</li><li>Conflicting counts return <code>EVIDENCE_CONFLICT</code>; unsealed evidence returns <code>REVIEW_FAILED</code>. Both halt and reject spend without changing vault state.</li></ul><h3>Historical Bradbury evidence</h3><ul><li>Canonical full lifecycle, paid claim, promotion, and evidence-conflict receipts remain preserved as archived proof.</li><li>The Bradbury Governor-sized gas-limit issue remains a historical platform finding, not a claim about Studio Next.</li></ul><h3>Direct-mode verified</h3><ul><li>Enrollment initialization and duplicate rejection.</li><li><code>REVIEW_STALE</code> timestamp/window logic.</li><li>Provider-feed access control, sealing, parsing and review branches (20 direct tests).</li></ul><h3>EVM feed route</h3><p>Solidity interface compiles and matches the Governor ABI. Runtime verification on an EVM-capable network remains pending.</p></section>
         <section id="judgment"><div className="eyebrow">01 / JUDGMENT</div><h2>Behavior is judged from pinned state and a hash-locked record.</h2><p>The current C1 review uses two stages. First, the Governor reads and pins the VaultTwin state. For C1-enrolled agents it then fetches the enrolled record, verifies its hash, parses it with <code>strict_eq</code>, and compares the record to the pin before branching to the mandate judgment. A mismatch produces the distinct <code>EVIDENCE_CONFLICT</code> ruling.</p><pre>pin vault state → fetch record → hash check → strict_eq → compare → judgment or EVIDENCE_CONFLICT</pre><p>Agent C is pin-only; C1 is hash-locked. Canonical proof is Agent C.</p><p>The consolidated Agent C demonstration on Governor <code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code> proves the pin-only lifecycle path. Agent C has no enrolled record, so <code>RECORD_STATUS=UNAVAILABLE</code> is expected there. When C1 evidence conflicts, <code>claim()</code> rejects payout as <code>DENIED_EVIDENCE_CONFLICT</code>.</p></section>
-         <section id="provider-feed"><div className="eyebrow">02 / PROVIDER FEED</div><h2>Feed checks add a governor-fetched evidence source.</h2><p>An agent enrolled via <code>enroll_with_feed</code> stores a <code>ProviderInvoiceFeed</code> address in <code>feed_of</code>. During <code>review(agent)</code>, the vault state is pinned first, then the sealed feed is read. An unavailable or unsealed feed produces <code>REVIEW_FAILED</code> and halts. An exact payment-count mismatch produces <code>EVIDENCE_CONFLICT</code> and halts. If the feed agrees, review continues to the existing C1 record and mandate evaluation.</p><p>Agents enrolled via <code>enroll</code>, <code>enroll_one</code>, or <code>enroll_covered</code> have no feed configured and are unaffected. The current feed is project-controlled, so it demonstrates cross-contract retrieval rather than independent third-party evidence.</p></section>
+         <section id="provider-feed"><div className="eyebrow">02 / PROVIDER FEED</div><h2>Feed checks add a governor-fetched evidence source.</h2><p>An agent enrolled via <code>enroll_with_feed</code> stores a feed address in <code>feed_of</code> and an explicit transport in <code>feed_kind_of</code>. During <code>review(agent)</code>, the vault state is pinned first, then the feed snapshot is read. The <code>native</code> transport uses another Intelligent Contract and is verified on Studio Next; the default <code>evm</code> transport uses <code>ProviderInvoiceFeed.sol</code> and requires an EVM-capable network.</p><p>A matching sealed count continues to mandate review. An exact count mismatch produces <code>EVIDENCE_CONFLICT</code>; an unavailable or unsealed feed produces <code>REVIEW_FAILED</code>. Both halt the vault and block spending. Agents enrolled through the legacy methods have no feed configured and keep their existing review path. These feeds are project-controlled demonstrations, not independent third-party invoice proofs.</p></section>
          <section id="halt"><div className="eyebrow">03 / HALT</div><h2>An OFF ruling changes what the vault can do next.</h2><p>When a review returns OFF_MANDATE, the Governor sets a halt and expiry. VaultTwin checks <code>is_halted(agent)</code> before spending and rejects the payment while the halt is active. Halt is set by an off-mandate or evidence-conflict ruling. It is not cleared by a later ON_MANDATE review. It ends when the enrolled halt window expires.</p><pre>{`function spend(address destination, uint256 amount) external {\n  require(msg.sender == agent, "Only the agent can spend");\n  require(!governor.is_halted(agent));\n  _transfer(destination, amount);\n}`}</pre><p>Halt expiry uses consensus time, not wall-clock time. The window must cover queue delay and review latency, so Bradbury uses a long protection window.</p></section>
         <section id="cover"><div className="eyebrow">04 / COVER</div><h2>A paid loss creates the evidence for a narrower rule.</h2><p>The thin mandate can allow a drain. If the pre-drain review was ON and the later balance falls, <code>claim()</code> pays <code>min(loss, bond, pool)</code> within the claim window. It stores the pre-drain ON trace and the post-loss trace separately.</p><p>A failed <code>get_governor</code> read is not treated as detachment. A permitted activity pattern is not silently reclassified as a thin-mandate denial.</p></section>
         <section id="capital"><div className="eyebrow">05 / CAPITAL</div><h2>Premium yield is separate from claims risk in this version.</h2><p><code>enroll_covered</code> splits premium 70/30 between the claims pool and LP pool. Deposits mint LP shares and withdrawals pay proportional LP pool value including yield. LPs do not back claims directly yet; the claims pool remains the paying pool.</p></section>
         <section id="lineage"><div className="eyebrow">06 / LINEAGE</div><h2>The original mandate remains visible inside the next version.</h2><p><code>propose_mandate</code> reads a paid claim and asks for a behavioral clause describing the missing pattern. The proposal must preserve the parent text as an exact prefix and starts as a dead branch.</p><p><code>promote_mandate</code> scores stored traces: the post-loss trace must become OFF, the pre-drain trace must remain ON, and any stored burst or strangers cases must keep their original rulings. Failed candidates remain stored and inactive. The enrollment envelope cannot widen providers, raise limits, or clear halts.</p></section>
-        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output, marks <code>REVIEW_FAILED</code>, and halts for safety.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>Resolved enrollment finding: the CLI's Address-vs-string encoding was inconsistent across <code>enroll</code>'s provider array, agent address, and halt-window parameters. Direct <code>genlayer-js</code> encoding succeeded with receipt <code>0x1a4846a0…</code>; product-page writes use that direct SDK path.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li><li>The enrollment-refactor, freshness, and provider-feed helper paths are direct-mode verified (four tests total), but localnet, Studio, and Bradbury runtime verification remains pending. The provider-feed cross-contract EVM path is still manually audited only.</li><li>The stable direct-mode pair is <code>genlayer-test 0.29.2</code> / <code>genlayer-py 0.16.3</code>. A fresh-cache rc2 retest (<code>0.30.0rc2</code> / <code>0.19.0rc2</code>) reproduced <code>DecodingError: unexpected end of memory</code> for a minimal two-<code>Address</code>-argument constructor; the narrowed regression is reported in testing-suite issue #113.</li></ul></section>
+        <section id="engineering"><div className="eyebrow">ENGINEERING NOTES</div><h2>What the receipts mean.</h2><p className="docs-related-links">Related notes: <a href="#cover">Cover</a> · <a href="#capital">Capital &amp; Yield</a></p><ul><li>Evidence stays in deterministic vault state. The canonical destination list is sorted before pinning.</li><li><code>prompt_non_comparative</code> receives a pinned callable, with JSON shape enforced by criteria and a bounded parse retry. Failed parsing stores raw output, marks <code>REVIEW_FAILED</code>, and halts for safety.</li><li>ACCEPTED is the terminal runner state on Bradbury. FINALIZED does not advance reliably, so receipt checks use ACCEPTED plus <code>FINISHED_WITH_RETURN</code>.</li><li>NOT_VOTED is distinct from DETERMINISTIC_VIOLATION and timeout behavior. A first receipt with no votes is repolled before it is recorded as final.</li><li>Consensus-time windows must include queue delay plus review latency. This is why the halt and claim windows are sized conservatively.</li><li>CLI address arguments use <code>addr#</code>, not <code>address#</code>.</li><li>Resolved enrollment finding: the CLI's Address-vs-string encoding was inconsistent across <code>enroll</code>'s provider array, agent address, and halt-window parameters. Direct <code>genlayer-js</code> encoding succeeded with receipt <code>0x1a4846a0…</code>; product-page writes use that direct SDK path.</li><li>Writes use genlayer-js with the connected wallet provider. Reads remain wallet-free, and reviews typically take about 73 seconds.</li><li>Twenty direct tests cover enrollment, freshness, feed access control, sealing and review branches. The native Studio Next feed path has live matching, conflict and unsealed results; conflict and unsealed halts both rejected spending. The Solidity EVM route compiles but still needs runtime testing on an EVM-capable network.</li><li>The stable direct-mode pair is <code>genlayer-test 0.29.2</code> / <code>genlayer-py 0.16.3</code>. A fresh-cache rc2 retest (<code>0.30.0rc2</code> / <code>0.19.0rc2</code>) reproduced <code>DecodingError: unexpected end of memory</code> for a minimal two-<code>Address</code>-argument constructor; the narrowed regression is reported in testing-suite issue #113.</li></ul></section>
       </article>
     </div>
   </main>;
@@ -1387,7 +1394,7 @@ function LandingPage() {
         <div className="eyebrow">STELE / PUBLIC RULES FOR AGENT VAULTS</div>
         <h1>A governor judges.<br /><em>Then acts.</em></h1>
         <p className="hero-lede">A governor cuts an agent&apos;s vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.</p>
-        <p className="primary-governor"><strong>Primary Governor · Bradbury</strong><br /><code>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</code></p>
+        <p className="primary-governor"><strong>Current Governor · Studio Next</strong><br /><code>0x63C1c91358fA4e778550C663465e105590F6f567</code></p>
         <div className="hero-actions"><a className="button button-dark" href="/product">Explore the live product ↗</a><a className="text-link" href="https://github.com/Snehal707/stele" target="_blank" rel="noreferrer">Read the repository</a></div>
       </div>
       <span className="image-caption">A public rule, made legible.</span>
@@ -1399,7 +1406,7 @@ function LandingPage() {
     <section id="mechanism" className="landing-mechanism">
       <div className="wrap mechanism-grid"><div><div className="eyebrow">THE MECHANISM</div><h2>From observed state to public consequence.</h2><p>Review pins the vault state, then C1-enrolled agents add a fetched, hash-locked record checked with <code>strict_eq</code>. Agreement reaches the mandate judgment; disagreement produces <code>EVIDENCE_CONFLICT</code> and blocks the claim.</p><p>Agent C proves the full lifecycle: enroll → ON_MANDATE → drain → PAID → propose → promote → v2 → OFF_MANDATE. <a href="/product">See the full evidence on the live product ↗</a></p></div><div className="flow-card"><div className="flow-step"><b>01</b><span>Pin + record</span><small>vault state · fetch · hash · strict_eq</small></div><div className="flow-line" /><div className="flow-step"><b>02</b><span>Validator ruling</span><small>ON · OFF · or EVIDENCE_CONFLICT</small></div><div className="flow-line" /><div className="flow-step"><b>03</b><span>Recorded response</span><small>halt · paid claim · next clause</small></div></div></div>
     </section>
-    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER BRADBURY · PRIMARY CONSOLIDATED GOVERNOR</div><span>CHAIN 4221</span></div><div className="proof-row"><strong>0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172</strong><a href="/product#proof">Open public record ↗</a></div><small className="landing-secondary-note">C1 burst and drain Governors remain secondary verification paths in the product evidence record.</small></section>
+    <section className="landing-proof wrap"><div className="proof-top"><div className="eyebrow">LIVE ON GENLAYER STUDIO NEXT · CURRENT GOVERNOR</div><span>CHAIN 61997</span></div><div className="proof-row"><strong>0x63C1c91358fA4e778550C663465e105590F6f567</strong><a href="/product#proof">Open live record ↗</a></div><small className="landing-secondary-note">Historical Bradbury receipts remain available in the product evidence record.</small></section>
     <footer className="wrap footer landing-footer"><span>STELE</span><span>an upright inscribed stone where laws are published in public and added to over time.</span></footer>
   </main>;
 }

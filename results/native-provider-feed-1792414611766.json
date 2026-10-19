@@ -1,0 +1,152 @@
+{
+  "rpc": "https://studio-dev.genlayer.com/api",
+  "chain": 61997,
+  "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+  "account": "0x26450A21A76708B1351213912242a6625CF33ea2",
+  "started": "2026-10-19T12:56:51.716Z",
+  "sources": {
+    "governor.py": {
+      "sourceSha256": "de39970f4118c13476b247d3ba9609a45a136fbc6c31dcdb61c6d8df3abcdf8d",
+      "deployedSha256": "67cb9c858098b947e418683ff5d315e57e922c355198e56b0e6ceb4622ffec93"
+    },
+    "provider_invoice_feed.py": {
+      "sourceSha256": "37e041326c320a4ba5a9e34a60bd7c447ce00e042a593dbd2d83371bc39ddaa8",
+      "deployedSha256": "5d6fa91ebfa39e70754c5e4ce7cd78988d4b96232b61fa3f4dc6ac76ef9197ed"
+    },
+    "vault_twin.py": {
+      "sourceSha256": "4c55670ec1181b215051f33a69ce358344ab5ed828be1ca90805cf1584654987",
+      "deployedSha256": "9bb0e1f00a05a7695dd9503f21d85635ef9bc8a2e43ef81d9bca3b69cee1c073"
+    }
+  },
+  "transactions": [
+    {
+      "label": "deploy:governor.py",
+      "hash": "0xbb2859ae6e5c3cf7a4d879857685aad4e4517319715e9d4a4a235e6bd47007da",
+      "submitted": "2026-10-19T12:56:58.968Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "deploy:governor.py",
+      "hash": "0xe003cbc8af7229167627161a96b65488053d6da56c72b6fdafb7eaa84a7880fc",
+      "submitted": "2026-10-19T12:57:41.967Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "deploy:provider_invoice_feed.py",
+      "hash": "0xc90c933109e0be71d9cfb2660b2d780417bdeb01dca7dcd3d2e6a678555daeed",
+      "submitted": "2026-10-19T12:58:21.106Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "deploy:vault_twin.py",
+      "hash": "0x2611bb8895ebaeb6093ba8b7b0890fa412267eecf1c4b9447ef5af4cacc5a512",
+      "submitted": "2026-10-19T12:58:59.491Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "update_feed",
+      "hash": "0xdad1d42fba6715487268f2d06663b99b66c1c4a51b17c3d7f2749f621d265e35",
+      "submitted": "2026-10-19T12:59:37.457Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "enroll_with_feed",
+      "hash": "0xaf696b4f26683ef9215544305e0bd35d9ce20a8b26d82996f230d5d1d5394a2a",
+      "submitted": "2026-10-19T13:00:17.154Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "seed_state",
+      "hash": "0x389159ba9cb12086b9839e887aecc52f31dc9931cc0ae8cc9d1716d5fa50183c",
+      "submitted": "2026-10-19T13:00:54.806Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0xfa9ab9d390eae5d51473e84a174cd5ca1c73a42e3f1261f66a766ceb98c86c8e",
+      "submitted": "2026-10-19T13:01:32.229Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "spend",
+      "hash": "0xef69b8eebbd8a347b89f49e735ad2da7ef37c9f318410cb39b53b73438dc8339",
+      "submitted": "2026-10-19T13:02:13.081Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_ERROR",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0",
+        "error": "Vault is halted"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "unsealed",
+      "count": 3,
+      "sealed": false,
+      "expected": "REVIEW_FAILED",
+      "halted": true,
+      "agent": "0x26450A21A76708B1351213912242a6625CF33ea2",
+      "governor": "0x2de647C0006977Abc374d854Cd6BdD933566A595",
+      "feed": "0x67E27036F18a046995bF0A6c005E0cBEF3Ee0569",
+      "vault": "0x8C3Ae0402e7FBCc1f3aaBBB63862aE9851e31593",
+      "snapshot": {
+        "initialized": true,
+        "invoice_count": 3,
+        "invoice_root": "0000000000000000000000000000000000000000000000000000000000000000",
+        "period": 1,
+        "provider": "0x26450a21a76708b1351213912242a6625cf33ea2",
+        "sealed": false
+      },
+      "ruling": "REVIEW_FAILED",
+      "actualHalted": true,
+      "spendRejected": true,
+      "passed": true
+    }
+  ],
+  "funding": "0x530699d9c68521f7e802eaa34b0f33a27542ad9b866b992d847a709a836494a8",
+  "balance": "0xf4240",
+  "governor": "0xDb0ff215a1BC798B15903Ba19f280c410ea34f10",
+  "passed": true
+}
