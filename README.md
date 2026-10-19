@@ -85,6 +85,20 @@ helper logic is direct-mode verified. The current Studio Next deployment is
 the post-deployment Governor listed above; the older Bradbury deployment is
 not being upgraded.
 
+**Fresh native-feed deployment retest (October 19, 2026):** a separate Governor
+was deployed on Studio Next at
+[`0x2D659936c041A789F711C2742C172bb316E07417`](https://explorer-studio-dev.genlayer.com/address/0x2D659936c041A789F711C2742C172bb316E07417); its schema exposes the
+`feed_kind` enrollment parameter. A matching sealed-feed review finalized as
+`ON_MANDATE` ([review receipt](https://explorer-studio-dev.genlayer.com/tx/0xd599c888d77b582a26b6832ca3362c89d5478c9373d547c0e174a77d3cf10c5f)).
+A separate conflict case ([VaultTwin](https://explorer-studio-dev.genlayer.com/address/0x87a5f4d7f7fDCCe8C523C0af6Df6a04d7B0Da6dc),
+[feed](https://explorer-studio-dev.genlayer.com/address/0xDc89AaE2875b3d52aE95Ef8393efA1701a90c39D)) was enrolled and seeded, but its review was not
+submitted: Studio Next returned an RPC rate-limit error. Therefore this fresh
+deployment does not add a verified conflict result. The seeded VaultTwin state
+is test data, not evidence of merchant payments. The existing public interactive
+Governor remains [`0x63C1c91358fA4e778550C663465e105590F6f567`](https://explorer-studio-dev.genlayer.com/address/0x63C1c91358fA4e778550C663465e105590F6f567); the fresh test
+Governor is linked from the product evidence page but is not configured for
+interactive wallet actions.
+
 ---
 
 ## The claim
@@ -738,7 +752,9 @@ fail-closed recorders directly; it did not exercise `review()`'s feed branch
 or a real cross-contract EVM read. Later hosted Studio Next runs verified the
 native Intelligent Contract feed branch with live contract calls and consensus,
 as documented in the current provider-feed status above. The Solidity/EVM
-transport remains pending runtime verification on an EVM-capable network.
+transport remains pending runtime verification on an EVM-capable network. The
+fresh-deployment retest above is a separate, newer deployment: it verified the
+matching case only; its conflict review remains pending.
 
 The rc2 retest was a separate tooling path. With a fresh bundle cache,
 `genlayer-test 0.30.0rc2` / `genlayer-py 0.19.0rc2` failed during contract import
