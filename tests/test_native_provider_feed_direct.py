@@ -107,8 +107,10 @@ def test_review_dispatches_native_feed(direct_deploy, monkeypatch, count, sealed
         return SimpleNamespace(view=lambda: SimpleNamespace(snapshot=lambda: {
             "initialized": True, "sealed": sealed, "invoice_count": count}))
     monkeypatch.setattr(module, "_get_contract_at", contract_at)
-    monkeypatch.setattr(module.gl.eq_principle, "prompt_non_comparative",
-                        lambda *args, **kwargs: '{"ruling":"ON_MANDATE","reason":"Only three payments and balance 970."}')
+    monkeypatch.setattr(module.gl.nondet, "exec_prompt",
+                        lambda *args, **kwargs: {"ruling": "ON_MANDATE", "reason": "Three payments and balance 970."})
+    monkeypatch.setattr(module.gl.eq_principle, "prompt_comparative",
+                        lambda operation, principle: operation())
     governor.review(agent)
     assert governor.governed[agent] == expected
     assert bool(governor.halted[agent]) == (expected != "ON_MANDATE")

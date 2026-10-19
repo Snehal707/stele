@@ -1,4 +1,4 @@
-**Current Studio Next Governor: `0x63C1c91358fA4e778550C663465e105590F6f567` (chain 61997). The post-deployment lifecycle smoke test is verified against this address.**
+**Current public Studio Next Governor: `0x63C1c91358fA4e778550C663465e105590F6f567` (chain 61997); it remains unchanged.** Its existing smoke-test evidence is separate from the two fresh, isolated Governor/VaultTwin deployments that verified the full claim-and-rewrite lifecycle below. Those test deployments are not replacements for the public Governor and are not wired into the frontend.
 
 The canonical historical lifecycle proof remains available on Bradbury at
 `0x8fb0b2648BF73D292EB1CD7736F6f6624Db9F172`; it is preserved as evidence,
@@ -50,14 +50,24 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 - Full v4 Lifeform loop.
 - Halted spend reverts with `Vault is halted`.
 
+**Full claim-and-rewrite lifecycle — independently repeated twice on fresh Studio Next deployments (chain 61997)**
+
+- Each run used a fresh simulator-funded wallet, explicitly pinned runner, SDK fee estimation, and real contract calls; no fixture state injection was used for lifecycle acceptance.
+- Both runs completed deploy → enroll → `ON_MANDATE` → spend 20 → refreshed `ON_MANDATE` → spend 980 to drain the modeled VaultTwin balance → claim `PAID` for loss/payout 980 → propose/promote mandate v2 → `OFF_MANDATE` and halt → spend rejected specifically with `Vault is halted`, with before/after vault state identical.
+- Both claim receipts included a 980-unit message to the agent and reported that message effect as delivered. VaultTwin models a balance; this is not evidence of a real merchant payment. The test-wallet native balance is also affected by transaction fees.
+- Run 1: Governor `0xdCcC11af145980cFefC1c58C0191b1583BF85ecF`, VaultTwin `0xe76DF91826a4Abd55Ca376aC16f5FAB5244858f1` — [full receipts and state report](results/studio-next-full-lifecycle-1792424915897.json).
+- Run 2: Governor `0x4b1eE7d1d2FB891dBA804071ED6362E9a182aED`, VaultTwin `0xE3EaAA643E1D4E76e45B871dfF7A21248719e3Ed` — [full receipts and state report](results/studio-next-full-lifecycle-1792425537112.json).
+- Earlier partial runs are preserved separately: [initial RPC-read failure](results/studio-next-full-lifecycle-1792424268956.json) and [pre-review getter-order failure](results/studio-next-full-lifecycle-1792424531372.json). A third failed review report captured the positional-only `prompt_comparative` argument error; that runtime mismatch was corrected before the two successful runs: [review failure diagnostics](results/studio-next-full-lifecycle-1792424674860.json).
+
 **Historical Bradbury evidence**
 
 - The older Bradbury receipts preserve the canonical proof history. The current
-  Studio Next deployment has also been smoke-tested through VaultTwin deploy,
-  enrollment, state seeding, ON review, normal spend, OFF review, and halted
-  spend rejection.
+  public Studio Next deployment has also been smoke-tested through VaultTwin
+  deploy, enrollment, state seeding, ON review, normal spend, OFF review, and
+  halted-spend rejection. The full claim-and-rewrite lifecycle above was
+  repeated on isolated test deployments, not the public Governor.
 
-**Direct-mode helper-logic verified; review-path and cross-contract EVM interaction unverified**
+**Provider-feed route: helper logic direct-mode verified; full EVM feed integration remains separately pending**
 
 - Shared enrollment initialization and duplicate rejection
   (`tests/test_enrollment_refactor_direct.py`).
@@ -66,7 +76,7 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 - Provider-feed `_payment_count`, `_record_feed_conflict`, and
   `_record_review_failure` helpers (`tests/test_provider_feed_logic_direct.py`).
 
-**Implemented, lint-clean, manually audited; cross-contract runtime verification pending**
+**Provider-feed implementation: lint-clean and manually audited; feed-specific cross-contract runtime verification pending**
 
 - Provider-feed cross-contract EVM read and agreement path.
 

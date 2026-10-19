@@ -28,6 +28,13 @@ class VaultTwin(_contract_base()):
     destination_count: u256
     payments: TreeMap[Address, u256]
     total: TreeMap[Address, u256]
+    # Append-only evidence for the most recent positive payment. Legacy and
+    # fixture-seeded states default to sequence 0 and are not verified history.
+    payment_sequence: u256
+    last_payment_destination: Address
+    last_payment_amount: u256
+    last_payment_balance_before: u256
+    last_payment_balance_after: u256
 
     def __init__(self, balance: u256, agent: Address, governor: Address):
         self.balance = balance
@@ -50,6 +57,23 @@ class VaultTwin(_contract_base()):
                 str(destination): self.total[destination]
                 for destination in self.total
             },
+            "last_payment": {
+                "sequence": self.payment_sequence,
+                "destination": self.last_payment_destination,
+                "amount": self.last_payment_amount,
+                "balance_before": self.last_payment_balance_before,
+                "balance_after": self.last_payment_balance_after,
+            },
+        }
+
+    @gl.public.view
+    def last_payment_evidence(self) -> dict:
+        return {
+            "sequence": self.payment_sequence,
+            "destination": self.last_payment_destination,
+            "amount": self.last_payment_amount,
+            "balance_before": self.last_payment_balance_before,
+            "balance_after": self.last_payment_balance_after,
         }
 
     @gl.public.view
@@ -106,6 +130,7 @@ class VaultTwin(_contract_base()):
         if amount > self.balance:
             raise gl.vm.UserError("Insufficient balance")
 
+        balance_before = self.balance
         if destination not in self.payments:
             self.destination_count += u256(1)
             self.payments[destination] = u256(0)
@@ -115,3 +140,9 @@ class VaultTwin(_contract_base()):
         self.total[destination] += amount
         self.spend_total += amount
         self.balance -= amount
+        if amount > u256(0):
+            self.payment_sequence += u256(1)
+            self.last_payment_destination = destination
+            self.last_payment_amount = amount
+            self.last_payment_balance_before = balance_before
+            self.last_payment_balance_after = self.balance

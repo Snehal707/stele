@@ -1,6 +1,7 @@
 """Studio check for independent frequency and single-payment drain rules."""
 
 from gltest import create_account, get_contract_factory, get_default_account
+from gltest.assertions import tx_execution_succeeded
 from genlayer_py.types import CalldataAddress
 
 
@@ -25,7 +26,7 @@ def test_single_payment_drain_is_off_mandate():
         account=account,
     )
 
-    governor.enroll_covered(
+    enrollment = governor.enroll_covered(
         args=[
             CalldataAddress(account.address),
             CalldataAddress(vault.address),
@@ -35,9 +36,22 @@ def test_single_payment_drain_is_off_mandate():
             1800,
         ],
     ).transact(value=2000)
-    vault.seed_state(args=[1000, 1, 0, PROVIDER_HEX, "1", "1000"]).transact()
+    assert tx_execution_succeeded(enrollment)
 
-    governor.review(args=[CalldataAddress(account.address)]).transact()
+    initial_review = governor.review(args=[CalldataAddress(account.address)]).transact()
+    assert tx_execution_succeeded(initial_review)
+    assert governor.get_governed(args=[CalldataAddress(account.address)]).call() == "ON_MANDATE"
+
+    spend = vault.spend(args=[PROVIDER, 1000]).transact()
+    assert tx_execution_succeeded(spend)
+    evidence = vault.last_payment_evidence().call()
+    assert int(evidence["sequence"]) == 1
+    assert int(evidence["amount"]) == 1000
+    assert int(evidence["balance_before"]) == 1000
+    assert int(evidence["balance_after"]) == 0
+
+    drain_review = governor.review(args=[CalldataAddress(account.address)]).transact()
+    assert tx_execution_succeeded(drain_review)
 
     assert governor.get_governed(args=[CalldataAddress(account.address)]).call() == "OFF_MANDATE"
 
