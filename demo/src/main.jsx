@@ -5,25 +5,26 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { createClient } from "genlayer-js";
 import { CalldataAddress } from "genlayer-js/types";
-import { testnetBradbury } from "genlayer-js/chains";
 import "@rainbow-me/rainbowkit/styles.css";
 import "../styles.css";
 import steleHero from "../assets/stele-hero.png";
 import vaultTwinSource from "../../contracts/vault_twin.py?raw";
 
-const bradbury = {
-  id: 4221,
-  name: "GenLayer Bradbury",
+const studioNext = {
+  id: 61997,
+  name: "GenLayer Studio Next",
   nativeCurrency: { name: "GEN", symbol: "GEN", decimals: 18 },
-  rpcUrls: { default: { http: ["https://rpc-bradbury.genlayer.com"] } },
-  blockExplorers: { default: { name: "Bradbury Explorer", url: "https://explorer-bradbury.genlayer.com" } },
+  rpcUrls: { default: { http: ["https://studio-dev.genlayer.com/api"] } },
+  blockExplorers: { default: { name: "Studio Next Explorer", url: "https://explorer-studio-dev.genlayer.com" } },
 };
+const bradbury = studioNext;
+const testnetBradbury = studioNext;
 
 const CONFIG = {
-  chainId: 4221,
-  governor: "0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9",
-  explorer: "https://explorer-bradbury.genlayer.com/tx/",
-  addressExplorer: "https://explorer-bradbury.genlayer.com/address/",
+  chainId: 61997,
+  governor: "0x63C1c91358fA4e778550C663465e105590F6f567",
+  explorer: "https://explorer-studio-dev.genlayer.com/tx/",
+  addressExplorer: "https://explorer-studio-dev.genlayer.com/address/",
   rewriteAgent: "0xfcad0b19bb29d4674531d6f115237e16afce377c",
 };
 const DECLARED_PROVIDER = "0x1111111111111111111111111111111111111111";
@@ -853,7 +854,8 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     try {
       const { client } = await createBradburyWriteClient();
       const args = [1000n, addressArg(connectedAddress), addressArg(CONFIG.governor)];
-      const hash = await client.deployContract({ code: vaultTwinSource, args });
+      const estimate = await client.estimateTransactionFees({});
+      const hash = await client.deployContract({ code: vaultTwinSource, args, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } });
       const startedAt = Date.now();
       setTransactions((previous) => [{ label: "Deploy VaultTwin", hash, startedAt, pending: true }, ...previous]);
       onResultChange({ action: "Deploy VaultTwin", hash, targetAgent: connectedAddress, status: "pending", consensus: "Pending", execution: null });
@@ -971,7 +973,8 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
       let hash;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         try {
-          hash = await client.writeContract({ address: targetContract, functionName, args: encodeArgs(args), value });
+          const estimate = await client.estimateTransactionFees({});
+          hash = await client.writeContract({ address: targetContract, functionName, args: encodeArgs(args), value, fees: { distribution: estimate.distribution, feeValue: estimate.feeValue } });
           break;
         } catch (error) {
           const message = describeWriteError(error);
@@ -1046,7 +1049,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
   const pollReceipt = (hash, label, startedAt, targetAgent = CONFIG.rewriteAgent, targetContract = CONFIG.governor, meta = null) => {
     const poll = async () => {
       try {
-        const response = await fetch(`https://rpc-bradbury.genlayer.com`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
+              const response = await fetch(studioNext.rpcUrls.default.http[0], { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method: "gen_getTransactionReceipt", params: [{ txId: hash }] }) });
         const payload = await response.json();
         if (payload.error) {
           console.error("Stele receipt RPC failed", payload.error);
@@ -1142,7 +1145,7 @@ function ActionPanel({ onResultChange, onReviewReadRetryReady }) {
     {!localTestWallet && <div className="advanced-live-test-note" role="note"><strong>Advanced live test · optional</strong><span>Submit your own Bradbury transactions with a connected wallet. Consensus finalization may take several minutes; use the prepared receipts above for an immediate demo.</span></div>}
     <div className="write-panel-head"><span>{localTestWallet ? "Test signer" : "Connected wallet"}</span><span>{connectedAddress}</span></div>
     <div className="run-target"><strong>{enrolledAgent ? (enrolledAgent.existing ? "Existing enrolled review agent" : "Newly enrolled review agent") : INTERACTIVE_V4_AGENT ? "Prepared review agent" : "No review agent is enrolled"}</strong>{reviewTargetAgent && <span>{reviewTargetAgent}</span>}<small>Full address retained for verification.</small></div>
-    {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Bradbury</button>}
+    {!localTestWallet && chain?.id !== bradbury.id && <button onClick={() => switchChain({ chainId: bradbury.id })}>Switch to Studio Next</button>}
     <div className="your-run-proof-banner">Writes target current v4 Governor <code>{shortAddress(CONFIG.governor)}</code>. The conflict preset uses C1 Governor <code>{shortAddress(C1_RECORD_EVIDENCE.burstConflict.governor)}</code>.</div>
     <div className="review-presets" aria-labelledby="review-presets-title">
       <div className="review-presets-heading"><strong id="review-presets-title">Quick review presets</strong><span>No manual agent address needed.</span></div>
