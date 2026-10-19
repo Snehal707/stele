@@ -5,7 +5,18 @@ import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from genlayer import *
+import genlayer as gl
+try:
+    from genlayer.types import *
+    from genlayer.storage import TreeMap, DynArray, allow as allow_storage
+except ModuleNotFoundError:
+    from genlayer import *
+
+def _contract_base():
+    try:
+        return gl.Contract
+    except AttributeError:
+        return gl.contract.Contract
 
 # Bradbury uses 1800 seconds (30 minutes) so queue and consensus latency cannot
 # consume the safety window. Studio fixtures may pass 60 seconds explicitly.
@@ -101,7 +112,7 @@ class _ProviderInvoiceFeed:
         pass
 
 
-class Governor(gl.Contract):
+class Governor(_contract_base()):
     vault_of: TreeMap[Address, Address]
     mandates: TreeMap[Address, str]
     governed: TreeMap[Address, str]

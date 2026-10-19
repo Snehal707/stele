@@ -1,9 +1,20 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
-from genlayer import *
+import genlayer as gl
+try:
+    from genlayer.types import *
+    from genlayer.storage import TreeMap
+except ModuleNotFoundError:
+    from genlayer import *
+
+def _contract_base():
+    try:
+        return gl.Contract
+    except AttributeError:
+        return gl.contract.Contract
 
 
-class VaultTwin(gl.Contract):
+class VaultTwin(_contract_base()):
     balance: u256
     agent: Address
     governor: Address
