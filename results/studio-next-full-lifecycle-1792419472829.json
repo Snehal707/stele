@@ -1,0 +1,181 @@
+{
+  "network": "Studio Next",
+  "rpc": "https://studio-dev.genlayer.com/api",
+  "chainId": 61997,
+  "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+  "started": "2026-10-19T14:17:52.828Z",
+  "account": "0x3065C2b93A189bA9a41F80B88dcCc7d083144B0e",
+  "sources": {
+    "governor.py": {
+      "sourceSha256": "de39970f4118c13476b247d3ba9609a45a136fbc6c31dcdb61c6d8df3abcdf8d",
+      "deployedSha256": "67cb9c858098b947e418683ff5d315e57e922c355198e56b0e6ceb4622ffec93"
+    },
+    "vault_twin.py": {
+      "sourceSha256": "4c55670ec1181b215051f33a69ce358344ab5ed828be1ca90805cf1584654987",
+      "deployedSha256": "9bb0e1f00a05a7695dd9503f21d85635ef9bc8a2e43ef81d9bca3b69cee1c073"
+    }
+  },
+  "transactions": [
+    {
+      "label": "deploy:governor.py",
+      "hash": "0x5dad196e244572536f6374715e13637594315f75d6d33303b66d64bfe712394e",
+      "submitted": "2026-10-19T14:17:57.218Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0",
+        "contractAddress": "0x53CCC1f0de5Bef6D99a570d748f474b88BF8063c"
+      }
+    },
+    {
+      "label": "deploy:vault_twin.py",
+      "hash": "0xcd49826ac47c8fe5edd8666989380cfa4072912a2cc075766fa0a54ff330b592",
+      "submitted": "2026-10-19T14:18:39.404Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0",
+        "contractAddress": "0x4Aa2ec5D14Ced04324633Ce1258abCAdd2419295"
+      }
+    },
+    {
+      "label": "enroll_covered",
+      "hash": "0xc5a80b9117d79262485929c3c5fdbfd43b3cb846b6686b4c90078e46b83e5777",
+      "submitted": "2026-10-19T14:19:16.699Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0xdd2fb630a30c008884830ce516693c977675fb166fa666ec1396779ec4c841a1",
+      "submitted": "2026-10-19T14:20:01.096Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "spend",
+      "hash": "0xa9cb31082b993adfed0980f8fe7f2a02ff29c7627597a9104839523eaed9c37f",
+      "submitted": "2026-10-19T14:20:50.809Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0xb03051faa95fcfc54c6afd42ffd809cbbf8b88be99d3769bbea525fccde8ae7a",
+      "submitted": "2026-10-19T14:21:33.345Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "spend",
+      "hash": "0xaae075581b89a94ff91d5f6f5ebf46ee7ff248ed328dbd465498f31d0d92bcfd",
+      "submitted": "2026-10-19T14:22:21.734Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "chain_id",
+      "actual": 61997,
+      "expected": 61997,
+      "passed": true
+    },
+    {
+      "name": "fresh_wallet_latest_nonce",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "fresh_wallet_pending_nonce",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "enrolled_vault",
+      "actual": "0x4aa2ec5d14ced04324633ce1258abcadd2419295",
+      "expected": "0x4Aa2ec5D14Ced04324633Ce1258abCAdd2419295",
+      "passed": true
+    },
+    {
+      "name": "initial_bond",
+      "actual": "2000",
+      "expected": "2000",
+      "passed": true
+    },
+    {
+      "name": "initial_ruling",
+      "actual": "ON_MANDATE",
+      "expected": "ON_MANDATE",
+      "passed": true
+    },
+    {
+      "name": "initial_halt",
+      "actual": false,
+      "expected": false,
+      "passed": true
+    },
+    {
+      "name": "post_normal_spend_balance",
+      "actual": "980",
+      "expected": "980",
+      "passed": true
+    },
+    {
+      "name": "refreshed_ruling",
+      "actual": "ON_MANDATE",
+      "expected": "ON_MANDATE",
+      "passed": true
+    },
+    {
+      "name": "drained_balance",
+      "actual": 0,
+      "expected": "0",
+      "passed": false
+    }
+  ],
+  "fundingTransaction": "0x5f60046992fe61a21f24f6f5c19fa75b2a887969703c686bdd3b70f8e6ba28ff",
+  "fundedBalance": "0xf4240",
+  "governor": "0x53CCC1f0de5Bef6D99a570d748f474b88BF8063c",
+  "vault": "0x4Aa2ec5D14Ced04324633Ce1258abCAdd2419295",
+  "preClaimState": {
+    "agent": "0x3065c2b93a189ba9a41f80b88dccc7d083144b0e",
+    "balance": 0,
+    "destination_count": 1,
+    "governor": "0x53ccc1f0de5bef6d99a570d748f474b88bf8063c",
+    "payments": {
+      "0x1111111111111111111111111111111111111111": 2
+    },
+    "spend_total": 1000,
+    "total": {
+      "0x1111111111111111111111111111111111111111": 1000
+    }
+  },
+  "passed": false,
+  "error": "drained_balance: unexpected on-chain value\n\n0 !== '0'\n",
+  "stopped": "2026-10-19T14:23:03.232Z"
+}
