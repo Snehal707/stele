@@ -168,8 +168,11 @@ Stele is a circuit breaker nobody owns.
 - **Being wrong is priced, not fatal.** If it rules on-mandate and money leaves
   anyway, the pool pays. Cover exists only if the judgment was actually used —
   route around the governor and the bond is slashed instead.
-- **It improves without a governance vote.** After a paid claim the contract
-  appends the clause it was missing. No proposal, no quorum, no redeploy.
+- **It can improve without a governance vote.** After a paid claim, someone can
+  propose a mandate clause and submit it for promotion. The contract checks the
+  candidate against stored traces; if it passes, the new mandate becomes active.
+  This requires explicit proposal and promotion calls, but no governance vote
+  or redeploy.
 
 ### Who this is for
 
@@ -404,8 +407,9 @@ The review branches are explicit:
 
 - Matching fields run the normal mandate judgment with both sources in the
   input.
-- A failed fetch or hash check records `UNAVAILABLE` or `HASH_MISMATCH` and
-  continues on pinned vault state alone; a website cannot halt review.
+- A failed fetch records `UNAVAILABLE` and continues on pinned vault state
+  alone; a website outage cannot halt review. A hash mismatch instead records
+  `EVIDENCE_CONFLICT` and halts for operator review.
 - A field mismatch records the distinct `EVIDENCE_CONFLICT` ruling, halts the
   agent, and `claim()` records `DENIED_EVIDENCE_CONFLICT` with zero payout.
 
