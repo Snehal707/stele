@@ -9,7 +9,11 @@ contract ProviderInvoiceFeed {
     uint256 public invoiceCount;
     uint256 public period;
     bool public initialized;
-    bool public sealed;
+    bool public is_sealed;
+
+    function invoice_count() external view returns (uint256) {
+        return invoiceCount;
+    }
 
     constructor() {
         provider = msg.sender;
@@ -25,7 +29,7 @@ contract ProviderInvoiceFeed {
         uint256 _count,
         uint256 _period
     ) external onlyProvider {
-        require(!sealed, "feed sealed");
+        require(!is_sealed, "feed sealed");
         invoiceRoot = _root;
         invoiceCount = _count;
         period = _period;
@@ -34,6 +38,6 @@ contract ProviderInvoiceFeed {
 
     function seal() external onlyProvider {
         require(initialized, "must call updateFeed before seal");
-        sealed = true;
+        is_sealed = true;
     }
 }

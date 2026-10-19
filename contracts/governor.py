@@ -112,7 +112,7 @@ class _ProviderInvoiceFeed:
 
         def initialized(self) -> bool: ...
 
-        def sealed(self) -> bool: ...
+        def is_sealed(self) -> bool: ...
 
     class Write:
         pass
@@ -147,6 +147,8 @@ class Governor(_contract_base()):
     review_window: TreeMap[Address, u256]
     # Append-only provider-feed address, used only by enroll_with_feed agents.
     feed_of: TreeMap[Address, Address]
+    # Append-only, explicit transport selection; empty preserves legacy EVM mode.
+    feed_kind_of: TreeMap[Address, str]
 
     def __init__(self):
         root = gl.storage.Root.get()
@@ -266,13 +268,25 @@ class Governor(_contract_base()):
         feed_address = self.feed_of.get_or_insert_default(agent)
         return str(feed_address).lower() != "0x" + "0" * 40
 
-    def _provider_feed_read(self, feed_address: Address) -> dict:
+    def _provider_feed_read(self, feed_address: Address, feed_kind: str = "evm") -> dict:
         """Read the provider-owned feed; an absent/unsealed feed is unusable."""
         try:
-            feed = _ProviderInvoiceFeed(feed_address).view()
-            initialized = feed.initialized()
-            sealed = feed.sealed()
-            invoice_count = feed.invoice_count()
+            if feed_kind == "native":
+                snapshot = _get_contract_at(feed_address).view().snapshot()
+                initialized = snapshot["initialized"]
+                sealed = snapshot["sealed"]
+                invoice_count = snapshot["invoice_count"]
+            elif feed_kind in ("", "evm"):
+                feed = _ProviderInvoiceFeed(feed_address).view()
+                initialized = feed.initialized()
+                sealed = feed.is_sealed()
+                invoice_count = feed.invoice_count()
+            else:
+                return {"status": "UNAVAILABLE"}
+            if type(initialized) is not bool or type(sealed) is not bool:
+                return {"status": "UNAVAILABLE"}
+            if isinstance(invoice_count, bool) or not isinstance(invoice_count, int) or not 0 <= invoice_count < 2**256:
+                return {"status": "UNAVAILABLE"}
             if not initialized or not sealed:
                 return {"status": "UNAVAILABLE"}
             return {"status": "READY", "invoice_count": u256(invoice_count)}
@@ -449,8 +463,11 @@ class Governor(_contract_base()):
         record_url: str = "",
         record_hash: str = "",
         review_window: u256 = u256(DEFAULT_HALT_WINDOW_BRADBURY),
+        feed_kind: str = "evm",
     ) -> None:
         """Enroll an agent whose sealed provider feed is checked during review."""
+        if feed_kind not in ("evm", "native"):
+            raise gl.vm.UserError("Provider feed kind must be evm or native")
         premium = gl.message.value
         if premium == u256(0):
             raise gl.vm.UserError("Premium and bond must be nonzero")
@@ -467,6 +484,7 @@ class Governor(_contract_base()):
             review_window,
         )
         self.feed_of[agent] = feed_address
+        self.feed_kind_of[agent] = feed_kind
         self._apply_premium(agent, premium)
         declared = self.providers.get_or_insert_default(agent)
         for provider in providers:
@@ -549,7 +567,7 @@ class Governor(_contract_base()):
         # check. Legacy agents retain the original pin-only behavior.
         if self._feed_address_is_configured(agent):
             feed_address = self.feed_of[agent]
-            feed_result = self._provider_feed_read(feed_address)
+            feed_result = self._provider_feed_read(feed_address, self.feed_kind_of.get_or_insert_default(agent))
             if feed_result["status"] != "READY":
                 self._record_review_failure(
                     agent,

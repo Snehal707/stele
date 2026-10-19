@@ -229,18 +229,23 @@ as historical context, but it is not the active review path.
 
 The optional `enroll_with_feed(...)` path keeps `review(agent)` to one argument.
 It stores a provider feed address per agent, reads the feed from the Governor,
-and compares its sealed `invoiceCount` with the sum of the pinned
+and compares its sealed invoice count with the sum of the pinned
 per-destination payment counts. An unavailable or unsealed feed fails closed
 with `REVIEW_FAILED`; a count mismatch writes `EVIDENCE_CONFLICT` and blocks
-payout. `contracts/ProviderInvoiceFeed.sol` is a minimal provider-controlled
-sealed-feed demo. It demonstrates the cross-contract retrieval pattern, but it
-is not independent third-party evidence while the feed is operated by this
-project.
+payout. `contracts/ProviderInvoiceFeed.sol` provides the EVM route;
+`contracts/provider_invoice_feed.py` provides an explicitly selected native
+GenLayer route (`feed_kind="native"`) for Studio Next, which does not implement
+EVM contract execution. Both are provider-controlled sealed-feed demos. They
+demonstrate the cross-contract retrieval pattern, but this is not independent
+third-party evidence while the feed is operated by this project.
 
-**Status: implementation is on `master` and direct-mode verified.** The
-post-deployment Governor is live on Studio Next; the provider-feed feature's
-helper logic is verified, while its full live cross-contract path remains a
-separate runtime item.
+**Runtime status:** the native Studio Next route has live matching and conflict
+results. The conflict halt blocked a spend and preserved vault state. The
+unsealed route returned `REVIEW_FAILED`; with a 24-hour test window its halt
+also blocked a spend and preserved vault state. The Solidity/EVM route compiles,
+but still needs testing on an EVM-capable GenLayer network. Evidence and
+transaction references are in
+[`results/provider-feed-runtime-2026-10-19.md`](results/provider-feed-runtime-2026-10-19.md).
 
 **Evidence precedence:** an agent enrolled with both a provider feed and a C1
 record is evaluated feed-first. An unavailable or unsealed feed produces
@@ -695,7 +700,11 @@ platform note; the current Studio Next deployment completed the post-
 deployment lifecycle smoke test, and the canonical Proof and prepared review
 fixtures remain available as independent evidence.
 
-**Provider-feed feature: implementation complete, runtime verification blocked.**
+**Historical provider-feed investigation (EVM route).** The following records
+the earlier blocked attempt, not the status of the new native Studio route.
+See [provider-feed runtime support](docs/provider-feed-runtime.md) for the
+current transports, tests, and runtime evidence.
+
 Added `enroll_with_feed`, `feed_of: TreeMap[Address, Address]`, a sealed-feed
 EVM read via `@gl.evm.contract_interface`, exact-match payment-count comparison,
 and fail-closed handling (`REVIEW_FAILED` on unavailable or unsealed feed,
