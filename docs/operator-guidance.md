@@ -183,12 +183,15 @@ When an action stalls, fails, or produces contradictory RPC views:
 5. Do not infer success from an `ACCEPTED` banner.
 6. Escalate with the exact reproduction instead of retrying blindly.
 
-Known platform limitation: a large Governor upgrade was estimated at roughly
-32.5 million gas while an earlier 10 million limit reverted. Subsequent nonce
-14 replacement attempts became unretrievable while the pending count remained
-15. This is reported in [genlayer-cli#402](https://github.com/genlayerlabs/genlayer-cli/issues/402);
-the repair upgrade is intentionally on hold until the supported Bradbury
-procedure is clarified.
+Known Bradbury limits: the network's outer transaction gas cap is `2^24`
+(16,777,216); 16,777,217 is rejected. A large Governor payload can be admitted
+at the cap and still run out of gas during deployment. This is a Bradbury
+configuration, not a universal GenLayer limit. The related exact-estimate and
+nonce/RPC symptoms are tracked separately in
+[#402](https://github.com/genlayerlabs/genlayer-cli/issues/402); replacement
+behavior for the large-upgrade case remains unresolved. See
+[#419](https://github.com/genlayerlabs/genlayer-cli/issues/419) for the cap
+measurements and trace discussion.
 
 ## External GenLayer follow-ups
 
@@ -197,12 +200,12 @@ Not Stele features; not claimed as fixed.
 
 | Report | Blocks | Status |
 |---|---|---|
-| [genlayer-studio #1761](https://github.com/genlayerlabs/genlayer-studio/issues/1761) | Local Studio/`gltest` runtime testing | Open, no reply |
-| [genlayer-cli #418](https://github.com/genlayerlabs/genlayer-cli/issues/418) | Local `genlayer up` startup | Open, no reply |
-| [genlayer-testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113) | `0.30.0rc2` direct-mode deploy — see README, Engineering notes | Open — maintainer could not reproduce; [narrowed two-`Address` reproducer, traceback, and environment posted as follow-up](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113#issuecomment-5647494534) |
-| [genlayer-cli #402](https://github.com/genlayerlabs/genlayer-cli/issues/402) (follow-up comment) | Bradbury gas estimate / nonce-replacement blocking the Governor repair upgrade — see this runbook | Open — maintainer's simple-transfer test did not reproduce the stuck-nonce case; the 41KB Governor-upgrade scenario remains untested by them |
-| [genlayer-cli #419](https://github.com/genlayerlabs/genlayer-cli/issues/419) | Bradbury Governor-sized deployment path | Historical platform finding — manual submissions at 16,777,216 and 16,000,000 gas were rejected as `gas limit too high`; this does not describe the current Studio Next deployment |
-| [genlayer-cli #420](https://github.com/genlayerlabs/genlayer-cli/issues/420) | StudioNet IC-to-IC `get_contract_at(...).view()` prototype | Open — target method was correctly decorated and schema-visible, but dynamic and static cross-contract calls reached `execution_result=ERROR` with undefined-method fallback dispatch |
+| [genlayer-studio #1761](https://github.com/genlayerlabs/genlayer-studio/issues/1761) | Local Studio/`gltest` runtime testing | Open. The suggested override cleared `session_create_request`, then our local startup required `REDIS_URL`; supported Compose topology is still requested. |
+| [genlayer-cli #418](https://github.com/genlayerlabs/genlayer-cli/issues/418) | Local `genlayer up` startup | Open. Maintainer reproduced the pre-Docker version-check stall on `v0.40-dev`; [PR #422](https://github.com/genlayerlabs/genlayer-cli/pull/422) proposes a bounded, best-effort check and is open. |
+| [genlayer-testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113) | `0.30.0rc2` direct-mode import failure | Open. Maintainer reproduced the error and traced it to stale `sdk_compat.py` imports after SDK module relocation; a fix was announced as forthcoming. The two-`Address` probe was not the root cause. |
+| [genlayer-cli #402](https://github.com/genlayerlabs/genlayer-cli/issues/402) | Bradbury gas estimation and stuck-nonce symptoms | Open. Follow-up PRs [genlayer-js #215](https://github.com/genlayerlabs/genlayer-js/pull/215) and [CLI #413](https://github.com/genlayerlabs/genlayer-cli/pull/413) are open; they add explicit gas overrides and SDK headroom. The large-upgrade replacement case remains unresolved. |
+| [genlayer-cli #419](https://github.com/genlayerlabs/genlayer-cli/issues/419) | Bradbury Governor-sized deployment path | Open. Bradbury's flat outer-gas cap is confirmed at `2^24`; our payload still reverts at the admitted cap. A separate deployment trace reported by another builder shows out-of-gas behavior consistent with this; our own RPC trace was unavailable. |
+| [genlayer-cli #420](https://github.com/genlayerlabs/genlayer-cli/issues/420) | StudioNet IC-to-IC `get_contract_at(...).view()` prototype | Open. Original failure remains unexplained; the original store/caller sources had the same runner pin. A later same-pin view/write control on chain 61999 succeeded, but used different caller source/client versions, so this does not establish a fix. |
 
 ## Judge walkthrough checklist
 

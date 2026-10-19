@@ -1,0 +1,301 @@
+{
+  "network": "Studio Next",
+  "rpc": "https://studio-dev.genlayer.com/api",
+  "chainId": 61997,
+  "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+  "started": "2026-10-19T14:23:23.112Z",
+  "account": "0x5419687491b91C7f14EdC5357e6313c632803407",
+  "sources": {
+    "governor.py": {
+      "sourceSha256": "de39970f4118c13476b247d3ba9609a45a136fbc6c31dcdb61c6d8df3abcdf8d",
+      "deployedSha256": "67cb9c858098b947e418683ff5d315e57e922c355198e56b0e6ceb4622ffec93"
+    },
+    "vault_twin.py": {
+      "sourceSha256": "4c55670ec1181b215051f33a69ce358344ab5ed828be1ca90805cf1584654987",
+      "deployedSha256": "9bb0e1f00a05a7695dd9503f21d85635ef9bc8a2e43ef81d9bca3b69cee1c073"
+    }
+  },
+  "transactions": [
+    {
+      "label": "deploy:governor.py",
+      "hash": "0xbf8ae1d9026dc2dce65028e2d9cd7196984b253f41ade7277c59e9f42f4927a6",
+      "submitted": "2026-10-19T14:23:27.461Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0",
+        "contractAddress": "0x2406565b8537C0E408FfA97B5e7dE3CcD9d3b65A"
+      }
+    },
+    {
+      "label": "deploy:vault_twin.py",
+      "hash": "0xd5632f1ec943b0a291d48a65ae7184f523e0418de410bb01e7a92bd6e1199682",
+      "submitted": "2026-10-19T14:24:06.371Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0",
+        "contractAddress": "0xA4A0471d034BD8ee09547C8759b3bEd52eed8621"
+      }
+    },
+    {
+      "label": "enroll_covered",
+      "hash": "0x303701ddd707104ba21a6b5ee91fef8219931176c10c1b6bc0587fe3c01fd4ec",
+      "submitted": "2026-10-19T14:24:49.471Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0xc2a3a73814eac95cfd528c9cf3787012ab1ec91af9959b8d7ccd4435e06804cf",
+      "submitted": "2026-10-19T14:25:57.705Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "spend",
+      "hash": "0xca3f6185d9217817c0f8b82d4bb1d53e70a73e8fd23a8c7cbd43c81f17570ff5",
+      "submitted": "2026-10-19T14:27:21.330Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0x15c5ff2d646920652b5a62fbac2cc00c30970677225caf31ada2bc8787d023e4",
+      "submitted": "2026-10-19T14:28:05.287Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "spend",
+      "hash": "0x6680c88979a4e319c0900818ea10f165671017a363901ab6b5424b0d2709126a",
+      "submitted": "2026-10-19T14:28:54.766Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "claim",
+      "hash": "0x226c8cb7e50d42800c56b2f31143e68e5fe78c22e33ac76e7e1e5a99412a51e8",
+      "submitted": "2026-10-19T14:29:32.794Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "propose_mandate",
+      "hash": "0x2481b9bd05c98af9f8d1e8216af2c1803d20aaa66e9111d2f387822e58ecf5a7",
+      "submitted": "2026-10-19T14:30:15.247Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "promote_mandate",
+      "hash": "0x2ada3fcf2717ff2fe94850effb79ade35137837b7ee0e83a22df9e2e2f8b4c8d",
+      "submitted": "2026-10-19T14:31:03.328Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_AGREE",
+        "rounds": "0"
+      }
+    },
+    {
+      "label": "review",
+      "hash": "0xc348ca9a00d83656f57e6b701959ad9185ec98a1e6a3b47ef172b2617cf9968c",
+      "submitted": "2026-10-19T14:32:28.726Z",
+      "receipt": {
+        "execution": "FINISHED_WITH_RETURN",
+        "status": "FINALIZED",
+        "consensus": "MAJORITY_DISAGREE",
+        "rounds": "0"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "chain_id",
+      "actual": 61997,
+      "expected": 61997,
+      "passed": true
+    },
+    {
+      "name": "fresh_wallet_latest_nonce",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "fresh_wallet_pending_nonce",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "enrolled_vault",
+      "actual": "0xa4a0471d034bd8ee09547c8759b3bed52eed8621",
+      "expected": "0xA4A0471d034BD8ee09547C8759b3bEd52eed8621",
+      "passed": true
+    },
+    {
+      "name": "initial_bond",
+      "actual": "2000",
+      "expected": "2000",
+      "passed": true
+    },
+    {
+      "name": "initial_ruling",
+      "actual": "ON_MANDATE",
+      "expected": "ON_MANDATE",
+      "passed": true
+    },
+    {
+      "name": "initial_halt",
+      "actual": false,
+      "expected": false,
+      "passed": true
+    },
+    {
+      "name": "post_normal_spend_balance",
+      "actual": "980",
+      "expected": "980",
+      "passed": true
+    },
+    {
+      "name": "refreshed_ruling",
+      "actual": "ON_MANDATE",
+      "expected": "ON_MANDATE",
+      "passed": true
+    },
+    {
+      "name": "drained_balance",
+      "actual": 0,
+      "expected": "0",
+      "passed": true
+    },
+    {
+      "name": "paid_claim",
+      "actual": {
+        "loss": 980,
+        "loss_trace": "spend_total=1000\ndestination_count=1\nbalance=0\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=2 | total=1000",
+        "payout": 980,
+        "pinned_state": "spend_total=20\ndestination_count=1\nbalance=980\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20",
+        "status": "PAID"
+      },
+      "expected": {
+        "status": "PAID",
+        "loss": "980",
+        "payout": "980"
+      },
+      "passed": true
+    },
+    {
+      "name": "post_promotion_ruling",
+      "actual": "ON_MANDATE",
+      "expected": "OFF_MANDATE",
+      "passed": false
+    }
+  ],
+  "fundingTransaction": "0x1ee8afaabfe7e8050299bd89092392985be39730e76c94d04a32afbe0b12636b",
+  "fundedBalance": "0xf4240",
+  "governor": "0x2406565b8537C0E408FfA97B5e7dE3CcD9d3b65A",
+  "vault": "0xA4A0471d034BD8ee09547C8759b3bEd52eed8621",
+  "preClaimState": {
+    "agent": "0x5419687491b91c7f14edc5357e6313c632803407",
+    "balance": 0,
+    "destination_count": 1,
+    "governor": "0x2406565b8537c0e408ffa97b5e7de3ccd9d3b65a",
+    "payments": {
+      "0x1111111111111111111111111111111111111111": 2
+    },
+    "spend_total": 1000,
+    "total": {
+      "0x1111111111111111111111111111111111111111": 1000
+    }
+  },
+  "claim": {
+    "loss": 980,
+    "loss_trace": "spend_total=1000\ndestination_count=1\nbalance=0\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=2 | total=1000",
+    "payout": 980,
+    "pinned_state": "spend_total=20\ndestination_count=1\nbalance=980\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20",
+    "status": "PAID"
+  },
+  "proposedMandate": {
+    "agent": "0x5419687491b91c7f14edc5357e6313c632803407",
+    "envelope": "Proposed clauses may tighten existing limits only; they may not raise limits, clear or shorten halts, or add or widen the declared provider set.",
+    "parent_id": 1,
+    "status": "dead_branch",
+    "text": "Pay the declared provider for recurring infrastructure invoices in modest amounts. Never sends an amount that empties the vault in a single payment.",
+    "version_id": 2
+  },
+  "promotion": {
+    "result": "PASSED",
+    "version": {
+      "agent": "0x5419687491b91c7f14edc5357e6313c632803407",
+      "envelope": "Proposed clauses may tighten existing limits only; they may not raise limits, clear or shorten halts, or add or widen the declared provider set.",
+      "parent_id": 1,
+      "status": "active",
+      "text": "Pay the declared provider for recurring infrastructure invoices in modest amounts. Never sends an amount that empties the vault in a single payment.",
+      "version_id": 2
+    }
+  },
+  "postStopSnapshot": {
+    "transaction": "0xc348ca9a00d83656f57e6b701959ad9185ec98a1e6a3b47ef172b2617cf9968c",
+    "consensus": "MAJORITY_DISAGREE",
+    "execution": "FINISHED_WITH_RETURN",
+    "governed": "ON_MANDATE",
+    "halted": false,
+    "latestVerdict": {
+      "ruling": "ON_MANDATE",
+      "reason": "The pinned vault state shows only 1 payment to the declared provider 0x1111111111111111111111111111111111111111, and the balance remains 980, so neither rule is violated (mandate judgment uses pin-only evidence).",
+      "pinned_state": "spend_total=20\ndestination_count=1\nbalance=980\ndestination 0x1111111111111111111111111111111111111111 | declared=yes | payments=1 | total=20"
+    },
+    "activeVersion2": true,
+    "vaultBalance": 0,
+    "followupSpendSubmitted": false
+  },
+  "diagnostics": {
+    "retrievedViaSdkGetTransaction": true,
+    "result": "MAJORITY_DISAGREE",
+    "lastRoundVotes": ["DISAGREE", "DISAGREE", "DISAGREE", "IDLE", "IDLE"],
+    "leaderAndValidatorExecution": "SUCCESS",
+    "leaderStdout": "",
+    "leaderStderr": "",
+    "validatorStdout": "",
+    "validatorStderr": "",
+    "validatorRawErrors": null,
+    "debugTrace": "Unavailable: Studio Next returned Method not found for gen_dbg_traceTransaction.",
+    "interpretation": "The transaction executed but failed the consensus agreement check. Available diagnostics do not identify which substantive judgment differed."
+  },
+  "passed": false,
+  "error": "post_promotion_ruling: unexpected on-chain value\n+ actual - expected\n\n+ 'ON_MANDATE'\n- 'OFF_MANDATE'\n",
+  "stopped": "2026-10-19T14:34:20.153Z"
+}

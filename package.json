@@ -11,7 +11,7 @@
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.66.8",
-    "genlayer-js": "^1.1.8",
+    "genlayer-js": "github:genlayerlabs/genlayer-js#4dabdf296f5594a6dcce2c2af6e7d53168ab4397",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "viem": "^2.37.2",

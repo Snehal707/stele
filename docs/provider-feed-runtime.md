@@ -58,9 +58,10 @@ The invoice root and period are metadata, not verified invoice proofs.
 
 `tests/test_native_provider_feed_direct.py` checks ownership, seal immutability,
 strict snapshot parsing, fail-closed dispatch, EVM getter alignment, and the
-three review branches. Together with enrollment, freshness, and existing feed
-helper tests, 20 direct tests passed on genlayer-test 0.29.2 / genlayer-py 0.16.3.
-These tests mock cross-contract reads and judgment; they are not consensus proof.
+three review branches. The latest full direct-mode suite passed 27 tests on
+genlayer-test 0.29.2 / genlayer-py 0.16.3. These tests mock cross-contract
+reads and judgment; they are not consensus proof. Separate hosted Studio Next
+reports below verify the native route with real contract calls and consensus.
 
 `scripts/verify_native_provider_feed.mjs` uses the isolated v0.6-compatible SDK
 selected by `STELE_TEST_SDK_DIR`. It requires Studio-dev chain 61997, creates an

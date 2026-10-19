@@ -7,18 +7,18 @@ not presented as the current deployment.
 ### Proof receipts.
 
 - **Enroll / Review — `0xd644075c748ef7241d7c4a46050f94cb7b5153ccb368900896e586d7107a84f8`** — `ON_MANDATE`: the mandate is judged, not assumed.
-- **Drain → Claim — `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb`** — `PAID 980`: the pool pays when the judgment was wrong.
+- **Drain → Claim — `0x19a86e4928759e7ece13478e24a7f7bd47f480a1384fc31b6d909df1135158fb`** — `PAID 980`: this historical receipt records a paid claim after a wrong judgment.
 - **Propose → Promote — `0x616c274fb1cf6554c6bab129d8a9737f7f9cd0daaa4890e2d4c9e4b8df37464d`** — `PASSED`: the contract rewrites its mandate after a paid claim, with no vote.
 - **Fresh drain → Review — `0xbd4d2f90af40eea2133b871acc8fe4fa886a260aa095db82366f806d56b1f956`** — `OFF_MANDATE` under v2: the same drain pattern is caught after the clause is active.
 - `0xe42d9198…3ea3` — C1 `EVIDENCE_CONFLICT` → claim denied, payout 0 (Governor `0xb77B…f0AF`; evidence path required a redeploy)  
   Studio regression suite: `gltest --network studionet tests/test_evidence_conflict.py` — 3 tests covering double-enroll, sticky halt, and conflict/deny
 - **Enroll — `0x1a4846a02514ecbfa328259a8594cd5fe5a497570ba6f1f1aa88597b598f4a0b`** — new agent enrolled live via direct SDK call.
 - **Halt-revert — `0xd1c094118a2bf4f8df805becd9640152e0ad1d6ff67d0892c387c29c5b51e896`** — spend attempted on a halted vault, reverted with “Vault is halted.”
-- **This week's fresh review — `0x6e66ba162a510ba49c0f4aa0ce6acf0167380935ac0e94e1f00f313440bade3b`** — fresh call, separate from the canonical `OFF_MANDATE` / halted / `PAID 980` lifecycle loop.
+- **Additional review receipt — `0x6e66ba162a510ba49c0f4aa0ce6acf0167380935ac0e94e1f00f313440bade3b`** — a separate historical call, not the canonical `OFF_MANDATE` / halted / `PAID 980` lifecycle loop.
 
 First four on `0x8fb0…`; conflict on `0xb77B…` after the evidence redeploy.
 
-A governor cuts an agent's vault when behaviour leaves a written mandate. If that cut cost money, the pool pays and the mandate grows a clause. No vote.
+A governor halts an agent's vault when behaviour leaves a written mandate. If a wrong ruling lets funds leave, a valid claim can be paid and the mandate can gain a clause. No vote.
 
 # Stele
 
@@ -67,7 +67,7 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
   halted-spend rejection. The full claim-and-rewrite lifecycle above was
   repeated on isolated test deployments, not the public Governor.
 
-**Provider-feed route: helper logic direct-mode verified; full EVM feed integration remains separately pending**
+**Provider-feed route: native Studio Next behavior verified; Solidity/EVM feed integration remains pending**
 
 - Shared enrollment initialization and duplicate rejection
   (`tests/test_enrollment_refactor_direct.py`).
@@ -76,9 +76,9 @@ enrol an agent and may trigger `claim`, `propose_mandate` and `promote_mandate`
 - Provider-feed `_payment_count`, `_record_feed_conflict`, and
   `_record_review_failure` helpers (`tests/test_provider_feed_logic_direct.py`).
 
-**Provider-feed implementation: lint-clean and manually audited; feed-specific cross-contract runtime verification pending**
+**Provider-feed EVM transport: lint-clean and manually audited; deployed EVM runtime verification pending**
 
-- Provider-feed cross-contract EVM read and agreement path.
+- The native Intelligent Contract feed path is runtime-verified on Studio Next; only the Solidity/EVM transport still needs an EVM-capable network.
 
 The provider-feed Governor implementation is merged into `master` and its
 helper logic is direct-mode verified. The current Studio Next deployment is
@@ -700,15 +700,19 @@ both transaction and receipt lookups returned `null`, and the nonce remained
 zero. The deployment payload was approximately 41 KB. No contract was
 created and no Governor state changed.
 
-This confirms a Bradbury ceiling below 16 million for the tested Governor-
-sized deployment paths; it does not claim that every possible Intelligent
-Contract has the same requirement. This is separate from
+Later Bradbury testing established a flat outer-transaction gas cap of exactly
+`2^24` (16,777,216): that value is accepted, while 16,777,217 is rejected.
+Our large Governor payload could be admitted at the cap but still reverted
+during execution. A separate builder's independent trace on a comparable large
+deployment showed out-of-gas inside the deployment path, consistent with our
+result; our own RPC did not expose a trace. This is separate from
 [genlayer-cli#402](https://github.com/genlayerlabs/genlayer-cli/issues/402),
 which documents gas underestimation and nonce/RPC symptoms. The ceiling
-finding is being filed separately with GenLayer. It remains a Bradbury
-platform note; the current Studio Next deployment completed the post-
-deployment lifecycle smoke test, and the canonical Proof and prepared review
-fixtures remain available as independent evidence.
+is a Bradbury configuration, not a universal GenLayer ceiling. Splitting
+oversized contracts is the currently identified workaround; the current public
+Studio Next Governor and the two isolated full-lifecycle test runs are separate
+from this Bradbury limitation. See the detailed update in
+[genlayer-cli#419](https://github.com/genlayerlabs/genlayer-cli/issues/419).
 
 **Historical provider-feed investigation (EVM route).** The following records
 the earlier blocked attempt, not the status of the new native Studio route.
@@ -727,23 +731,27 @@ enrollment paths; no shared-state regression was found. Premium accounting was
 also centralized in `_apply_premium` for `enroll_covered` and
 `enroll_with_feed`.
 
-Direct-mode logic test: `tests/test_provider_feed_logic_direct.py` passed
-(`1 passed in 0.21s`) on stable `genlayer-test 0.29.2` / `genlayer-py 0.16.3`.
-It verifies the payment-count helper and fail-closed recorders by calling those
-helpers directly, but does not exercise `review()`'s feed branching or a real
-cross-contract EVM read.
+Initial direct-mode logic check: `tests/test_provider_feed_logic_direct.py`
+passed (`1 passed in 0.21s`) on stable `genlayer-test 0.29.2` /
+`genlayer-py 0.16.3`. That early check called the payment-count helper and
+fail-closed recorders directly; it did not exercise `review()`'s feed branch
+or a real cross-contract EVM read. Later hosted Studio Next runs verified the
+native Intelligent Contract feed branch with live contract calls and consensus,
+as documented in the current provider-feed status above. The Solidity/EVM
+transport remains pending runtime verification on an EVM-capable network.
 
 The rc2 retest was a separate tooling path. With a fresh bundle cache,
-`genlayer-test 0.30.0rc2` / `genlayer-py 0.19.0rc2` failed while importing a
-minimal contract whose constructor accepted two `Address` arguments, before
-the constructor ran, with `DecodingError: unexpected end of memory`. The same
-failure reproduced in the real Governor import and was narrowed away from
-contract size, `DynArray`, and method count. This Address-argument regression
-is reported to GenLayer in testing-suite issue #113; it is not evidence against
-the Stele contract logic.
+`genlayer-test 0.30.0rc2` / `genlayer-py 0.19.0rc2` failed during contract import
+with `DecodingError: unexpected end of memory`. A two-`Address` constructor
+was the smallest reproducer we observed, but the maintainer later reproduced
+the failure with a no-argument contract and traced it to stale compatibility
+imports in `gltest/direct/sdk_compat.py` after SDK modules moved under
+`genlayer.py`; the import error was swallowed before calldata injection. A
+maintainer fix was forthcoming when last checked. The issue is in the direct
+test harness compatibility path, not evidence against Stele contract logic:
+[testing-suite #113](https://github.com/genlayerlabs/genlayer-testing-suite/issues/113).
 
-Validation not performed: the integration test suite has not run to completion.
-Local
+The local `gltest` integration suite has not run to completion. Local
 `genlayer up --headless` and `gltest --network studionet` fail before contract
 deployment with:
 
@@ -754,14 +762,15 @@ error: missing field `session_create_request`
 RuntimeError: Failed to start module
 ```
 
-The issue was isolated through checks of npm/registry connectivity, GitHub rate
-limits, stale CLI locks, orphaned processes, Docker context, and WSL2. It is an
-apparent `genlayer-test 0.29.2` / `genlayer-py 0.16.3` schema mismatch with the
-local JSON-RPC `web` module. Stable direct mode is available for local logic
-tests, but its cross-contract EVM hook is not a real deployed EVM interaction.
-No Bradbury deployment was attempted for the provider-feed feature. The exact
-versions and error text are ready to report to GenLayer while awaiting a
-compatible integration path.
+The maintainer-provided override cleared that field error in our tested local
+invocation, but startup then stopped with `FATAL: REDIS_URL environment variable
+is required`; the CLI also regenerated the config on a later invocation. The
+supported Compose topology remains unanswered in
+[Studio #1761](https://github.com/genlayerlabs/genlayer-studio/issues/1761).
+This local `gltest` limitation is distinct from the successful hosted Studio
+Next SDK runs documented above and in
+[provider-feed runtime evidence](docs/provider-feed-runtime.md). No Bradbury
+provider-feed deployment was attempted.
 
 **Complete interactive-v4 Lifeform loop.** On Governor
 `0x36b49eFFd0b9d5C47D8Cf93734BE34b911a6c3C9`, agent
