@@ -18,6 +18,18 @@ upgrades, and the zero-address default for `get_vault()`. The post-deployment
 smoke test completed VaultTwin deployment, enrollment, state seeding, an
 ON review and normal spend, an OFF review, and halted-spend rejection.
 
+The full claim-and-rewrite lifecycle has additionally passed twice on fresh,
+isolated Studio Next Governor/VaultTwin deployments (chain 61997) using real
+contract calls and no fixture state injection. Both runs verified ON review,
+spends of 20 and 980, a `PAID` claim with a delivered 980-unit simulator
+message, proposal and promotion to active mandate v2, an OFF review and halt,
+and a rejected post-halt spend with unchanged VaultTwin state. These test
+deployments do not replace or change the public Governor above. The detailed
+receipts, transaction hashes, source hashes, and state checks are in
+[run 1](../results/studio-next-full-lifecycle-1792424915897.json) and
+[run 2](../results/studio-next-full-lifecycle-1792425537112.json). VaultTwin
+models a balance; the test does not claim a real merchant payment.
+
 The Bradbury Governors and receipts elsewhere in this document are historical
 evidence and platform-investigation records. They are not the active demo
 deployment. Enrollment remains write-once for an agent: a second enrollment
